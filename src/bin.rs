@@ -13,7 +13,20 @@ fn try_main() -> Result<()> {
         conf.clone().report(format!("no input file provided"));
     }
 
+    let head = 
+    r#"
+// Intrinsic functions space
+//
+
+interface Block<T> {
+    T run(); 
+}
+
+enum Void {
+    Unit
+}
+    "#; 
     let res = jack_lang::compile_and_run(conf)?;
-    println!("{:?}", res);
+    println!("{head}\n{}", res);
     Ok(())
 }

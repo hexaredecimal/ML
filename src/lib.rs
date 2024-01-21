@@ -11,8 +11,20 @@ mod ir;
 mod parser;
 pub mod config;
 
-pub fn compile_and_run(config: config::Config) -> Result<i32> {
+pub fn compile_and_run(config: config::Config) -> Result<String> {
     
+    let file_name = config.file.clone(); 
+
+    if file_name.ends_with(".sml") == false {
+        println!("Invalid input file. expected a file with `.sml` extension but found `{}`", file_name.clone()); 
+        std::process::exit(1); 
+    }
+
+    let splits: Vec<_> = file_name.split(".sml").collect(); 
+
+    let out_file = splits.first().unwrap();
+    let out_file = out_file.to_string(); 
+
     let program = std::fs::read_to_string(config.file).unwrap(); 
     let functions = parse(program.as_str())?;
 
@@ -30,10 +42,8 @@ pub fn compile_and_run(config: config::Config) -> Result<i32> {
 
     let mut jit = Jit::new();
     let code_ptr = jit.compile(&typed_functions)?;
-    unsafe {
-        let code_fn = mem::transmute::<_, fn() -> i32>(code_ptr);
-        Ok(code_fn())
-    }
+
+    Ok(code_ptr)
 }
 
 fn parse(text: &str) -> Result<Vec<RawFunction>> {

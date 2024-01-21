@@ -1,6 +1,7 @@
 use super::{identifier, sp};
 use crate::ir::raw::*;
 use crate::ir::*;
+use crate::ir::sem::SemExpression;
 use crate::parser::types::type_literal;
 use nom::branch::alt;
 use nom::bytes::complete::{tag, take_while1};
@@ -76,6 +77,7 @@ fn bool_literal(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     Ok((i, RawNode::new(RawExpression::Bool(val == "true"))))
 }
 
+
 fn array_literal(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     let (i, (_, _, exprs, _, _)) = tuple((
         tag("["),
@@ -99,8 +101,29 @@ fn null_of(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     Ok((i, RawNode::new(RawExpression::Null(Box::new(t)))))
 }
 
+
+fn unit_literal(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
+    let (i, (t)) = tuple((
+        tag("()"),
+    ))(i)?;
+
+    let t = t.0; 
+    Ok((i, RawNode::new(RawExpression::Unit)))
+}
+
+fn str_literal(_i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
+    let (i, (_, c, _)) = tuple((
+        tag("\""), 
+        take_while1(move |c: char| c != '\"'),
+        tag("\""), 
+    ))(_i)?; 
+
+    Ok((i, RawNode::new(RawExpression::String(c.to_string()))))
+}
+
+
 fn literal(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
-    alt((null_of, float_literal, int_literal, char_literal,  bool_literal, array_literal))(i)
+    alt((str_literal, unit_literal, null_of, float_literal, int_literal, char_literal,  bool_literal, array_literal))(i)
 }
 
 fn parens(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
@@ -484,10 +507,35 @@ fn abs_expr(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
         ))
     ))
 }
+fn embed_expr(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
+    let (i, (_, _, _, _, e, _, _)) = tuple((
+        tag("java"), 
+        sp, 
+        tag("{"),
+        sp,
+        separated_list0(sp, str_literal),
+        sp, 
+        tag("}")
+    ))(i)?;
 
+    let s: Vec<_> = e.into_iter().map(|f| {
+        match f.expr() {
+            RawExpression::String(x) => x.clone(),
+            _ => unreachable!()
+        }
+    }).collect();
+
+    let s = s.join("\n");
+    let e = RawExpression::String(s);
+    let e = RawNode::new(e);  
+    Ok((i, 
+        RawNode::new(RawExpression::Embed(Box::new(e)))
+    ))
+}
+ 
 
 pub fn expression_(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
-    alt((abs_expr, match_expr, let_expr, block_expr, val_expr, conditional_expr, logical_or_expr,))(i)
+    alt((embed_expr, abs_expr, match_expr, let_expr, block_expr, val_expr, conditional_expr, logical_or_expr,))(i)
 }
 
 pub fn expression(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {

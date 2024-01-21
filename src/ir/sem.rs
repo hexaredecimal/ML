@@ -5,10 +5,12 @@ use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum SemExpression {
+    Unit, 
     Integer(i64, Box<Type>),
     Bool(bool),
     Decimal(f64, Box<Type>),
     Char(u8),
+    String(String),
     Array(Vec<SemNode>),
     Id(String), // TODO: semantic checking step
     Null(Box<Type>), 
@@ -23,6 +25,7 @@ pub enum SemExpression {
     NullCheck(Box<SemNode>),
     Match(Box<SemNode>, Vec<(SemNode, SemNode)>),
     Abs(Box<SemNode>),
+    Embed(Box<SemNode>),
     Cast(Box<SemNode>, Box<Type>),
 }
 
@@ -43,7 +46,11 @@ impl SemFunction {
         ctx.append_new_vars(args.iter().cloned());
         let root = SemNode::analyze(fun.root, ctx)?;
         (&*root.ty()).assert_eq(&*ret)?;
-        let ty = Type::Function(ret, arg_types);
+        let ty = Type::Function(ret.clone(), arg_types);
+
+        if fun.name == "main".to_string() && *ret.clone() != Type::Unit {
+            return Err(CompilerError::BackendError("entry point main must return a unit type".to_string()));
+        }
 
         Ok(Self {
             root,
@@ -96,6 +103,7 @@ impl SemContext {
         }
     }
 
+    #[allow(unused)]
     pub fn extend_var(&self, id: String, ty: Type) -> Self {
         let funs = self.funs.clone();
         let mut vars = self.vars.clone();
@@ -103,6 +111,7 @@ impl SemContext {
         Self { funs, vars }
     }
 
+    #[allow(unused)]
     pub fn extend_vars(&self, it: impl IntoIterator<Item = (String, Type)>) -> Self {
         let funs = self.funs.clone();
         let mut vars = self.vars.clone();
@@ -122,6 +131,12 @@ pub struct SemNode {
 impl SemNode {
     pub fn analyze(node: RawNode, ctx: &mut SemContext) -> Result<Self> {
         let expr = match node.into_expr() {
+            RawExpression::Embed(x) => {
+                let e = SemNode::analyze(*x, ctx)?; 
+                SemExpression::Embed(Box::new(e))
+            }
+            RawExpression::String(x) => SemExpression::String(x.clone()), 
+            RawExpression::Unit => SemExpression::Unit, 
             RawExpression::Let(_, _) => unreachable!(),
             RawExpression::Null(t) => SemExpression::Null(t.clone()), 
             RawExpression::Cast(e, t) => {
@@ -130,72 +145,35 @@ impl SemNode {
             }
             RawExpression::Abs(x) => SemExpression::Abs(Box::new(SemNode::analyze(*x, ctx)?)), 
             RawExpression::Match(cond, cases) => {
-                let e = SemNode::analyze(*cond, ctx)?;
-                fn make_comp(cond: SemNode, other: SemNode) -> Result<SemNode> {
-                    Ok(SemNode { 
-                        ty: Type::Bool, 
-                        expr: SemExpression::BinaryOp(BinaryOp::Equal, Box::new(cond), Box::new(other)) 
-                    })
-                }
+                let e = SemNode::analyze(*cond, ctx)?; 
 
-                fn make_cond(cond: SemNode, other: SemNode, r: Option<SemNode>) -> Result<SemNode> {
-                    let r = r.unwrap_or(other.clone()); 
-                    Ok(SemNode { 
-                        ty: Type::Bool, 
-                        expr: SemExpression::Conditional(Box::new(cond), Box::new(other), Box::new(r)) 
-                    })
-                }
+                let len = cases.len(); 
 
-                fn construct_ast(cond: SemNode, cases_: Vec<(RawNode, RawNode)>, ctx: &mut SemContext) -> Result<SemNode> {
-                    let len = cases_.len(); 
-                    for i in 0 .. len {
-                        let left = cases_.get(i);  
-                        let right = cases_.get(i + 1);
+                let mut cs: Vec<_> = Vec::new(); 
+                for (i, (case, body)) in cases.into_iter().enumerate() {
+                    let (c, b) = (case, body); 
 
-                        if left.is_some() && right.is_none() {
-                            let (_, l_bdy) = left.unwrap().clone(); 
-                            return SemNode::analyze(l_bdy, ctx); 
-                            //return Ok(left.unwrap().clone().1); 
-                        } else if left.is_some() && right.is_some() {
-                            let (l_cond, l_body) = left.unwrap(); 
-                            let l = SemNode::analyze(l_cond.clone(), ctx)?; 
-                            let l_b = SemNode::analyze(l_body.clone(), ctx)?; 
-                            let cmp = make_comp(cond.clone(), l).unwrap(); 
-                            //right.unwrap();
+                    if i == len -1 {
+                        let is_else = match c.expr() {
+                            RawExpression::Id(i) => i == "_", 
+                            _ => false
+                        }; 
 
-                            let right = right.clone().unwrap(); 
-                            let (r_cond, r_body) = right;  
-                            let last = cases_.last().unwrap();
-                            if right.clone() == last.clone() {
-                                let is_else = match r_cond.expr().clone() {
-                                    RawExpression::Id(x) => x == "_", 
-                                    _ => false, 
-                                };
+                        if is_else == false {
+                            return Err(CompilerError::BackendError("expected last case to be the default case in match expression".to_string()));
+                        } else {
+                            let d = SemNode::analyze(b, ctx).unwrap();
+                            cs.push((d.clone(), d));
 
-                                if !is_else {
-                                    println!("Expected last condition to be default case in match"); 
-                                    panic!(); 
-                                }
-
-                                let r_b = SemNode::analyze(r_body.clone(), ctx)?; 
-                                return Ok(make_cond(cmp, l_b, Some(r_b)).unwrap()); 
-                            }
-
-                            let r = SemNode::analyze(r_cond.clone(), ctx)?; 
-                            //let r_b = SemNode::analyze(r_body.clone(), ctx)?; 
-                            let cmp2 = make_comp(cond.clone(), r).unwrap(); 
-                            let rv = cases_.get(i + 1 .. len).unwrap();
-                            let rv = rv.to_vec(); 
-                            //println!("rv: {:?}", rv);
-                            return Ok(make_cond(cmp, l_b, Some(construct_ast(cmp2, rv, ctx).unwrap())).unwrap());
                         }
+                    } else {
+                        let c = SemNode::analyze(c, ctx).unwrap(); 
+                        let d = SemNode::analyze(b, ctx).unwrap();
+                        cs.push((c, d));
                     }
-
-                    return Ok(cond.clone());
                 }
 
-                let ast = construct_ast(e, cases.clone(), ctx)?;
-                ast.expr
+                SemExpression::Match(Box::new(e), cs)
             }
             RawExpression::Char(x) => SemExpression::Char(x), 
             RawExpression::NullCheck(e) => {
@@ -264,10 +242,13 @@ impl SemNode {
         };
 
         let ty = match &expr {
+            SemExpression::String(_) => Type::String,
+            SemExpression::Embed(_) => Type::Unit, 
+            SemExpression::Unit => Type::Unit, 
             SemExpression::Null(t) => *t.clone(), 
             SemExpression::Cast(_, t) => *t.clone(), 
             SemExpression::Abs(x) => x.ty().clone(), 
-            SemExpression::Match(cond, cases) => {
+            SemExpression::Match(_cond, cases) => {
                 if cases.len() == 0 {
                     println!("Invalid match expression with no cases");
                     panic!();
@@ -306,18 +287,35 @@ impl SemNode {
                 };
 
                 let (ret, argdefs) = ftype.as_function();
-                if args.len() != argdefs.len() {
-                    return Err(CompilerError::WrongNumberOfArguments(
-                        id.to_string(),
-                        argdefs.len(),
-                        args.len(),
-                    ));
+
+                let mut is_varargs = false; 
+                if argdefs.len() > 0 {
+                    let (_, t) = argdefs.last().unwrap();
+                    match t {
+                        Type::VarArgs => {
+                            is_varargs = true;
+                        }
+                        _ => ()
+                    }
                 }
 
-                for ((_arg_name, arg_type), arg_node) in argdefs.iter().zip(args.iter()) {
-                    arg_type.assert_eq(arg_node.ty())?;
-                }
-                (*ret).clone()
+                let ret = if is_varargs {
+                    (*ret).clone()
+                } else {
+                    if args.len() != argdefs.len() {
+                        return Err(CompilerError::WrongNumberOfArguments(
+                            id.to_string(),
+                            argdefs.len(),
+                            args.len(),
+                        ));
+                    };
+
+                    for ((_arg_name, arg_type), arg_node) in argdefs.iter().zip(args.iter()) {
+                        arg_type.assert_eq(arg_node.ty())?;
+                    }
+                    (*ret).clone()
+                };
+                ret
             }
             SemExpression::Array(vals) => {
                 let inner_type = if !vals.is_empty() {

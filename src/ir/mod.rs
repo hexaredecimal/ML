@@ -58,7 +58,7 @@ impl BinaryOp {
     pub fn check_ty(&self, left_operand: &Type, right_operand: &Type) -> Result<()> {
         if let BinaryOp::ArrayDeref = self {
             if let Type::Array(_, _) = left_operand {
-                if right_operand != &Type::Int {
+                if right_operand != &Type::Usize {
                     return Err(CompilerError::WrongBinaryOperatorType(
                         right_operand.clone(),
                         self.clone(),
@@ -88,10 +88,10 @@ impl BinaryOp {
                 | BinaryOp::Sub
                 | BinaryOp::LessThanOrEqual
                 | BinaryOp::GreaterThanOrEqual => {
-                    vec![Type::Float, Type::Int, Type::Double, Type::Char, Type::Int8, Type::Int16, Type::Int32, Type::Int64,Type::Int128]
+                    vec![Type::Float, Type::Int, Type::Double, Type::Char, Type::Int8, Type::Int16, Type::Int32, Type::Int64,Type::Int128, Type::String]
                 }
                 BinaryOp::Equal | BinaryOp::NotEqual => {
-                    vec![Type::Float, Type::Int, Type::Bool, Type::Double, Type::Char, Type::Int8, Type::Int16, Type::Int32, Type::Int64,Type::Int128]
+                    vec![Type::Float, Type::Int, Type::Bool, Type::Double, Type::Char, Type::Int8, Type::Int16, Type::Int32, Type::Int64,Type::Int128, Type::String]
                 },
                 BinaryOp::Or | BinaryOp::And => vec![Type::Bool],
                 BinaryOp::ArrayDeref => unreachable!(),
@@ -136,6 +136,10 @@ impl std::fmt::Display for BinaryOp {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
+    VarArgs, 
+    Unit,
+    String,
+    Usize,    // System Dependent
     Int,    // System Dependent
     Int32,
     Int64,
@@ -201,6 +205,10 @@ impl std::fmt::Display for Type {
             f,
             "{}",
             match self {
+                Type::VarArgs => "...".to_string(), 
+                Type::Unit => "()".to_string(), 
+                Type::Usize => "usize".to_string(), 
+                Type::String => "String".to_string(), 
                 Type::Char => "Char".to_string(),
                 Type::List(t) => format!("List[{}]", t),
                 Type::Double => "Double".to_string(),

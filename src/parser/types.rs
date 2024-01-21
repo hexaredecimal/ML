@@ -90,6 +90,20 @@ fn double_type(i: &str) -> IResult<&str, Type, VerboseError<&str>> {
     Ok((i, Type::Double))
 }
 
+fn usz_type(i: &str) -> IResult<&str, Type, VerboseError<&str>> {
+    let (i, _) = tag("Usize")(i)?;
+    Ok((i, Type::Usize))
+}
+
+fn unit_type(i: &str) -> IResult<&str, Type, VerboseError<&str>> {
+    let (i, _) = tag("Unit")(i)?;
+    Ok((i, Type::Unit))
+}
+
+fn str_type(i: &str) -> IResult<&str, Type, VerboseError<&str>> {
+    let (i, _) = tag("String")(i)?;
+    Ok((i, Type::String))
+}
 pub fn type_literal(i: &str) -> IResult<&str, Type, VerboseError<&str>> {
-    alt((double_type, list_type, char_type, float_type, int_types, bool_type, array_type))(i)
+    alt((str_type, unit_type, usz_type, double_type, list_type, char_type, float_type, int_types, bool_type, array_type))(i)
 }
