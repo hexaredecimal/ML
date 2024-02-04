@@ -1,6 +1,12 @@
-fun main(): Bool => 
-  (let a = 10 in a == 10) && 
-    (let b = 20 in 
-      (let c = 30 in 
-        (let c = 20 in 
-          (b == c))))
+
+fun main(): Unit => { 
+  val a = let
+    n = 10
+    b = 20
+    c = b + n
+    d = b * c 
+    e = d / 2 
+  in e
+  val b = a * 2 
+  ()
+}

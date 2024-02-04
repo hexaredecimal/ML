@@ -34,4 +34,6 @@ pub enum CompilerError {
     NoInput,
     #[error(display = "Invalid block with zero statements")]
     InvalidBlock,
+    #[error(display = "Type Error:\n{} is incompatible with {}", 0, 1)]
+    UserTypeConflict(String, String),
 }

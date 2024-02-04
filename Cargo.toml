@@ -1,15 +1,15 @@
 [package]
-name = "jack"
+name = "small_ml"
 version = "0.1.0"
-authors = ["IGI-111 <igi-111@protonmail.com>"]
-edition = "2018"
+authors = ["Mfanakagama mfanakagama@gmail.com github.com/hexaredecimal"]
+edition = "2021"
 
 [lib]
-name = "jack_lang"
+name = "smll_lang"
 path = "src/lib.rs"
 
 [[bin]]
-name = "jack"
+name = "smll"
 path = "src/bin.rs"
 
 [dependencies]

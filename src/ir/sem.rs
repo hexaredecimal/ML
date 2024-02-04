@@ -5,29 +5,36 @@ use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum SemExpression {
-    Unit, 
+    Unit,
     Integer(i64, Box<Type>),
     Bool(bool),
     Decimal(f64, Box<Type>),
     Char(u8),
     String(String),
+    Null(Box<Type>),
     Array(Vec<SemNode>),
-    Id(String), // TODO: semantic checking step
-    Null(Box<Type>), 
+    LambdaCall(Box<SemNode>, Vec<SemNode>),
     FunCall(String, Vec<SemNode>),
+    Id(String), // TODO: semantic checking step
     BinaryOp(BinaryOp, Box<SemNode>, Box<SemNode>),
     UnaryOp(UnaryOp, Box<SemNode>),
     Conditional(Box<SemNode>, Box<SemNode>, Box<SemNode>),
     Let(String, Box<SemNode>),
     Lets(Vec<SemExpression>, Box<SemNode>),
     Val(String, Box<SemNode>),
-    Block(Vec<SemNode>), 
-    NullCheck(Box<SemNode>),
+    Block(Vec<SemNode>),
+    SimpleNullCheck(Box<SemNode>),
+    NullCheck(Box<SemNode>, Box<Type>),
     Match(Box<SemNode>, Vec<(SemNode, SemNode)>),
     Abs(Box<SemNode>),
     Embed(Box<SemNode>),
+    RecordLiteral(String, Vec<(String, SemNode)>),
+    EnumLiteral(String, Box<SemNode>),
     Cast(Box<SemNode>, Box<Type>),
+    Lambda(Vec<(String, Type)>, Box<Type>, Box<SemNode>),
+    Destructure(Vec<String>, Box<SemNode>),
 }
+
 
 #[derive(PartialEq, Debug)]
 pub struct SemFunction {

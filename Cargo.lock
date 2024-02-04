@@ -84,15 +84,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "jack"
-version = "0.1.0"
-dependencies = [
- "codegen",
- "err-derive",
- "nom",
-]
-
-[[package]]
 name = "lexical-core"
 version = "0.7.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -183,6 +174,15 @@ name = "ryu"
 version = "1.0.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "71d301d4193d031abdd79ff7e3dd721168a9572ef3fe51a1517aba235bd8f86e"
+
+[[package]]
+name = "small_ml"
+version = "0.1.0"
+dependencies = [
+ "codegen",
+ "err-derive",
+ "nom",
+]
 
 [[package]]
 name = "static_assertions"

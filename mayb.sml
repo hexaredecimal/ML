@@ -1,6 +1,4 @@
-# ML (code name)
 
-```ml
 enum Maybe = Just(x: Any) | Nothing
 
 fun println(...): Unit => {
@@ -20,10 +18,6 @@ fun panic(msg: String): Unit => {
   ()
 }
 
-fun fact(x: Int): Int => match x {
-    1 -> 1
-    _ -> x * fact(x - 1)
-}
 
 fun unwrap(m: Maybe): Any => match m {
   Maybe.Just(x) -> x
@@ -32,10 +26,9 @@ fun unwrap(m: Maybe): Any => match m {
 }
 
 fun main(): Unit => {
-  val v = Maybe.Just(fact(5))
+  val v = Maybe.Nothing
   val u = unwrap(v) 
   println("Value: ", u)
   ()
 }
 
-```

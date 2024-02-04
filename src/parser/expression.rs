@@ -1,20 +1,20 @@
 use super::{identifier, sp};
 use crate::ir::raw::*;
 use crate::ir::*;
-use crate::ir::sem::SemExpression;
 use crate::parser::types::type_literal;
 use nom::branch::alt;
 use nom::bytes::complete::{tag, take_while1};
 use nom::combinator::opt;
 use nom::error::{VerboseError, VerboseErrorKind};
-use nom::multi::{many0, separated_list0, many1};
+use nom::multi::{many0, many1, separated_list0};
 use nom::sequence::tuple;
-use nom::{IResult, Err};
+use nom::IResult;
 
 fn int_literal(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     let (i, (num, ty)) = tuple((
-        take_while1(move |c: char| c.is_numeric()), 
-        many0(tuple((sp, tag("of"), sp, type_literal)))))(i)?;
+        take_while1(move |c: char| c.is_numeric()),
+        many0(tuple((sp, tag("of"), sp, type_literal))),
+    ))(i)?;
 
     let ty = if ty.len() == 0 {
         Type::Int
@@ -22,14 +22,11 @@ fn int_literal(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
         let c = ty.first().unwrap();
         let (_, _, _, ty) = c;
         ty.clone()
-    }; 
+    };
 
-
-    Ok((i, RawNode::new(
-        RawExpression::Integer(
-            num.parse().unwrap(),
-            Box::new(ty)
-        ))
+    Ok((
+        i,
+        RawNode::new(RawExpression::Integer(num.parse().unwrap(), Box::new(ty))),
     ))
 }
 
@@ -38,35 +35,31 @@ fn float_literal(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
         take_while1(move |c: char| c.is_numeric()),
         tag("."),
         take_while1(move |c: char| c.is_numeric()),
-        many0(tuple((sp, tag("of"), sp, type_literal)))
+        many0(tuple((sp, tag("of"), sp, type_literal))),
     ))(i)?;
- 
+
     let ty = if conv.len() == 0 {
         Type::Double
     } else {
         let c = conv.first().unwrap();
         let (_, _, _, ty) = c;
         ty.clone()
-    }; 
+    };
 
     Ok((
         i,
         RawNode::new(RawExpression::Decimal(
             format!("{}.{}", u, f).parse().unwrap(),
-            Box::new(ty.clone())
+            Box::new(ty.clone()),
         )),
     ))
 }
 
 fn char_literal(_i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
-    let (i, (_, c, _)) = tuple((
-        tag("'"), 
-        take_while1(move |c: char| c != '\''),
-        tag("'"), 
-    ))(_i)?; 
+    let (i, (_, c, _)) = tuple((tag("'"), take_while1(move |c: char| c != '\''), tag("'")))(_i)?;
 
     if c.len() > 1 {
-        println!("Literal of `Char` type has more than one rune.\nNote: error happened here on this value `{}`", c); 
+        println!("Literal of `Char` type has more than one rune.\nNote: error happened here on this value `{}`", c);
         std::process::exit(1);
     }
     Ok((i, RawNode::new(RawExpression::Char(c.as_bytes()[0]))))
@@ -76,7 +69,6 @@ fn bool_literal(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     let (i, val) = alt((tag("true"), tag("false")))(i)?;
     Ok((i, RawNode::new(RawExpression::Bool(val == "true"))))
 }
-
 
 fn array_literal(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     let (i, (_, _, exprs, _, _)) = tuple((
@@ -90,40 +82,35 @@ fn array_literal(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
 }
 
 fn null_of(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
-    let (i, (_, _, _, _, t)) = tuple((
-        tag("null"), 
-        sp, 
-        tag("of"), 
-        sp, 
-        type_literal
-    ))(i)?;
+    let (i, (_, _, _, _, t)) = tuple((tag("null"), sp, tag("of"), sp, type_literal))(i)?;
 
     Ok((i, RawNode::new(RawExpression::Null(Box::new(t)))))
 }
 
-
 fn unit_literal(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
-    let (i, (t)) = tuple((
-        tag("()"),
-    ))(i)?;
+    let (i, (t)) = tuple((tag("()"),))(i)?;
 
-    let t = t.0; 
+    let t = t.0;
     Ok((i, RawNode::new(RawExpression::Unit)))
 }
 
 fn str_literal(_i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
-    let (i, (_, c, _)) = tuple((
-        tag("\""), 
-        take_while1(move |c: char| c != '\"'),
-        tag("\""), 
-    ))(_i)?; 
+    let (i, (_, c, _)) = tuple((tag("\""), take_while1(move |c: char| c != '\"'), tag("\"")))(_i)?;
 
     Ok((i, RawNode::new(RawExpression::String(c.to_string()))))
 }
 
-
 fn literal(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
-    alt((str_literal, unit_literal, null_of, float_literal, int_literal, char_literal,  bool_literal, array_literal))(i)
+    alt((
+        str_literal,
+        unit_literal,
+        null_of,
+        float_literal,
+        int_literal,
+        char_literal,
+        bool_literal,
+        array_literal,
+    ))(i)
 }
 
 fn parens(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
@@ -131,7 +118,13 @@ fn parens(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     Ok((i, expr))
 }
 
-fn fun_call(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
+pub fn fun_call(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
+    // TODO: Fix the parser for function call such that it is generic for all 
+    //       kinds of functions. For now function calls are parsed as
+    //       <ID> (<ARGS>) 
+    //       What I want to parse is 
+    //       <EXPR> (<ARGS>)
+    //       Currenty the parser has an issue parsing this.
     let (i, (id, _, _, _, args, _, _)) = tuple((
         identifier,
         sp,
@@ -141,21 +134,44 @@ fn fun_call(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
         sp,
         tag(")"),
     ))(i)?;
+
     Ok((
         i,
         RawNode::new(RawExpression::FunCall(id.to_string(), args.to_vec())),
     ))
 }
 
+pub fn lambda_call(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
+    // TODO: Fix the parser for function call such that it is generic for all 
+    //       kinds of functions. For now function calls are parsed as
+    //       <ID> (<ARGS>) 
+    //       What I want to parse is 
+    //       <EXPR> (<ARGS>)
+    //       Currenty the parser has an issue parsing this.
+    let (i, (_, _, id, _, _, args, _, _)) = tuple((
+        tag("["),
+        sp, 
+        expression, 
+        sp,
+        tag(":"),
+        separated_list0(tuple((sp, tag(","), sp)), expression),
+        sp,
+        tag("]"),
+    ))(i)?;
+
+    println!("expr: {:?} -> args: {:?}", id, args);
+    todo!()
+}
 
 
-fn identifier_expr(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
+
+pub fn identifier_expr(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     let (i, id) = identifier(i)?;
     Ok((i, RawNode::new(RawExpression::Id(id.to_string()))))
 }
 
 fn terminal(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
-    alt((parens, literal, fun_call, identifier_expr))(i)
+    alt((parens, literal, fun_call, identifier_expr, lambda_call))(i)
 }
 
 fn deref_expr(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
@@ -393,7 +409,7 @@ fn conditional_expr(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
 }
 
 fn named_expression(i: &str) -> IResult<&str, (&str, RawNode), VerboseError<&str>> {
-    let (i, (id, _, _,_, exp, _)) = tuple((identifier, sp, tag("="), sp, expression, sp))(i)?; 
+    let (i, (id, _, _, _, exp, _)) = tuple((identifier, sp, tag("="), sp, expression, sp))(i)?;
     Ok((i, (id, exp)))
 }
 
@@ -407,161 +423,257 @@ fn let_expr(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
         expression,
     ))(i)?;
 
-    let decls: Vec<RawExpression> = id.into_iter().map(|f| {
-        let (name, expr) = f; 
-        RawExpression::Let(name.to_string(), Box::new(expr))
-    }).collect(); 
+    let decls: Vec<RawExpression> = id
+        .into_iter()
+        .map(|f| {
+            let (name, expr) = f;
+            RawExpression::Let(name.to_string(), Box::new(expr))
+        })
+        .collect();
 
     Ok((
         i,
-        RawNode::new(RawExpression::Lets(
-            decls.clone(), 
-            Box::new(expr),
-        )),
+        RawNode::new(RawExpression::Lets(decls.clone(), Box::new(expr))),
     ))
+}
+
+
+fn val_destruct(i: &str) -> IResult<&str, TempExpr, VerboseError<&str>> {
+    let (i, (_, identifiers, _)) = tuple((
+        tag("("),
+        separated_list0(tuple((sp, tag(","), sp)), identifier),
+        tag(")"),
+    ))(i)?;
+
+    let identifiers: Vec<_> = identifiers.into_iter().map(|f| f.to_string()).collect(); 
+
+    Ok((i, TempExpr::Ids(identifiers)))
+}
+
+
+fn val_id(i: &str) -> IResult<&str, TempExpr, VerboseError<&str>> {
+    let (i, e) = tuple((identifier,))(i)?; 
+    let (e,) =e;
+    Ok((i, TempExpr::Id(e.to_string())))
+}
+
+fn val_alt(i: &str) -> IResult<&str, TempExpr, VerboseError<&str>> {
+    let (i, e) = alt((val_id, val_destruct))(i)?; 
+    Ok((i, e))
 }
 
 
 fn val_expr(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
-    let (i, (_, _, id, _, _, _, val)) = tuple((
-        tag("val"),
-        sp,
-        identifier,
-        sp,
-        tag("="),
-        sp,
-        expression,
-    ))(i)?;
-    Ok((
-        i,
-        RawNode::new(RawExpression::Val(
-            id.to_string(),
-            Box::new(val),
-        )),
-    ))
+    let (i, (_, _, ids, _, _, _, val)) =
+        tuple((tag("val"), sp, val_alt, sp, tag("="), sp, expression))(i)?;
+
+    match ids {
+        TempExpr::Id(id) => {
+            return Ok((
+                i,
+                RawNode::new(RawExpression::Val(id.to_string(), Box::new(val))),
+            )); 
+        }
+        TempExpr::Ids(v) => {
+            return Ok((
+                i, 
+                RawNode::new(RawExpression::Destructure(v.clone(), Box::new(val))),
+            )); 
+        }
+    }
 }
 
 fn block_expr(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
-    let (i, (_, _, stmts, _, _)) = tuple((
-        tag("{"), 
-        sp, 
-        separated_list0(sp, expression),
-        sp, 
-        tag("}")
-    ))(i)?;
+    let (i, (_, _, stmts, _, _)) =
+        tuple((tag("{"), sp, separated_list0(sp, expression), sp, tag("}")))(i)?;
 
-    Ok((
-        i,
-        RawNode::new(RawExpression::Block(stmts))
-    ))
+    Ok((i, RawNode::new(RawExpression::Block(stmts))))
 }
 
 fn cases(i: &str) -> IResult<&str, (RawNode, RawNode), VerboseError<&str>> {
-    let (i, (a, _, _, _, e)) = tuple((
-        expression, 
-        sp, 
-        tag("=>"),
-        sp, 
-        expression
-    ))(i)?;
+    let (i, (a, _, _, _, e)) = tuple((expression, sp, tag("->"), sp, expression))(i)?;
 
-    Ok((i, 
-        (a,e)))
+    Ok((i, (a, e)))
 }
 
 fn match_expr(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     let (i, (_, _, cond, _, _, _, casesd, _, _)) = tuple((
-        tag("match"), 
+        tag("match"),
         sp,
-        expression, 
-        sp, 
+        expression,
+        sp,
         tag("{"),
-        sp, 
+        sp,
         separated_list0(sp, cases),
-        sp, 
-        tag("}")
+        sp,
+        tag("}"),
     ))(i)?;
 
-    Ok((i,
-        RawNode::new(
-            RawExpression::Match(
-                Box::new(cond), 
-                casesd
-            )
-        )
+    Ok((
+        i,
+        RawNode::new(RawExpression::Match(Box::new(cond), casesd)),
     ))
 }
 
 fn abs_expr(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
-    let (i, (_, _, e, _, _)) = tuple((
-        tag("|"), 
-        sp, 
-        expression, 
-        sp, 
-        tag("|")
-    ))(i)?;
+    let (i, (_, _, e, _, _)) = tuple((tag("|"), sp, expression, sp, tag("|")))(i)?;
 
-    Ok((i, 
-        RawNode::new(RawExpression::Abs(
-            Box::new(e)
-        ))
-    ))
+    Ok((i, RawNode::new(RawExpression::Abs(Box::new(e)))))
 }
 fn embed_expr(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     let (i, (_, _, _, _, e, _, _)) = tuple((
-        tag("java"), 
-        sp, 
+        tag("java"),
+        sp,
         tag("{"),
         sp,
         separated_list0(sp, str_literal),
-        sp, 
-        tag("}")
+        sp,
+        tag("}"),
     ))(i)?;
 
-    let s: Vec<_> = e.into_iter().map(|f| {
-        match f.expr() {
+    let s: Vec<_> = e
+        .into_iter()
+        .map(|f| match f.expr() {
             RawExpression::String(x) => x.clone(),
-            _ => unreachable!()
-        }
-    }).collect();
+            _ => unreachable!(),
+        })
+        .collect();
 
     let s = s.join("\n");
     let e = RawExpression::String(s);
-    let e = RawNode::new(e);  
-    Ok((i, 
-        RawNode::new(RawExpression::Embed(Box::new(e)))
+    let e = RawNode::new(e);
+    Ok((i, RawNode::new(RawExpression::Embed(Box::new(e)))))
+}
+
+fn normargument(i: &str) -> IResult<&str, (String, RawNode), VerboseError<&str>> {
+    let (i, (name, _, _, _, arg_type)) = tuple((identifier, sp, tag(":"), sp, expression))(i)?;
+    Ok((i, (name.to_string(), arg_type)))
+}
+
+
+
+pub fn record_expression(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
+    let (i, (name, _, _, decls, _)) = tuple((
+        identifier,
+        sp,
+        tag("{"),
+        separated_list0(tuple((sp, tag(","), sp)), normargument),
+        tag("}"),
+    ))(i)?;
+
+    Ok((
+        i,
+        RawNode::new(RawExpression::RecordLiteral(
+            name.to_string(),
+            decls.clone(),
+        )),
     ))
 }
- 
+
+pub fn enum_node(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
+    let (i, a) = alt((fun_call, identifier_expr))(i)?; 
+    Ok((i, a))
+}
+
+pub fn enum_expression(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
+    let (i, (parent, _, _, _, e)) = tuple((
+        identifier, 
+        sp, 
+        tag("."), 
+        sp, 
+        enum_node
+    ))(i)?;
+
+    Ok((
+        i,
+        RawNode::new(RawExpression::EnumLiteral(parent.to_string(), Box::new(e)))
+    ))
+}
+
+
+fn normargument_typed(i: &str) -> IResult<&str, (String, Type), VerboseError<&str>> {
+    let (i, (name, _, _, _, arg_type)) = tuple((identifier, sp, tag(":"), sp, type_literal))(i)?;
+    Ok((i, (name.to_string(), arg_type)))
+}
+
+
+pub fn lambda_expression(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
+    let (i, (_, _, _, args, _, _, _,_, ret, _,_,_, body)) = tuple((
+        tag("fn"), 
+        sp, 
+        tag("("), 
+        separated_list0(tuple((sp, tag(","), sp)), normargument_typed),
+        tag(")"),
+        sp, 
+        tag(":"), 
+        sp, 
+        type_literal, 
+        sp, 
+        tag("=>"),
+        sp, 
+        expression
+    ))(i)?; 
+
+    Ok((i, RawNode::new(RawExpression::Lambda(args.clone(), Box::new(ret), Box::new(body)))))
+}
+
 
 pub fn expression_(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
-    alt((embed_expr, abs_expr, match_expr, let_expr, block_expr, val_expr, conditional_expr, logical_or_expr,))(i)
+    alt((
+        lambda_expression,
+        enum_expression,
+        record_expression,
+        embed_expr,
+        abs_expr,
+        match_expr,
+        let_expr,
+        block_expr,
+        val_expr,
+        conditional_expr,
+        logical_or_expr,
+    ))(i)
+}
+
+pub fn expression_null_check(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
+    let (i, (e, a)) = tuple((
+        expression_,
+        many0(tuple((sp, tag("?"), sp, many0(type_literal)))),
+    ))(i)?;
+
+    if a.len() == 0 {
+        return Ok((i, e));
+    }
+
+    let t = a.last().unwrap();
+    let e = match t {
+        (_, _, _, t) => {
+            if t.len() == 0 {
+                RawExpression::SimpleNullCheck(Box::new(e))
+            } else {
+                let ty = t.last().unwrap();
+                let ty = ty.clone();
+                RawExpression::NullCheck(Box::new(e), Box::new(ty))
+            }
+        }
+    };
+
+    Ok((i, RawNode::new(e)))
 }
 
 pub fn expression(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     let (i, (e, a)) = tuple((
-        expression_,
-        many0(
-            tuple((
-                sp, 
-                tag("as"), 
-                sp, 
-                type_literal
-            ))
-        )
+        expression_null_check,
+        many0(tuple((sp, tag("as"), sp, type_literal))),
     ))(i)?;
 
-    
     if a.len() == 0 {
-        return Ok((i, e)); 
+        return Ok((i, e));
     }
 
-    let (_, _, _, t_) = a.last().unwrap(); 
-    Ok((i, 
-        RawNode::new(RawExpression::Cast(
-            Box::new(e), 
-            Box::new(t_.clone())
-        ))
+    let (_, _, _, t_) = a.last().unwrap();
+    Ok((
+        i,
+        RawNode::new(RawExpression::Cast(Box::new(e), Box::new(t_.clone()))),
     ))
 }
 

@@ -1,18 +1,28 @@
 
+enum Result = Ok(value: Any) | Err(msg: String)
 
-fun println(...): Result => {
+fun panic(msg: String): Unit => {
   java {
-    "for (int i = 0; i < var_args.length; i++) {"
-    "  System.out.print(var_args[i]);"
-    "}"
-    "System.out.println();"
+    "Intrinsic.panic(msg);"
   }
   ()
 }
 
-fun main(): Unit => {
-  val name = "Vincent"  
-  println(name)
-  ()
+fun unwrap(r: Result): Any => match r {
+  Result.Ok(value) -> value
+  Result.Err(msg) -> panic("Attempt to unwrap an error value of type `Result.Err` with message: " + msg)
+  _ -> ()
 }
 
+fun safe_div(x: Int, y: Int): Result => 
+  if y == 0 then 
+    Result.Err("Divide by zero error")
+  else Result.Ok(x / y)
+
+fun main(): Unit => {
+  val answer = safe_div(10, 2)
+  val err = safe_div(5, 0)
+  val ok = unwrap(answer) as Int 
+  val not_ok = unwrap(err) 
+  ()
+}

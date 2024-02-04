@@ -58,21 +58,20 @@ impl BinaryOp {
     pub fn check_ty(&self, left_operand: &Type, right_operand: &Type) -> Result<()> {
         if let BinaryOp::ArrayDeref = self {
             if let Type::Array(_, _) = left_operand {
-                if right_operand != &Type::Usize {
-                    return Err(CompilerError::WrongBinaryOperatorType(
-                        right_operand.clone(),
-                        self.clone(),
-                    ));
-                }
-            }else if let Type::List(_) = left_operand {
                 if right_operand != &Type::Int {
                     return Err(CompilerError::WrongBinaryOperatorType(
                         right_operand.clone(),
                         self.clone(),
                     ));
                 }
-            }
-            else {
+            } else if let Type::List(_) = left_operand {
+                if right_operand != &Type::Int {
+                    return Err(CompilerError::WrongBinaryOperatorType(
+                        right_operand.clone(),
+                        self.clone(),
+                    ));
+                }
+            } else {
                 return Err(CompilerError::WrongBinaryOperatorType(
                     left_operand.clone(),
                     self.clone(),
@@ -88,11 +87,48 @@ impl BinaryOp {
                 | BinaryOp::Sub
                 | BinaryOp::LessThanOrEqual
                 | BinaryOp::GreaterThanOrEqual => {
-                    vec![Type::Float, Type::Int, Type::Double, Type::Char, Type::Int8, Type::Int16, Type::Int32, Type::Int64,Type::Int128, Type::String]
+                    let mut ts = vec![
+                        Type::Float,
+                        Type::Int,
+                        Type::Double,
+                        Type::Char,
+                        Type::Int8,
+                        Type::Int16,
+                        Type::Int32,
+                        Type::Int64,
+                        Type::Int128,
+                        Type::String,
+                        Type::Any,
+                    ];
+
+                    match self {
+                        BinaryOp::Add => match (left_operand, right_operand) {
+                            (Type::String, Type::UserType(_)) => ts.push(right_operand.clone()),
+                            (Type::String, Type::EnumType(_, _)) => ts.push(right_operand.clone()), 
+                            (Type::UserType(_), Type::String) => ts.push(left_operand.clone()),
+                            (Type::EnumType(_, _), Type::String) => ts.push(left_operand.clone()),
+                            _ => (),
+                        },
+                        _ => (),
+                    };
+
+                    ts
                 }
                 BinaryOp::Equal | BinaryOp::NotEqual => {
-                    vec![Type::Float, Type::Int, Type::Bool, Type::Double, Type::Char, Type::Int8, Type::Int16, Type::Int32, Type::Int64,Type::Int128, Type::String]
-                },
+                    vec![
+                        Type::Float,
+                        Type::Int,
+                        Type::Bool,
+                        Type::Double,
+                        Type::Char,
+                        Type::Int8,
+                        Type::Int16,
+                        Type::Int32,
+                        Type::Int64,
+                        Type::Int128,
+                        Type::String,
+                    ]
+                }
                 BinaryOp::Or | BinaryOp::And => vec![Type::Bool],
                 BinaryOp::ArrayDeref => unreachable!(),
             };
@@ -136,11 +172,12 @@ impl std::fmt::Display for BinaryOp {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
-    VarArgs, 
+    VarArgs,
     Unit,
     String,
-    Usize,    // System Dependent
-    Int,    // System Dependent
+    Any,
+    Usize, // System Dependent
+    Int,   // System Dependent
     Int32,
     Int64,
     Int128,
@@ -152,7 +189,10 @@ pub enum Type {
     Char,
     Array(u64, Box<Type>),
     List(Box<Type>),
+    Lambda(Box<Type>, Vec<Type>),
     Function(Box<Type>, Vec<(String, Type)>),
+    EnumType(String, String),
+    UserType(String), // Tobe looked up in the type table
 }
 
 impl Type {
@@ -171,29 +211,83 @@ impl Type {
     pub fn assert_eq(&self, other: &Self) -> Result<()> {
         if self != other {
             match (self, other) {
-                (Type::List(i), Type::Array(_, t)) => {
-                    let e = i.assert_eq(t);
+                (Type::Any, _) => return Ok(()),
+                (Type::Array(_, t), Type::List(i)) => {
+                    let e = t.assert_eq(i);
                     if e.is_err() {
-                        return Err(CompilerError::TypeConflict(self.clone(), other.clone()))
+                        return Err(CompilerError::TypeConflict(self.clone(), other.clone()));
                     }
-                    return Ok(()); 
-                } 
-                _ => {
-                    match other {
-                        Type::Float 
-                        | Type::Int 
-                        | Type::Double 
-                        | Type::Char 
-                        | Type::Int8 
-                        | Type::Int16 
-                        | Type::Int32 
-                        | Type::Int64 
-                        | Type::Int128
-                        | Type::Bool => return Ok(()), 
-                        _ => return Err(CompilerError::TypeConflict(self.clone(), other.clone()))
+                    return Ok(());
+
+                }
+                (Type::UserType(t1), Type::UserType(t2)) => {
+                    let (t1, t2) = (t1.clone(), t2.clone());
+                    if t2 != t1 {
+                        return Err(CompilerError::UserTypeConflict(t1, t2));
+                    }
+                    return Ok(());
+                }
+                (Type::UserType(user_name), Type::EnumType(parent, _child)) => {
+                    if user_name != parent {
+                        return Err(CompilerError::TypeConflict(self.clone(), other.clone()));
+                    }
+                    return Ok(());
+                }
+                (Type::EnumType(parent, child), Type::UserType(_parent)) => {
+                    if parent == _parent {
+                        return Ok(());
+                    } else {
+                        return Err(CompilerError::TypeConflict(self.clone(), other.clone()));
                     }
                 }
-            }; 
+                (Type::EnumType(parent, _), Type::EnumType(parent_, _)) => {
+                    if parent == parent_ {
+                        return Ok(());
+                    } else {
+                        return Err(CompilerError::TypeConflict(self.clone(), other.clone()));
+                    }
+                }
+                (Type::String, Type::EnumType(_, _)) => return Ok(()), 
+                (Type::String, Type::UserType(_)) => return Ok(()),
+                (
+                    Type::Float
+                    | Type::Int
+                    | Type::Double
+                    | Type::Char
+                    | Type::Int8
+                    | Type::Int16
+                    | Type::Int32
+                    | Type::Int64
+                    | Type::Int128
+                    | Type::Bool, 
+
+                    Type::String | Type::UserType(_)
+                ) => {
+                    return Err(CompilerError::TypeConflict(self.clone(), other.clone())); 
+                }
+
+                (Type::String, Type::Any) => return Ok(()), 
+                (Type::String, _) => {
+                    return Err(CompilerError::TypeConflict(self.clone(), other.clone())); 
+                }
+                _ => match other {
+                    Type::Float
+                    | Type::Int
+                    | Type::Double
+                    | Type::Char
+                    | Type::Int8
+                    | Type::Int16
+                    | Type::Int32
+                    | Type::Int64
+                    | Type::Int128
+                    | Type::Any
+                    | Type::String
+                    | Type::Bool => {
+                        return Ok(())
+                    },
+                    _ => return Err(CompilerError::TypeConflict(self.clone(), other.clone())),
+                },
+            };
         }
         Ok(())
     }
@@ -205,10 +299,17 @@ impl std::fmt::Display for Type {
             f,
             "{}",
             match self {
-                Type::VarArgs => "...".to_string(), 
-                Type::Unit => "()".to_string(), 
-                Type::Usize => "usize".to_string(), 
-                Type::String => "String".to_string(), 
+                Type::Lambda(ret, args) => {
+                    let args: Vec<_> = args.into_iter().map(|f| format!("{f}")).collect(); 
+                    format!("{}", args.join(","))
+                }
+                Type::EnumType(name, p) => format!("{}.{}", name, p), 
+                Type::UserType(s) => s.clone(),
+                Type::VarArgs => "...".to_string(),
+                Type::Unit => "()".to_string(),
+                Type::Usize => "usize".to_string(),
+                Type::String => "String".to_string(),
+                Type::Any => "Any".to_string(),
                 Type::Char => "Char".to_string(),
                 Type::List(t) => format!("List[{}]", t),
                 Type::Double => "Double".to_string(),

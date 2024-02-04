@@ -4,6 +4,5 @@ fun simple(a: Int): Int =>
     1 
   else 0
 
-
 fun main(): Int => simple(42)
 
