@@ -3,7 +3,7 @@
 
 ![example workflow](https://github.com/hexaredecimal/ML/actions/workflows/rust.yml/badge.svg)
 
-<div>
+</div>
 
 ```ml
 enum Maybe = Just(x: Any) | Nothing
