@@ -21,7 +21,7 @@ fun safe_div(x: Int, y: Int): Result =>
 
 fun main(): Unit => {
   val answer = safe_div(10, 2)
-  val err = safe_div(5, 0)
+  val err = safe_div(15, 5)
   val ok = unwrap(answer) as Int 
   val not_ok = unwrap(err) 
   ()

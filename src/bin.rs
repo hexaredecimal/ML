@@ -45,7 +45,7 @@ fn try_main() -> Result<()> {
     let program = format!("{head2}\n{}", res);
     let out_name = make_out_file_name(conf.file);
     if conf.ir {
-        println!("printing ir to stdio{}\n\n", res);
+        println!("printing ir to stdio{}\n\n\n", res);
     } else {
         println!("Writing ir to file: `{out_name}.java`");
         fs::write(format!("./{}.java", out_name), program.as_bytes()).unwrap();

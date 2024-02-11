@@ -81,17 +81,23 @@ impl SemFunction {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SemContext {
     funs: HashMap<String, Type>,
     vars: HashMap<String, Type>,
+    pub records: HashMap<String, RecordType>, 
+    pub enums: HashMap<String, EnumType>,
+ 
 }
 
 impl SemContext {
     pub fn from_funs(funs: impl IntoIterator<Item = (String, Type)>) -> Self {
         let funs = funs.into_iter().collect::<HashMap<_, _>>();
         let vars = HashMap::new();
-        Self { funs, vars }
+        let records: HashMap<String, RecordType> = HashMap::new();
+        let enums: HashMap<String, EnumType> = HashMap::new();
+
+        Self { funs, vars, records, enums }
     }
     pub fn funs(&self) -> &HashMap<String, Type> {
         &self.funs
@@ -115,7 +121,10 @@ impl SemContext {
         let funs = self.funs.clone();
         let mut vars = self.vars.clone();
         vars.insert(id, ty);
-        Self { funs, vars }
+
+        let records = self.records.clone(); 
+        let enums = self.enums.clone(); 
+        Self { funs, vars, records, enums }
     }
 
     #[allow(unused)]
@@ -125,7 +134,10 @@ impl SemContext {
         for (id, ty) in it {
             vars.insert(id, ty);
         }
-        Self { funs, vars }
+        let records = self.records.clone(); 
+        let enums = self.enums.clone(); 
+
+        Self { funs, vars, records, enums }
     }
 }
 
@@ -136,8 +148,70 @@ pub struct SemNode {
 }
 
 impl SemNode {
+    fn extract_enum_field(name: String, fields: Vec<EnumField>) -> Result<EnumField> {
+        for field in fields.into_iter() {
+            match field.clone() {
+                EnumField::Rec(record) => {
+                    if record.name == name  {
+                        return Ok(field); 
+                    }
+                }
+                EnumField::Id(n) => {
+                    if n == name {
+                        return Ok(field); 
+                    }
+                }
+            }
+        }
+        return Err(CompilerError::BackendError(
+            format!("Invalid enum field lookup for field `{}`", name)
+        ));
+    }
+
     pub fn analyze(node: RawNode, ctx: &mut SemContext) -> Result<Self> {
         let expr = match node.into_expr() {
+            RawExpression::Lambda(args, ret, body) => {
+                todo!()
+            }
+            RawExpression::Destructure(dest, e) => {
+                todo!()
+            }
+            RawExpression::RecordLiteral(parent, fields) => {
+                todo!()
+            }
+            RawExpression::EnumLiteral(parent, child) => {
+                let enums = ctx.enums.clone(); 
+
+                let enum_name = parent.clone(); 
+                if enums.contains_key(&enum_name) == false {
+                    return Err(CompilerError::BackendError(
+                        format!("Invalid enum expression, `{}` is not an enum type", parent)
+                    ));
+                }
+
+                match child.expr() {
+                    RawExpression::FunCall(name, args) => {
+                        let mut arguments: Vec<SemNode> = Vec::new();  
+                        for arg in args.into_iter() {
+                            let e = SemNode::analyze(arg.clone(), ctx)?; 
+                            arguments.push(e); 
+                        }
+                        let inner  = SemExpression::FunCall(name.clone(), arguments);
+                        let ty = Type::EnumType(parent.clone(), name.clone()); 
+                        let inner = SemNode {expr: inner, ty: ty.clone()}; 
+                        SemExpression::EnumLiteral(parent.clone(), Box::new(inner))
+                    }
+                    RawExpression::Id(name) => {
+                        let ty = Type::EnumType(parent.clone(), name.clone()); 
+                        let inner = SemExpression::Id(name.clone()); 
+                        let inner = SemNode {expr: inner, ty: ty.clone()}; 
+                        SemExpression::EnumLiteral(parent.clone(), Box::new(inner)) 
+                    }
+                    _ => unreachable!()
+                }
+            }
+            RawExpression::SimpleNullCheck(e) => todo!("Implement simple null check"),
+            RawExpression::LambdaCall(_, _) => todo!("Implement invoking a lamda expresssion"),
             RawExpression::Embed(x) => {
                 let e = SemNode::analyze(*x, ctx)?; 
                 SemExpression::Embed(Box::new(e))
@@ -160,7 +234,7 @@ impl SemNode {
                 for (i, (case, body)) in cases.into_iter().enumerate() {
                     let (c, b) = (case, body); 
 
-                    if i == len -1 {
+                    if i == len -1 { // Last case
                         let is_else = match c.expr() {
                             RawExpression::Id(i) => i == "_", 
                             _ => false
@@ -174,8 +248,80 @@ impl SemNode {
 
                         }
                     } else {
-                        let c = SemNode::analyze(c, ctx).unwrap(); 
-                        let d = SemNode::analyze(b, ctx).unwrap();
+
+                        let mut ct = ctx.clone(); 
+                        let c = match c.expr() {
+                            RawExpression::EnumLiteral(parent, child) => {
+                                let enums = ctx.enums.clone(); 
+
+                                if enums.contains_key(parent) == false {
+                                    return Err(CompilerError::BackendError(
+                                        format!("Invalid enum expression, `{}` is not an enum type", parent)
+                                    ));
+                                }
+
+                                let enumer = enums.get(parent).unwrap(); 
+                                match child.expr() {
+                                    RawExpression::FunCall(name, args) => {
+                                        let field = SemNode::extract_enum_field(name.clone(), enumer.fields.clone())?;
+                                        match field {
+                                            EnumField::Rec(record) => {
+                                                if name.clone() != record.name {
+                                                    return Err(CompilerError::BackendError(
+                                                        format!("enum `{parent} has no field with name {name}`")
+                                                    ));
+                                                }
+
+                                                if args.len() != record.fields.len() {
+                                                    return Err(CompilerError::BackendError(
+                                                        format!("invalid number of arguments passed to enum field `{name}` from enum `{parent}`")
+                                                    ));
+                                                }
+
+                                                let mut _args: Vec<SemNode> = Vec::new(); 
+                                                for (node, f) in args.into_iter().zip(record.fields) {
+                                                    let RawExpression::Id(n) = node.expr() else {
+                                                        return Err(CompilerError::BackendError(
+                                                            format!("Attempt to destructure an invalid expression in enum field `{name}` of enum type `{parent}`")
+                                                        ));
+                                                    }; 
+
+                                                    let (r, ty) = f; 
+                                                    if r != n.clone() {
+                                                        return Err(CompilerError::BackendError(
+                                                            format!("Attempt to destructure an invalid or non existing field property `{n}` in enum field `{name}` of enum type `{parent}`. ")
+                                                        ));
+                                                    }
+                                                    ct.vars.insert(n.clone(), ty.clone()); 
+                                                    _args.push(SemNode{expr: SemExpression::Id(r), ty});
+                                                }
+
+                                                let ty = Type::EnumType(parent.clone(), name.clone()); 
+                                                let call = SemExpression::FunCall(name.clone(), _args);
+                                                let call = SemNode {expr: call, ty: ty.clone()};
+                                                let enum_val = SemExpression::EnumLiteral(parent.clone(), Box::new(call));
+                                                let enum_val = SemNode {expr: enum_val, ty}; 
+                                                enum_val
+                                            }
+                                            EnumField::Id(_name) => {
+                                                unreachable!()
+                                            }
+                                        }
+                                    }
+                                    RawExpression::Id(_name) => {
+                                        let ty = Type::EnumType(parent.clone(), _name.clone()); 
+                                        let id = SemExpression::Id(_name.clone());
+                                        let id = SemNode {expr: id, ty: ty.clone()};
+                                        let enum_val = SemExpression::EnumLiteral(parent.clone(), Box::new(id));
+                                        SemNode {expr: enum_val, ty} 
+                                    }, 
+                                    _ => unreachable!()
+                                }
+                            }
+                            _ => SemNode::analyze(c, ctx).unwrap()
+                        }; 
+
+                        let d = SemNode::analyze(b, &mut ct).unwrap();
                         cs.push((c, d));
                     }
                 }
@@ -183,9 +329,9 @@ impl SemNode {
                 SemExpression::Match(Box::new(e), cs)
             }
             RawExpression::Char(x) => SemExpression::Char(x), 
-            RawExpression::NullCheck(e) => {
+            RawExpression::NullCheck(e, t) => {
                 let e = SemNode::analyze(*e, ctx)?;
-                SemExpression::NullCheck(Box::new(e))
+                SemExpression::NullCheck(Box::new(e), t)
             }, 
             RawExpression::Block(values) => {
                 let mut vals  = vec![]; 
@@ -249,6 +395,19 @@ impl SemNode {
         };
 
         let ty = match &expr {
+            SemExpression::Lambda(args, ret, body) => *ret.clone(), 
+            SemExpression::Destructure(p, e) => Type::Any,
+            SemExpression::SimpleNullCheck(e) => Type::Bool,
+            SemExpression::LambdaCall(e, args) => todo!(), 
+            SemExpression::RecordLiteral(parent, child) => Type::UserType(parent.clone()),
+            SemExpression::EnumLiteral(parent, child) => {
+                let ty = match child.expr() {
+                    SemExpression::FunCall(n,_) => n, 
+                    SemExpression::Id(n) => n, 
+                    _ => unreachable!()
+                }; 
+                Type::EnumType(parent.clone(), ty.clone())
+            },
             SemExpression::String(_) => Type::String,
             SemExpression::Embed(_) => Type::Unit, 
             SemExpression::Unit => Type::Unit, 
@@ -266,7 +425,7 @@ impl SemNode {
                 body.ty().clone()
             }
             SemExpression::Char(_) => Type::Char, 
-            SemExpression::NullCheck(a) => Type::Bool, 
+            SemExpression::NullCheck(a, _) => Type::Bool, 
             SemExpression::Block(v) => {
                 if v.len() == 0 {
                     return Err(CompilerError::InvalidBlock);
