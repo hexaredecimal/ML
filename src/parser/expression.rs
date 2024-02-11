@@ -82,15 +82,15 @@ fn array_literal(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
 }
 
 fn null_of(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
-    let (i, (_, _, _, _, t)) = tuple((tag("null"), sp, tag("of"), sp, type_literal))(i)?;
+    let (i, (_,)) = tuple((tag("null"),))(i)?;
 
-    Ok((i, RawNode::new(RawExpression::Null(Box::new(t)))))
+    Ok((i, RawNode::new(RawExpression::Null(Box::new(Type::Any)))))
 }
 
 fn unit_literal(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
-    let (i, (t)) = tuple((tag("()"),))(i)?;
+    let (i, _) = tuple((tag("()"),))(i)?;
 
-    let t = t.0;
+    // let t = t.0;
     Ok((i, RawNode::new(RawExpression::Unit)))
 }
 

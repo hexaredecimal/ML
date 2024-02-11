@@ -177,7 +177,48 @@ impl SemNode {
                 todo!()
             }
             RawExpression::RecordLiteral(parent, fields) => {
-                todo!()
+                let records = ctx.records.clone();
+                let record_name = parent.clone(); 
+
+                if records.contains_key(&record_name) == false {
+                    return Err(CompilerError::BackendError(
+                        format!("Invalid struct expression, `{}` is not a record type", parent)
+                    ));
+                }
+
+                let record = records.get(&record_name).unwrap(); 
+
+                if fields.len() != record.fields.len() {
+                    return Err(CompilerError::BackendError(
+                        format!(
+                            "Invalid number of fields passed to struct literal for record type `{parent}`, expected {} but found {}",
+                            record.fields.len(), 
+                            fields.len()
+                        )
+                    ));
+                }
+
+                let mut args: Vec<(String, SemNode)> = Vec::new();
+                for (passed, expected) in fields.into_iter().zip(record.fields.clone()) {
+                    let (passed_name, passed_expr) = passed; 
+                    let (expected_name, expected_type)  = expected; 
+
+                    if passed_name != expected_name {
+                        return Err(CompilerError::BackendError(
+                            format!(
+                                "Invalid field initialization. field `{passed_name}` doesn't exist in struct `{parent}`. Expected initialization of `{}` with value of type {}", 
+                                expected_name, 
+                                expected_type
+                            )
+                        )); 
+                    }
+
+                    let e = SemNode::analyze(passed_expr, ctx)?;
+                    expected_type.assert_eq(e.ty())?;
+                    args.push((passed_name, e)); 
+                }
+
+                SemExpression::RecordLiteral(parent.clone(), args)
             }
             RawExpression::EnumLiteral(parent, child) => {
                 let enums = ctx.enums.clone(); 
@@ -485,7 +526,23 @@ impl SemNode {
             }
             SemExpression::Array(vals) => {
                 let inner_type = if !vals.is_empty() {
-                    vals[0].ty().clone()
+                    if vals.len() > 1 {
+                        let first = vals[0].ty().clone();
+                        let seconds = vals[1].ty().clone();
+                        match (first.clone(), seconds.clone()) {
+                            (Type::EnumType(parent1, _), Type::EnumType(parent2, _)) => {
+                                let t = if parent1 == parent2 {
+                                    Type::UserType(parent2)
+                                } else {
+                                    first.clone()
+                                };
+                                t
+                            }
+                            _ => first
+                        }
+                    } else{
+                        vals[0].ty().clone()
+                    }
                 } else {
                     Type::Int
                 };
