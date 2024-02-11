@@ -182,7 +182,7 @@ impl SemNode {
 
                 if records.contains_key(&record_name) == false {
                     return Err(CompilerError::BackendError(
-                        format!("Invalid record expression, `{}` is not a record type", parent)
+                        format!("Invalid struct expression, `{}` is not a record type", parent)
                     ));
                 }
 
@@ -191,7 +191,7 @@ impl SemNode {
                 if fields.len() != record.fields.len() {
                     return Err(CompilerError::BackendError(
                         format!(
-                            "Invalid number of fields passed to record literal for record type `{parent}`, expected {} but found {}",
+                            "Invalid number of fields passed to struct literal for record type `{parent}`, expected {} but found {}",
                             record.fields.len(), 
                             fields.len()
                         )
