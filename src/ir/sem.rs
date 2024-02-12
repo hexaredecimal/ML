@@ -174,7 +174,12 @@ impl SemNode {
                 todo!()
             }
             RawExpression::Destructure(dest, e) => {
-                todo!()
+                let expr = SemNode::analyze(*e, ctx)?; 
+                // TODO: recognize types for destructured fields, for now just use type any 
+                for var in dest.clone().into_iter() {
+                    ctx.vars.insert(var, Type::Any);
+                }
+                SemExpression::Destructure(dest.clone(), Box::new(expr))
             }
             RawExpression::RecordLiteral(parent, fields) => {
                 let records = ctx.records.clone();
