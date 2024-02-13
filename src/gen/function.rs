@@ -89,7 +89,7 @@ impl FunctionTranslator {
                         block.push_str(first.as_str());
 
                         let last = lines.last().unwrap();
-                        block.push_str(format!("\treturn {}\n{}", last, "}").as_str());
+                        block.push_str(format!("\treturn {};\n{}", last, "}").as_str());
                     }
                     _ => {
                         block.push_str("\treturn ");
@@ -796,10 +796,25 @@ impl FunctionTranslator {
                     s.push_str(a.as_str());
                 }
 
-                let e = self.translate_expr(expr, &mut sc).unwrap();
-                s.push_str("\t\treturn ");
-                s.push_str(e.as_str());
-                s.push_str(";\n\t}");
+                match expr.expr() {
+                    SemExpression::Block(_) => {
+                        let real_ty = self.jit.clone().real_type(expr.ty())?; 
+                        let (block, ret) = self.extract_block(expr, &mut sc, real_ty)?;
+
+                        s.push_str(format!("\t\t{}", block).as_str());
+                        s.push_str("\t\treturn ");
+                        s.push_str(ret.as_str());
+                        s.push_str(";\n\t}");
+                    }
+                    _ => {
+                        let e = self.translate_expr(expr, &mut sc)?; 
+                        s.push_str("\t\treturn ");
+                        s.push_str(e.as_str());
+                        s.push_str(";\n\t}");
+                    }
+                }; 
+
+                // let e = self.translate_expr(expr, &mut sc).unwrap();
 
                 let h = format!("() -> {}", s);
                 let var = format!("Block<{real_ty}> block_{} = {};\n", self.block_count, h);
