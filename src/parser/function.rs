@@ -135,7 +135,21 @@ pub fn function(i: &str) -> IResult<&str, TopLevel, VerboseError<&str>> {
     ))
 }
 
+pub fn import_statement(i: &str) -> IResult<&str, TopLevel, VerboseError<&str>> {
+    let (i, (_ ,_ , path)) = tuple((
+        tag("using"), 
+        sp, 
+        separated_list0(tuple((sp, tag("::"), sp)), identifier)
+    ))(i)?; 
+
+    let path = path.into_iter().map(|f| f.to_string()).collect();
+
+    Ok((i , 
+        TopLevel::Import { path }
+    ))
+}
+ 
 pub fn top_levels(i: &str) -> IResult<&str, TopLevel, VerboseError<&str>> {
-    let (i, e) = alt((record_type, function, enum_type))(i)?;
+    let (i, e) = alt((import_statement, record_type, function, enum_type))(i)?;
     Ok((i, e))
 }
