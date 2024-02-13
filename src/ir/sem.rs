@@ -256,7 +256,10 @@ impl SemNode {
                     _ => unreachable!()
                 }
             }
-            RawExpression::SimpleNullCheck(e) => todo!("Implement simple null check"),
+            RawExpression::SimpleNullCheck(e) => {
+                let expr = SemNode::analyze(*e, ctx)?; 
+                SemExpression::SimpleNullCheck(Box::new(expr))
+            },
             RawExpression::LambdaCall(_, _) => todo!("Implement invoking a lamda expresssion"),
             RawExpression::Embed(x) => {
                 let e = SemNode::analyze(*x, ctx)?; 
@@ -441,11 +444,11 @@ impl SemNode {
         };
 
         let ty = match &expr {
-            SemExpression::Lambda(args, ret, body) => *ret.clone(), 
-            SemExpression::Destructure(p, e) => Type::Any,
-            SemExpression::SimpleNullCheck(e) => Type::Bool,
-            SemExpression::LambdaCall(e, args) => todo!(), 
-            SemExpression::RecordLiteral(parent, child) => Type::UserType(parent.clone()),
+            SemExpression::Lambda(_, ret, _) => *ret.clone(), 
+            SemExpression::Destructure(_, _) => Type::Any,
+            SemExpression::SimpleNullCheck(_) => Type::Bool,
+            SemExpression::LambdaCall(_, _) => todo!(), 
+            SemExpression::RecordLiteral(parent, _) => Type::UserType(parent.clone()),
             SemExpression::EnumLiteral(parent, child) => {
                 let ty = match child.expr() {
                     SemExpression::FunCall(n,_) => n, 
