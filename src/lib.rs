@@ -14,7 +14,13 @@ mod parser;
 
 
 pub fn compile_file(input: String) -> Result<(Vec<RawFunction>, Vec<RecordType>, Vec<EnumType>)> {
-    let program = std::fs::read_to_string(input).unwrap();
+    let program = match std::fs::read_to_string(input.to_string()) {
+        Ok(x) => x, 
+        Err(e) => {
+            return Err(CompilerError::BackendError(format!("failed to import file with path: {}, with reason: {e}", input)));
+        }
+    };
+    
     let toplevels = parse(program.as_str())?;
 
     let mut functions: Vec<RawFunction> = vec![];
@@ -45,7 +51,7 @@ pub fn compile_file(input: String) -> Result<(Vec<RawFunction>, Vec<RecordType>,
         for import in imports {
             let path = import.path.clone(); 
             let path = path.join("/");
-            let path = format!("{path}.sml"); 
+            let path = format!("./{path}.sml"); 
             let (f, r, e) = compile_file(path)?;
 
             functions = [functions, f].concat(); 
@@ -89,7 +95,7 @@ pub fn compile_and_run(config: config::Config) -> Result<String> {
     for import in imports {
         let path = import.path; 
         let path = path.join("/");
-        let path = format!("{path}.sml"); 
+        let path = format!("./{path}.sml"); 
         let (f, r, e) = compile_file(path.clone())?;
         // println!("symbols imported from {:?}\nfuncs: {:?}\nrecords: {:?}\n,imports: {:?}", path, f, r, e);
         
