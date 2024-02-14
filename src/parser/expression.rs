@@ -3,7 +3,7 @@ use crate::ir::raw::*;
 use crate::ir::*;
 use crate::parser::types::type_literal;
 use nom::branch::alt;
-use nom::bytes::complete::{tag, take_while1};
+use nom::bytes::complete::{tag, take_while1, take_until};
 use nom::combinator::opt;
 use nom::error::{VerboseError, VerboseErrorKind};
 use nom::multi::{many0, many1, separated_list0};
@@ -95,7 +95,7 @@ fn unit_literal(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
 }
 
 fn str_literal(_i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
-    let (i, (_, c, _)) = tuple((tag("\""), take_while1(move |c: char| c != '\"'), tag("\"")))(_i)?;
+    let (i, (_, c, _)) = tuple((tag("\""), take_until("\""), tag("\"")))(_i)?;
 
     Ok((i, RawNode::new(RawExpression::String(c.to_string()))))
 }

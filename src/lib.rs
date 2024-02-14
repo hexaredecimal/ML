@@ -1,7 +1,7 @@
 use crate::error::{CompilerError, Result};
 use crate::ir::raw::{RawFunction, RecordType, TopLevel};
 use gen::Jit;
-use ir::raw::EnumType;
+use ir::raw::{EnumType, Import};
 use nom::error::convert_error;
 use std::collections::{HashMap, HashSet};
 use std::mem;
@@ -12,13 +12,22 @@ mod gen;
 mod ir;
 mod parser;
 
-pub fn compile_and_run(config: config::Config) -> Result<String> {
-    let program = std::fs::read_to_string(config.file).unwrap();
+
+pub fn compile_file(input: String) -> Result<(Vec<RawFunction>, Vec<RecordType>, Vec<EnumType>)> {
+    let program = match std::fs::read_to_string(input.to_string()) {
+        Ok(x) => x, 
+        Err(e) => {
+            return Err(CompilerError::BackendError(format!("failed to import file with path: {}, with reason: {e}", input)));
+        }
+    };
+    
     let toplevels = parse(program.as_str())?;
 
     let mut functions: Vec<RawFunction> = vec![];
     let mut records: Vec<RecordType> = vec![];
     let mut enums: Vec<EnumType> = vec![]; 
+    let mut imports: Vec<Import> = vec![]; 
+
     for top in toplevels {
         match top {
             TopLevel::RawFunction {
@@ -34,8 +43,67 @@ pub fn compile_and_run(config: config::Config) -> Result<String> {
             }),
             TopLevel::RecordType { name, fields } => records.push(RecordType { name, fields }),
             TopLevel::EnumType { name, fields } => enums.push(EnumType { name, fields }),
+            TopLevel::Import { path } => imports.push(Import { path }), 
         }
     }
+
+    if imports.len() > 0 {
+        for import in imports {
+            let path = import.path.clone(); 
+            let path = path.join("/");
+            let path = format!("./{path}.sml"); 
+            let (f, r, e) = compile_file(path)?;
+
+            functions = [functions, f].concat(); 
+            records = [records, r].concat(); 
+            enums = [enums, e].concat(); 
+        }
+    }
+
+    Ok((functions, records, enums))
+}
+
+
+pub fn compile_and_run(config: config::Config) -> Result<String> {
+    let program = std::fs::read_to_string(config.file).unwrap();
+    let toplevels = parse(program.as_str())?;
+
+    let mut functions: Vec<RawFunction> = vec![];
+    let mut records: Vec<RecordType> = vec![];
+    let mut enums: Vec<EnumType> = vec![]; 
+    let mut imports: Vec<Import> = vec![]; 
+
+    for top in toplevels {
+        match top {
+            TopLevel::RawFunction {
+                name,
+                root,
+                args,
+                ty,
+            } => functions.push(RawFunction {
+                name,
+                root,
+                args,
+                ty,
+            }),
+            TopLevel::RecordType { name, fields } => records.push(RecordType { name, fields }),
+            TopLevel::EnumType { name, fields } => enums.push(EnumType { name, fields }),
+            TopLevel::Import { path } => imports.push(Import { path }), 
+        }
+    }
+
+    for import in imports {
+        let path = import.path; 
+        let path = path.join("/");
+        let path = format!("./{path}.sml"); 
+        let (f, r, e) = compile_file(path.clone())?;
+        // println!("symbols imported from {:?}\nfuncs: {:?}\nrecords: {:?}\n,imports: {:?}", path, f, r, e);
+        
+        functions = [f, functions].concat(); 
+        records = [records, r].concat(); 
+        enums = [enums, e].concat(); 
+    }
+
 
     let mut uniq = HashSet::new();
     if !functions.iter().all(|x| uniq.insert(x.name.clone())) {

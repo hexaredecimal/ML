@@ -17,7 +17,17 @@ pub enum TopLevel {
     EnumType {
         name: String, 
         fields: Vec<EnumField>
+    },
+
+    Import {
+        path: Vec<String>
     }
+}
+
+
+#[derive(Debug, Clone)]
+pub struct Import {
+    pub path: Vec<String>
 }
 
 #[derive(Debug, Clone)]
@@ -39,6 +49,7 @@ pub struct RecordType {
     pub fields: Vec<(String, Type)>,
 }
 
+#[derive(Clone, Debug)]
 pub struct RawFunction {
     pub name: String,
     pub root: RawNode,

@@ -89,7 +89,7 @@ impl FunctionTranslator {
                         block.push_str(first.as_str());
 
                         let last = lines.last().unwrap();
-                        block.push_str(format!("\treturn {}\n{}", last, "}").as_str());
+                        block.push_str(format!("\treturn {};\n{}", last, "}").as_str());
                     }
                     _ => {
                         block.push_str("\treturn ");
@@ -453,6 +453,13 @@ impl FunctionTranslator {
                 let right_val = self.translate_expr(right, scope)?;
 
                 match (op, left.ty(), right.ty()) {
+                    (ir::BinaryOp::Equal, 
+                        ir::Type::String | ir::Type::UserType(_) | ir::Type::EnumType(_, _), 
+                        ir::Type::String | ir::Type::UserType(_) | ir::Type::EnumType(_, _), 
+                    ) => {
+                        println!("l: {left_val}, r: {right_val}"); 
+                        Ok(format!("{}.equals({}) == true", left_val, right_val))
+                    }
                     (
                         ir::BinaryOp::Equal,
                         ir::Type::Int
@@ -469,12 +476,9 @@ impl FunctionTranslator {
                         | ir::Type::Int32
                         | ir::Type::Int64
                         | ir::Type::Int128
-                    ) => Ok(format!("{} == {}", left_val, right_val)),
-                    (ir::BinaryOp::Equal, 
-                        ir::Type::String | ir::Type::UserType(_) | ir::Type::EnumType(_, _), 
-                        ir::Type::String | ir::Type::UserType(_) | ir::Type::EnumType(_, _), 
                     ) => {
-                        Ok(format!("{}.equals({}) == true", left_val, right_val))
+                        println!("l: {left_val}, r: {right_val}"); 
+                        Ok(format!("{} == {}", left_val, right_val))
                     }
                     (ir::BinaryOp::Equal, ir::Type::Bool, ir::Type::Bool) => {
                         Ok(format!("{} == {}", left_val, right_val))
@@ -492,7 +496,6 @@ impl FunctionTranslator {
                         | ir::Type::Int16
                         | ir::Type::Int32
                         | ir::Type::Int64
-                        | ir::Type::String
                         | ir::Type::Int128,
                         ir::Type::Int
                         | ir::Type::Char
@@ -500,7 +503,6 @@ impl FunctionTranslator {
                         | ir::Type::Int16
                         | ir::Type::Int32
                         | ir::Type::Int64
-                        | ir::Type::String
                         | ir::Type::Int128,
                     ) => Ok(format!("{} != {}", left_val, right_val)),
                     (ir::BinaryOp::NotEqual, 
@@ -794,10 +796,25 @@ impl FunctionTranslator {
                     s.push_str(a.as_str());
                 }
 
-                let e = self.translate_expr(expr, &mut sc).unwrap();
-                s.push_str("\t\treturn ");
-                s.push_str(e.as_str());
-                s.push_str(";\n\t}");
+                match expr.expr() {
+                    SemExpression::Block(_) => {
+                        let real_ty = self.jit.clone().real_type(expr.ty())?; 
+                        let (block, ret) = self.extract_block(expr, &mut sc, real_ty)?;
+
+                        s.push_str(format!("\t\t{}", block).as_str());
+                        s.push_str("\t\treturn ");
+                        s.push_str(ret.as_str());
+                        s.push_str(";\n\t}");
+                    }
+                    _ => {
+                        let e = self.translate_expr(expr, &mut sc)?; 
+                        s.push_str("\t\treturn ");
+                        s.push_str(e.as_str());
+                        s.push_str(";\n\t}");
+                    }
+                }; 
+
+                // let e = self.translate_expr(expr, &mut sc).unwrap();
 
                 let h = format!("() -> {}", s);
                 let var = format!("Block<{real_ty}> block_{} = {};\n", self.block_count, h);

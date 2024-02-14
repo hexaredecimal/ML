@@ -43,7 +43,7 @@ fn try_main() -> Result<()> {
     let head2 = format!("{}\n{}\n\n{}{}\n", IMPORTS, lambdas, convs, HEAD);
     let res = smll_lang::compile_and_run(conf.clone())?;
     let program = format!("{head2}\n{}", res);
-    let out_name = make_out_file_name(conf.file);
+    let out_name = make_output_file_name(conf.file);
     if conf.ir {
         println!("{}", res);
     } else {
@@ -124,7 +124,7 @@ fn generate_lambdas(max: i32) -> String {
     format!("{comment}\n{}\n{comment}\n", lambdas.join("\n"))
 }
 
-fn make_out_file_name(file_name: String) -> String {
+fn make_output_file_name(file_name: String) -> String {
     if file_name.ends_with(".sml") == false {
         println!(
             "Invalid input file. expected a file with `.sml` extension but found `{}`",
