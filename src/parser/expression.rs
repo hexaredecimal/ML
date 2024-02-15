@@ -637,16 +637,18 @@ pub fn expression_(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
 pub fn expression_null_check(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     let (i, (e, a)) = tuple((
         expression_,
-        many0(tuple((sp, tag("?"), sp, many0(type_literal)))),
+        many0(tuple((sp, tag("?"), many0(type_literal)))),
     ))(i)?;
+
 
     if a.len() == 0 {
         return Ok((i, e));
     }
 
+
     let t = a.last().unwrap();
     let e = match t {
-        (_, _, _, t) => {
+        (_, _, t) => {
             if t.len() == 0 {
                 RawExpression::SimpleNullCheck(Box::new(e))
             } else {
