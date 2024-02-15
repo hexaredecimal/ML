@@ -15,6 +15,7 @@ pub enum BinaryOp {
     Divide,
     Add,
     Sub,
+    Mod,
     LessThan,
     LessThanOrEqual,
     GreaterThan,
@@ -80,6 +81,7 @@ impl BinaryOp {
         } else {
             let allowed_types = match self {
                 BinaryOp::LessThan
+                | BinaryOp::Mod
                 | BinaryOp::GreaterThan
                 | BinaryOp::Multiply
                 | BinaryOp::Divide
@@ -152,6 +154,7 @@ impl std::fmt::Display for BinaryOp {
             f,
             "{}",
             match self {
+                BinaryOp::Mod => "%", 
                 BinaryOp::Multiply => "*",
                 BinaryOp::Divide => "/",
                 BinaryOp::Add => "+",

@@ -208,7 +208,7 @@ fn factor(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
 fn term(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     let (i, (first, remainder)) = tuple((
         factor,
-        many0(tuple((sp, alt((tag("*"), tag("/"))), sp, factor))),
+        many0(tuple((sp, alt((tag("*"), tag("/"), tag("%"))), sp, factor))),
     ))(i)?;
     Ok((
         i,
@@ -222,6 +222,11 @@ fn term(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
                 )),
                 "/" => RawNode::new(RawExpression::BinaryOp(
                     BinaryOp::Divide,
+                    Box::new(prev),
+                    Box::new(next),
+                )),
+                "%" => RawNode::new(RawExpression::BinaryOp(
+                    BinaryOp::Mod,
                     Box::new(prev),
                     Box::new(next),
                 )),

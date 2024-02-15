@@ -569,7 +569,8 @@ impl SemNode {
             SemExpression::BinaryOp(op, a, b) => {
                 op.check_ty(a.ty(), b.ty())?;
                 match op {
-                    BinaryOp::Multiply | BinaryOp::Divide | BinaryOp::Add | BinaryOp::Sub => {
+
+                    BinaryOp::Multiply | BinaryOp::Divide | BinaryOp::Add | BinaryOp::Sub | BinaryOp::Mod => {
                         a.ty().clone()
                     }
                     BinaryOp::LessThan
