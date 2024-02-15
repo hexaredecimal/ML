@@ -519,6 +519,30 @@ impl FunctionTranslator {
                         ir::Type::Float | ir::Type::Double,
                         ir::Type::Float | ir::Type::Double,
                     ) => Ok(format!("{} != {}", left_val, right_val)),
+
+                    (
+                        ir::BinaryOp::Mod,
+                        ir::Type::Int
+                        | ir::Type::Char
+                        | ir::Type::Int8
+                        | ir::Type::Int16
+                        | ir::Type::Int32
+                        | ir::Type::Int64
+                        | ir::Type::Int128,
+                        ir::Type::Int
+                        | ir::Type::Char
+                        | ir::Type::Int8
+                        | ir::Type::Int16
+                        | ir::Type::Int32
+                        | ir::Type::Int64
+                        | ir::Type::Int128,
+                    ) => Ok(format!("{} % {}", left_val, right_val)),
+                    (
+                        ir::BinaryOp::Mod,
+                        ir::Type::Float | ir::Type::Double,
+                        ir::Type::Float | ir::Type::Double,
+                    ) => Ok(format!("{} % {}", left_val, right_val)),
+
                     (
                         ir::BinaryOp::Multiply,
                         ir::Type::Int
