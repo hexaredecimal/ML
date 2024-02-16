@@ -347,11 +347,18 @@ impl FunctionTranslator {
             }
             SemExpression::Cast(e, t) => {
                 let is_sys_type = self.jit.clone().is_sys_type(&*t.clone());
-                let ty = self.jit.clone().real_type(t)?;
+                let ty = t.clone();
+                let ty = *ty.clone(); 
+                let ty = self.jit.clone().real_type(&ty)?;
                 let e = self.translate_expr(e, scope)?;
 
                 let cast = if is_sys_type {
-                    format!("SysConv.to{}({})", ty, e)
+                    let ay = t.clone();
+                    let ay = *ay.clone();
+                    match ay {
+                        ir::Type::String => format!("(String) {}", e),
+                        _ => format!("SysConv.to_{}({})", ty, e)
+                    }
                 } else {
                     format!("(({}) {})", ty, e)
                 };
