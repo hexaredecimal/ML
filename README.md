@@ -11,11 +11,17 @@
 </div>
 
 
+# What is needed to run this?
+> The latest JAVA compiler (with support for java 21 source input)
+> A rust compiler
+
+
 ```ml
 using System::Io
 
 fun main(): Unit => println("Hello, world")
 ```
+
 
 # Features:
 - Type inference for variables
@@ -23,6 +29,7 @@ fun main(): Unit => println("Hello, world")
 - structs 
 - No Implicit OOP (No inheritence, no interfaces, only data and data alone)
 - Expressions not Statements
+
 
 # Inspiration:
 
