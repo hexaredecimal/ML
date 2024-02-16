@@ -21,3 +21,10 @@ fun println(...): Unit => {
   ()
 }
 
+fun printf(fmt: String, ...): Unit => {
+  java {
+    "System.out.printf(fmt, var_args);"
+  }
+  ()
+}
+
