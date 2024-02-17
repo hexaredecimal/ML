@@ -1,3 +1,10 @@
+(*
+*    =========================== SMLL Standard Libary =====================================
+*                   File: System/Result.smll
+*                   Created by: Gama Sibusiso
+*                   Date: 17-02-2024 
+* *)
+
 using System::Intrinsics
 
 enum Result = Ok(value: Any) | Err(msg: String)

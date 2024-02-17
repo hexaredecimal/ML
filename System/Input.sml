@@ -1,5 +1,11 @@
 
-(* Input routines lifted from java *)
+(*
+*    =========================== SMLL Standard Libary =====================================
+*                   File: System/Input.smll
+*                   Created by: Gama Sibusiso
+*                   Date: 17-02-2024 
+* *)
+
 
 fun readString(): String => {
   val s = ""

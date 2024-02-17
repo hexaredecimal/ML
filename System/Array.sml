@@ -1,8 +1,9 @@
 
 (*
-*
-*
-*
+*    =========================== SMLL Standard Libary =====================================
+*                   File: System/Array.smll
+*                   Created by: Gama Sibusiso
+*                   Date: 17-02-2024 
 * *)
 
 fun length(array: List[Any]): Int => {

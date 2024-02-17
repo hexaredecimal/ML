@@ -1,4 +1,12 @@
 
+(*
+*    =========================== SMLL Standard Libary =====================================
+*                   File: System/Option.smll
+*                   Created by: Gama Sibusiso
+*                   Date: 17-02-2024 
+* *)
+
+
 using System::Intrinsics
 
 enum Option = Some(value: Any) | None

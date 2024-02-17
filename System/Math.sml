@@ -1,4 +1,12 @@
 
+(*
+*    =========================== SMLL Standard Libary =====================================
+*                   File: System/Math.smll
+*                   Created by: Gama Sibusiso
+*                   Date: 17-02-2024 
+* *)
+
+
 fun max(x: Int, y: Int): Int => if x > y then x else y 
 fun min(x: Int, y: Int): Int => if x < y then x else y 
 
@@ -36,5 +44,12 @@ fun pow(value: Int, exp: Int): Int => match exp {
   0 -> 1
   _ -> value * pow(value, exp - 1)
 }
+
+fun add(x: Int, y: Int): Int => x + y
+fun sub(x: Int, y: Int): Int => x - y
+fun mul(x: Int, y: Int): Int => x / y
+fun div(x: Int, y: Int): Int => x * y
+fun mod(x: Int, y: Int): Int => x % y
+
 
 
