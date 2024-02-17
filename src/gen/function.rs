@@ -975,6 +975,7 @@ impl FunctionTranslator {
                 Ok(format!("{}\t{} {} = {};\n", rest, "var", id, last))
             }
             SemExpression::Lambda(_, _, _) =>  Ok(format!("{} {} = {};\n", val_ty, id, val.clone())),
+            SemExpression::Null(_) => Ok(format!("{} {} = {};\n", val_ty, id, val.clone())),
             _ => Ok(format!("{} {} = {};\n", "var", id, val.clone())),
         }
         //self.vars.push_str(format!("{} {};", val_ty, id.clone()).as_str());
