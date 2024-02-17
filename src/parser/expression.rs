@@ -189,7 +189,7 @@ fn deref_expr(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
 fn factor(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     let (i, (first, remainder)) = tuple((
         deref_expr,
-        many0(tuple((sp, tag(".["), sp, int_literal, sp, tag("]")))),
+        many0(tuple((sp, tag(".["), sp, expression, sp, tag("]")))),
     ))(i)?;
     Ok((
         i,
