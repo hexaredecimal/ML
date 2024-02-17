@@ -16,8 +16,8 @@ enum Void {
 
 static IMPORTS: &'static str = 
 r#"
-import java.util.Scanner; 
-
+import java.io.*;
+import java.util.*;
 "#;
 
 fn main() {
