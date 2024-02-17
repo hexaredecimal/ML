@@ -5,11 +5,7 @@
     <p> A small, experimental, general purpose programming language created for exploring alternative ways of writing applications on the JVM </p>
 </div>
 
-
-<div align="center">
 ![example workflow](https://github.com/hexaredecimal/ML/actions/workflows/rust.yml/badge.svg)
-</div>
-
 
 # What is needed to run this?
 > The latest JAVA compiler (with support for java 21 source input)
