@@ -214,6 +214,10 @@ impl Type {
     pub fn assert_eq(&self, other: &Self) -> Result<()> {
         if self != other {
             match (self, other) {
+                (Type::List(list_ty), Type::Array(_, ty)) => {
+                    list_ty.assert_eq(ty).unwrap(); 
+                    return Ok(());
+                }
                 (Type::Any, _) => return Ok(()),
                 (Type::Array(_, t), Type::List(i)) => {
                     let e = t.assert_eq(i);
