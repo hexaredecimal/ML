@@ -347,11 +347,18 @@ impl FunctionTranslator {
             }
             SemExpression::Cast(e, t) => {
                 let is_sys_type = self.jit.clone().is_sys_type(&*t.clone());
-                let ty = self.jit.clone().real_type(t)?;
+                let ty = t.clone();
+                let ty = *ty.clone(); 
+                let ty = self.jit.clone().real_type(&ty)?;
                 let e = self.translate_expr(e, scope)?;
 
                 let cast = if is_sys_type {
-                    format!("SysConv.to{}({})", ty, e)
+                    let ay = t.clone();
+                    let ay = *ay.clone();
+                    match ay {
+                        ir::Type::String => format!("(String) {}", e),
+                        _ => format!("SysConv.to_{}({})", ty, e)
+                    }
                 } else {
                     format!("(({}) {})", ty, e)
                 };
@@ -519,6 +526,30 @@ impl FunctionTranslator {
                         ir::Type::Float | ir::Type::Double,
                         ir::Type::Float | ir::Type::Double,
                     ) => Ok(format!("{} != {}", left_val, right_val)),
+
+                    (
+                        ir::BinaryOp::Mod,
+                        ir::Type::Int
+                        | ir::Type::Char
+                        | ir::Type::Int8
+                        | ir::Type::Int16
+                        | ir::Type::Int32
+                        | ir::Type::Int64
+                        | ir::Type::Int128,
+                        ir::Type::Int
+                        | ir::Type::Char
+                        | ir::Type::Int8
+                        | ir::Type::Int16
+                        | ir::Type::Int32
+                        | ir::Type::Int64
+                        | ir::Type::Int128,
+                    ) => Ok(format!("{} % {}", left_val, right_val)),
+                    (
+                        ir::BinaryOp::Mod,
+                        ir::Type::Float | ir::Type::Double,
+                        ir::Type::Float | ir::Type::Double,
+                    ) => Ok(format!("{} % {}", left_val, right_val)),
+
                     (
                         ir::BinaryOp::Multiply,
                         ir::Type::Int
@@ -944,6 +975,7 @@ impl FunctionTranslator {
                 Ok(format!("{}\t{} {} = {};\n", rest, "var", id, last))
             }
             SemExpression::Lambda(_, _, _) =>  Ok(format!("{} {} = {};\n", val_ty, id, val.clone())),
+            SemExpression::Null(_) => Ok(format!("{} {} = {};\n", val_ty, id, val.clone())),
             _ => Ok(format!("{} {} = {};\n", "var", id, val.clone())),
         }
         //self.vars.push_str(format!("{} {};", val_ty, id.clone()).as_str());

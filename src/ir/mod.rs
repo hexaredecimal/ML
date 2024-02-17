@@ -15,6 +15,7 @@ pub enum BinaryOp {
     Divide,
     Add,
     Sub,
+    Mod,
     LessThan,
     LessThanOrEqual,
     GreaterThan,
@@ -80,6 +81,7 @@ impl BinaryOp {
         } else {
             let allowed_types = match self {
                 BinaryOp::LessThan
+                | BinaryOp::Mod
                 | BinaryOp::GreaterThan
                 | BinaryOp::Multiply
                 | BinaryOp::Divide
@@ -152,6 +154,7 @@ impl std::fmt::Display for BinaryOp {
             f,
             "{}",
             match self {
+                BinaryOp::Mod => "%", 
                 BinaryOp::Multiply => "*",
                 BinaryOp::Divide => "/",
                 BinaryOp::Add => "+",
@@ -211,6 +214,10 @@ impl Type {
     pub fn assert_eq(&self, other: &Self) -> Result<()> {
         if self != other {
             match (self, other) {
+                (Type::List(list_ty), Type::Array(_, ty)) => {
+                    list_ty.assert_eq(ty).unwrap(); 
+                    return Ok(());
+                }
                 (Type::Any, _) => return Ok(()),
                 (Type::Array(_, t), Type::List(i)) => {
                     let e = t.assert_eq(i);

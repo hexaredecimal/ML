@@ -98,14 +98,88 @@ pub fn compile_and_run(config: config::Config) -> Result<String> {
         let path = format!("./{path}.sml"); 
         let (f, r, e) = compile_file(path.clone())?;
         // println!("symbols imported from {:?}\nfuncs: {:?}\nrecords: {:?}\n,imports: {:?}", path, f, r, e);
-        
-        functions = [f, functions].concat(); 
-        records = [records, r].concat(); 
-        enums = [enums, e].concat(); 
+    
+        for fx in f.clone().into_iter() {
+            let import_func_name = fx.name.clone();
+            let mut is_found = false; 
+            for func in functions.clone() {
+                let func_name = func.name.clone();
+                if import_func_name == func_name {
+                    is_found = true; 
+                }
+            }
+
+            if !is_found {
+                functions.push(fx); 
+            }
+        }
+
+
+        for rec in r.clone().into_iter() {
+            let import_rec_name = rec.name.clone();
+            let mut is_found = false; 
+            for record in records.clone() {
+                let rec_name = record.name.clone();
+                if import_rec_name == rec_name {
+                    is_found = true; 
+                }
+            }
+
+            if !is_found {
+                records.push(rec); 
+            }
+        }
+
+
+        for enm in e.clone().into_iter() {
+            let import_enm_name = enm.name.clone();
+            let mut is_found = false; 
+            for enmm in enums.clone() {
+                let enum_name = enmm.name.clone();
+                if import_enm_name == enum_name {
+                    is_found = true; 
+                }
+            }
+
+            if !is_found {
+                enums.push(enm); 
+            }
+        }
+        // functions = [f, functions].concat(); 
+        // records = [records, r].concat(); 
+        // enums = [enums, e].concat(); 
     }
 
 
     let mut uniq = HashSet::new();
+
+/*    fn count_dups(name: String, fxs: Vec<RawFunction>) -> i32 {
+        let mut count = 0; 
+        for fx in fxs.into_iter() {
+            let nm = fx.name.clone(); 
+            if nm == name {
+                count += 1;
+            }
+        }
+        count
+    }
+
+    fn remove_dups(name: String, fxs: &mut Vec<RawFunction>) {
+        let mut all_ones = true;
+        for (i, fx) in fxs.clone().into_iter().enumerate() {
+            let dups = count_dups(name.clone(), fxs.clone());
+            if dups > 1 {
+                all_ones = false; 
+                fxs.remove(i);
+            }
+        }
+
+        if !all_ones {
+            remove_dups(name, fxs);
+        }
+    }*/
+    
+
     if !functions.iter().all(|x| uniq.insert(x.name.clone())) {
         panic!("Duplicate function name");
     }

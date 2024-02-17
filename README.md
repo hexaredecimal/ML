@@ -1,46 +1,39 @@
-# ML (code name)
-<div align="center">
 
-![example workflow](https://github.com/hexaredecimal/ML/actions/workflows/rust.yml/badge.svg)
+# Small ML language (SMLL) 
 
+<div align="center"> 
+    <p> A small, experimental, general purpose programming language created for exploring alternative ways of writing applications on the JVM </p>
 </div>
 
+
+<div align="center">
+![example workflow](https://github.com/hexaredecimal/ML/actions/workflows/rust.yml/badge.svg)
+</div>
+
+
+# What is needed to run this?
+> The latest JAVA compiler (with support for java 21 source input)
+> A rust compiler
+
+
 ```ml
-enum Maybe = Just(x: Any) | Nothing
+using System::Io
 
-fun println(...): Unit => {
-  java {
-    "for (Object arg: var_args) {"
-    "  System.out.print(arg);"
-    "}"
-    "System.out.println();"
-  }
-  ()
-} 
-
-fun panic(msg: String): Unit => {
-  java {
-    "Intrinsic.panic(msg);"
-  }
-  ()
-}
-
-fun fact(x: Int): Int => match x {
-    1 -> 1
-    _ -> x * fact(x - 1)
-}
-
-fun unwrap(m: Maybe): Any => match m {
-  Maybe.Just(x) -> x
-  Maybe.Nothing -> panic("Attempt to unwrap value of `Maybe.Nothing`")
-  _ -> () (* unreachable *)
-}
-
-fun main(): Unit => {
-  val v = Maybe.Just(fact(5))
-  val u = unwrap(v) 
-  println("Value: ", u)
-  ()
-}
-
+fun main(): Unit => println("Hello, world")
 ```
+
+
+# Features:
+- Type inference for variables
+- Variant enums
+- structs 
+- No Implicit OOP (No inheritence, no interfaces, only data and data alone)
+- Expressions not Statements
+
+
+# Inspiration:
+
+>>> SMLL is a ml derived language for the JVM which borrows a lot of concepts from languages such as 
+Standard ML, Rust and Kotlin. 
+
+

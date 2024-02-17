@@ -552,7 +552,7 @@ impl SemNode {
                         vals[0].ty().clone()
                     }
                 } else {
-                    Type::Int
+                    Type::Any
                 };
                 for val in vals.iter() {
                     val.ty().assert_eq(&inner_type)?;
@@ -569,7 +569,8 @@ impl SemNode {
             SemExpression::BinaryOp(op, a, b) => {
                 op.check_ty(a.ty(), b.ty())?;
                 match op {
-                    BinaryOp::Multiply | BinaryOp::Divide | BinaryOp::Add | BinaryOp::Sub => {
+
+                    BinaryOp::Multiply | BinaryOp::Divide | BinaryOp::Add | BinaryOp::Sub | BinaryOp::Mod => {
                         a.ty().clone()
                     }
                     BinaryOp::LessThan
@@ -582,17 +583,9 @@ impl SemNode {
                     | BinaryOp::Or => Type::Bool,
                     BinaryOp::ArrayDeref => {
                         if let Type::Array(_, elem_type) = a.ty() {
-                            if let SemExpression::Integer(_, _) = b.expr() {
                                 (**elem_type).clone()
-                            } else {
-                                unreachable!()
-                            }
                         } else if let Type::List(elem_type) = a.ty() {
-                            if let SemExpression::Integer(_, _) = b.expr() {
                                 (**elem_type).clone()
-                            } else {
-                                unreachable!()
-                            }
                         } else {
                             return Err(CompilerError::CannotIndex(a.ty().clone()));
                         }

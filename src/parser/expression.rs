@@ -189,7 +189,7 @@ fn deref_expr(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
 fn factor(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     let (i, (first, remainder)) = tuple((
         deref_expr,
-        many0(tuple((sp, tag(".["), sp, int_literal, sp, tag("]")))),
+        many0(tuple((sp, tag(".["), sp, expression, sp, tag("]")))),
     ))(i)?;
     Ok((
         i,
@@ -208,7 +208,7 @@ fn factor(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
 fn term(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     let (i, (first, remainder)) = tuple((
         factor,
-        many0(tuple((sp, alt((tag("*"), tag("/"))), sp, factor))),
+        many0(tuple((sp, alt((tag("*"), tag("/"), tag("%"))), sp, factor))),
     ))(i)?;
     Ok((
         i,
@@ -222,6 +222,11 @@ fn term(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
                 )),
                 "/" => RawNode::new(RawExpression::BinaryOp(
                     BinaryOp::Divide,
+                    Box::new(prev),
+                    Box::new(next),
+                )),
+                "%" => RawNode::new(RawExpression::BinaryOp(
+                    BinaryOp::Mod,
                     Box::new(prev),
                     Box::new(next),
                 )),
@@ -637,16 +642,18 @@ pub fn expression_(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
 pub fn expression_null_check(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     let (i, (e, a)) = tuple((
         expression_,
-        many0(tuple((sp, tag("?"), sp, many0(type_literal)))),
+        many0(tuple((sp, tag("?"), many0(type_literal)))),
     ))(i)?;
+
 
     if a.len() == 0 {
         return Ok((i, e));
     }
 
+
     let t = a.last().unwrap();
     let e = match t {
-        (_, _, _, t) => {
+        (_, _, t) => {
             if t.len() == 0 {
                 RawExpression::SimpleNullCheck(Box::new(e))
             } else {
