@@ -10,7 +10,6 @@ use nom::multi::separated_list0;
 use nom::sequence::tuple;
 use nom::IResult;
 
-use super::expression::identifier_expr; 
 
 fn normargument(i: &str) -> IResult<&str, (String, Type), VerboseError<&str>> {
     let (i, (name, _, _, _, arg_type)) = tuple((identifier, sp, tag(":"), sp, type_literal))(i)?;

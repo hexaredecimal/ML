@@ -86,7 +86,7 @@ fn try_main() -> Result<()> {
             .output()
             .expect(format!("failed to execute command {:?}", cmd).as_str());
 
-        let status = output.status.code().unwrap(); 
+        let _status = output.status.code().unwrap(); 
 
         io::stdout().write_all(&output.stdout).unwrap();
         io::stderr().write_all(&output.stderr).unwrap();

@@ -4,7 +4,6 @@ use gen::Jit;
 use ir::raw::{EnumType, Import};
 use nom::error::convert_error;
 use std::collections::{HashMap, HashSet};
-use std::mem;
 
 pub mod config;
 pub mod error;

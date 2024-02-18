@@ -1,4 +1,4 @@
-use std::{env::Args, io};
+use std::io;
 
 /// Configuration struct for command line arguments
 #[derive(Debug, Clone)]

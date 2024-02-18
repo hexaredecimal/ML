@@ -1,5 +1,5 @@
 use crate::error::{CompilerError, Result};
-use crate::ir::raw::{RecordType, TopLevel, EnumType, EnumField};
+use crate::ir::raw::{RecordType,EnumType, EnumField};
 use crate::ir::sem::*;
 use crate::ir::{self, Type};
 use std::collections::HashMap;
@@ -132,7 +132,7 @@ impl Jit {
         let args: Vec<String> = args.into_iter().map(|f| f.unwrap()).collect();
         let args = args.join(", ");
 
-        let mut ret_type = if let ir::Type::Function(ret, _args) = func.ty() {
+        let ret_type = if let ir::Type::Function(ret, _args) = func.ty() {
             self.clone().real_type(ret)?
         } else {
             return Err(CompilerError::BackendError(format!(

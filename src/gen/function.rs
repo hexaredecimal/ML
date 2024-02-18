@@ -5,7 +5,6 @@ use crate::ir::{self, Type};
 use crate::Jit;
 
 use std::collections::hash_map::HashMap;
-use std::fmt::format;
 
 pub(crate) struct FunctionTranslator {
     jit: Jit,
@@ -125,7 +124,7 @@ impl FunctionTranslator {
         match node.expr() {
             SemExpression::LambdaCall(e, args) => {
                 let mut vals: Vec<_> = Vec::new();
-                // let val = self.translate_expr(e, scope)?;
+                let _val = self.translate_expr(e, scope)?;
                 for arg in args.clone().into_iter() {
                     let expr = self.translate_expr(&arg, scope)?;
                     vals.push(expr); 
@@ -168,7 +167,7 @@ impl FunctionTranslator {
             SemExpression::Destructure(names, e) => {
                 let jit = self.jit.clone(); 
                 let records = jit.records.clone(); 
-                let enums = jit.clone().enums.clone(); 
+                let _enums = jit.clone().enums.clone(); 
                 let expr = self.translate_expr(e, scope)?;
 
                 let mut str = String::new(); 
@@ -315,7 +314,7 @@ impl FunctionTranslator {
                         )));
                     }
 
-                    e.ty().assert_eq(_e);
+                    e.ty().assert_eq(_e)?;
                 }
 
                 let args: Vec<String> = args
@@ -340,11 +339,7 @@ impl FunctionTranslator {
             }
             SemExpression::String(x) => Ok(format!("\"{x}\"")),
             SemExpression::Unit => Ok(format!("Void.Unit")),
-            SemExpression::Null(t) => {
-                // let ty = self.jit.clone().real_type(t)?;
-                // Ok(format!("new Null({}.class)", ty))
-                Ok(format!("null"))
-            }
+            SemExpression::Null(_) => Ok(format!("null")),
             SemExpression::Cast(e, t) => {
                 let is_sys_type = self.jit.clone().is_sys_type(&*t.clone());
                 let ty = t.clone();
@@ -379,8 +374,6 @@ impl FunctionTranslator {
 
             SemExpression::NullCheck(a, t) => {
                 let a = a.clone();
-                let at = a.ty();
-                // let at = self.jit.clone().real_type(at)?;
                 let ty = self.jit.clone().real_type(t)?;
                 let e = self.translate_expr(&a, scope)?;
                 Ok(format!("({} instanceof {ty})", e.clone()))
@@ -744,7 +737,7 @@ impl FunctionTranslator {
 
                     (ir::BinaryOp::ArrayDeref, ir::Type::List(_), ir::Type::Int) => {
                         // TODO: add bounds checking (don't bounds check on constants)
-                        let elem = match left.ty() {
+                        match left.ty() {
                             ir::Type::List(elem_ty) => elem_ty,
                             _ => {
                                 return Err(CompilerError::BackendError(format!(
@@ -759,7 +752,7 @@ impl FunctionTranslator {
 
                     (ir::BinaryOp::ArrayDeref, ir::Type::Array(_, _), ir::Type::Int) => {
                         // TODO: add bounds checking (don't bounds check on constants)
-                        let elem = match left.ty() {
+                        match left.ty() {
                             ir::Type::Array(_num, elem_ty) => (_num, elem_ty),
                             _ => {
                                 return Err(CompilerError::BackendError(format!(
@@ -780,7 +773,7 @@ impl FunctionTranslator {
                 }
             }
             SemExpression::Array(elems) => {
-                let (elem_count, elem_ty) = match node.ty() {
+                let (_elem_count, elem_ty) = match node.ty() {
                     ir::Type::Array(elem_count, elem_ty) => (elem_count, elem_ty),
                     _ => {
                         return Err(CompilerError::BackendError(format!(
@@ -856,7 +849,7 @@ impl FunctionTranslator {
             }
             SemExpression::Val(id, init) => self.translate_val(id, init, scope, real_ty),
             SemExpression::Id(id) => {
-                let ty = scope.get(id).ok_or_else(|| {
+                scope.get(id).ok_or_else(|| {
                     CompilerError::BackendError(format!("No variable {} available", id))
                 })?;
                 Ok(id.clone())
@@ -1008,7 +1001,7 @@ impl FunctionTranslator {
         args: &[SemNode],
         scope: &mut HashMap<String, Type>,
     ) -> Result<String, CompilerError> {
-        let mut args_values = args
+        let args_values = args
             .iter()
             .map(|arg| self.translate_expr(arg, scope).unwrap())
             .collect::<Vec<_>>();

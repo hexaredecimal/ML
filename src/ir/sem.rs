@@ -4,6 +4,7 @@ use crate::error::{CompilerError, Result};
 use std::collections::HashMap;
 
 #[derive(Debug, PartialEq, Clone)]
+#[allow(unused)]
 pub enum SemExpression {
     Unit,
     Integer(i64, Box<Type>),
@@ -170,7 +171,7 @@ impl SemNode {
 
     pub fn analyze(node: RawNode, ctx: &mut SemContext) -> Result<Self> {
         let expr = match node.into_expr() {
-            RawExpression::Lambda(args, ret, body) => {
+            RawExpression::Lambda(_args, _ret, _body) => {
                 todo!()
             }
             RawExpression::Destructure(dest, e) => {
@@ -474,7 +475,7 @@ impl SemNode {
                 body.ty().clone()
             }
             SemExpression::Char(_) => Type::Char, 
-            SemExpression::NullCheck(a, _) => Type::Bool, 
+            SemExpression::NullCheck(_, _) => Type::Bool, 
             SemExpression::Block(v) => {
                 if v.len() == 0 {
                     return Err(CompilerError::InvalidBlock);

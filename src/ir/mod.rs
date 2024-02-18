@@ -240,7 +240,7 @@ impl Type {
                     }
                     return Ok(());
                 }
-                (Type::EnumType(parent, child), Type::UserType(_parent)) => {
+                (Type::EnumType(parent, _), Type::UserType(_parent)) => {
                     if parent == _parent {
                         return Ok(());
                     } else {
@@ -306,7 +306,7 @@ impl std::fmt::Display for Type {
             f,
             "{}",
             match self {
-                Type::Lambda(ret, args) => {
+                Type::Lambda(_ret, args) => {
                     let args: Vec<_> = args.into_iter().map(|f| format!("{f}")).collect(); 
                     format!("{}", args.join(","))
                 }

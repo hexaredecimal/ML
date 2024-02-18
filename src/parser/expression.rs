@@ -5,7 +5,7 @@ use crate::parser::types::type_literal;
 use nom::branch::alt;
 use nom::bytes::complete::{tag, take_while1, take_until};
 use nom::combinator::opt;
-use nom::error::{VerboseError, VerboseErrorKind};
+use nom::error::VerboseError;
 use nom::multi::{many0, many1, separated_list0};
 use nom::sequence::tuple;
 use nom::IResult;
@@ -159,6 +159,7 @@ pub fn lambda_call(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
         tag("]"),
     ))(i)?;
 
+    let _ = i; // TODO: Remove this. This is done to suppress a warning
     println!("expr: {:?} -> args: {:?}", id, args);
     todo!()
 }
