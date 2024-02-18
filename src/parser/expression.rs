@@ -82,9 +82,16 @@ fn array_literal(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
 }
 
 fn null_of(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
-    let (i, (_,)) = tuple((tag("null"),))(i)?;
+    let (i, (_, t)) = tuple((tag("null"), many0(tuple((sp, tag("of"), sp, type_literal)))))(i)?;
+    
+    let ty = if t.len() == 0 {
+        Box::new(Type::Any)
+    } else {
+        let (_, _, _, last) = t.first().unwrap(); 
+        Box::new(last.clone())
+    };
 
-    Ok((i, RawNode::new(RawExpression::Null(Box::new(Type::Any)))))
+    Ok((i, RawNode::new(RawExpression::Null(ty))))
 }
 
 fn unit_literal(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
