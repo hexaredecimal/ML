@@ -247,8 +247,8 @@ impl Type {
                         return Err(CompilerError::TypeConflict(self.clone(), other.clone()));
                     }
                 }
-                (Type::EnumType(parent, _), Type::EnumType(parent_, _)) => {
-                    if parent == parent_ {
+                (Type::EnumType(parent, _c), Type::EnumType(parent_, _cc)) => {
+                    if parent == parent_ && _c == _cc {
                         return Ok(());
                     } else {
                         return Err(CompilerError::TypeConflict(self.clone(), other.clone()));
