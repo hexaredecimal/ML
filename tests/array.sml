@@ -1,9 +1,11 @@
-fun a2(): [Int;3] => [1, 2, 3]
+
+using System::Io
+using System::Array
 
 fun main(): Unit => {
-  let 
-    a1 = [40] 
-  in a1.[0] + (a2()).[1]
+  val array = [1,2,3,4,5,6,7,8,9,10]
+  println("Memory location: " + array_to_string(array))
+  println("Head: ", array.[0])
   ()
 }
 
