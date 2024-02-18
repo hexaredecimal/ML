@@ -1,22 +1,10 @@
-
-fun println(ln: Any): Unit => {
-  java {
-    "System.out.println(ln);"
-  }
-  ()
-}
+using System::Io
+using System::Intrinsic
 
 fun red_encode(msg: String): String => "\033[31m" + msg + "\033[0m"
 fun green_encode(msg: String): String => "\033[32m" + msg + "\033[0m"
 fun succ(): String => green_encode("Success")
 fun err(): String => red_encode("Error:")
-
-fun panic(msg: String): Unit => {
-  java {
-    "Intrinsic.panic(msg);"
-  }
-  ()
-}
 
 enum Result = Ok(value: Any) | Err(msg: String)
 
