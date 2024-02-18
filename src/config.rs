@@ -122,7 +122,7 @@ impl Config {
                     }
                     "--version" => {
                         c.clone()
-                            .report(format!("{} version 0.1.1", c.program_name.clone()));
+                            .report(format!("{} version 0.5.1", c.program_name.clone()));
                     }
                     "--help" => {
                         c.clone().report(c.clone().help().to_string());
@@ -145,6 +145,9 @@ impl Config {
                 collect_file = true;
             } else if index < len && held {
                 if collect_paths {
+                    // WTF? What was I thinking Here???
+                    // TODO: Fix this mess as soon as possible, but for not it works so it it no
+                    // high priority
                     c = c.clone();
                     c.import_paths.push(arg);
                     c = c.clone();
