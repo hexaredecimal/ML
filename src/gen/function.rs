@@ -457,7 +457,7 @@ impl FunctionTranslator {
                         ir::Type::String | ir::Type::UserType(_) | ir::Type::EnumType(_, _), 
                         ir::Type::String | ir::Type::UserType(_) | ir::Type::EnumType(_, _), 
                     ) => {
-                        println!("l: {left_val}, r: {right_val}"); 
+                        // println!("l: {left_val}, r: {right_val}"); 
                         Ok(format!("{}.equals({}) == true", left_val, right_val))
                     }
                     (
