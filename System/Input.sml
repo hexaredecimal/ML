@@ -8,14 +8,23 @@
 
 
 fun readString(): String => {
-  val s = ""
+  val s = null of String
   java {
     "s = new Scanner(System.in).next();"
   }
   s
 } 
 
-fun readInt(): String => {
+
+fun readLine(): String => {
+  val s = null of String
+  java {
+    "s = new Scanner(System.in).nextLine();"
+  }
+  s
+} 
+
+fun readInt(): Int => {
   val s = 0
   java {
     "s = new Scanner(System.in).nextInt();"
@@ -24,15 +33,15 @@ fun readInt(): String => {
 } 
 
 fun readDouble(): Double => {
-  val s = 0
+  val s = 0 as Double
   java {
     "s = new Scanner(System.in).nextDouble();"
   }
   s
 }
 
-fun readChar(): String => {
-  val s = '_'
+fun readChar(): Char => {
+  val s = null of Char
   java {
     "s = new Scanner(System.in).next().charAt(0);"
   }
