@@ -104,6 +104,8 @@ fn unit_literal(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
 fn str_literal(_i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     let (i, (_, c, _)) = tuple((tag("\""), take_until("\""), tag("\"")))(_i)?;
 
+    let c = c.to_string(); 
+    let c = c.replace("\n", "\\n"); 
     Ok((i, RawNode::new(RawExpression::String(c.to_string()))))
 }
 
