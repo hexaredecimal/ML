@@ -6,24 +6,28 @@
 *                   Date: 17-02-2024 
 * *)
 
+using System::Escape (* For colored error messages *)
+
 fun panic(msg: String): Unit => {
-  val prefix = "Panic: "
+  val prefix = fg_red("Panic: ")
+  val _msg = underline(msg) 
   java {
-    "Intrinsic.panic(prefix + msg);"
+    "Intrinsic.panic(prefix + _msg);"
   }
   ()
 }
 
 fun todo(msg: String): Unit => {
-  val prefix = "TODO: "
+  val prefix = fg_yellow(underline("TODO: "))
+  val _msg = underline(msg) 
   java {
-    "Intrinsic.panic(prefix + msg);"
+    "Intrinsic.panic(prefix + _msg);"
   }
   ()
 }
 
 fun unreachable(): Unit => {
-  val prefix = "Unreachable"
+  val prefix = bg_red(fg_white("Unreachable"))
   java {
     "Intrinsic.panic(prefix);"
   }
