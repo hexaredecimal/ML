@@ -19,6 +19,27 @@ using System::Io
 fun main(): Unit => println("Hello, world")
 ```
 
+# How to compile?
+> After downloading and installing the required software, execute the following commands
+
+
+```sh
+$ git clone depth=1 https://github.com/hexaredecimal/ML.git
+$ cd ML
+$ cargo build
+```
+
+> After running these commands you should now have a target folder on the root of the project, 
+then execute the following
+
+```sh
+$ ./target/debug/smll --run main.sml                                    # This compiles the main.sml file and runs it with java
+```
+or
+
+```sh
+$ ./target/debug/smll --help                                            # This prints the help file
+```
 
 # Features:
 - Type inference for variables
