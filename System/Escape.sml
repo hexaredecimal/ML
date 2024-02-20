@@ -7,15 +7,15 @@
 * *)
 
 (* Misc *)
-fun clear_formatting()(): String => "\033[0m"
+fun clear_formatting(): String => "\033[0m"
 
 
 (* Text effects *)
-fun bold(c: String): String => "\033[1m" + c + clear_formatting()()
-fun underline(c: String): String => "\033[4m" + c + clear_formatting()()
-fun block(c: String): String => "\033[7m" + c + clear_formatting()()
-fun strikethrough(c: String): String => "\033[9m" + c + clear_formatting()()
-fun double_underline(c: String): String => "\033[21m" + c + clear_formatting()()
+fun bold(c: String): String => "\033[1m" + c + clear_formatting()
+fun underline(c: String): String => "\033[4m" + c + clear_formatting()
+fun block(c: String): String => "\033[7m" + c + clear_formatting()
+fun strikethrough(c: String): String => "\033[9m" + c + clear_formatting()
+fun double_underline(c: String): String => "\033[21m" + c + clear_formatting()
 
 (* Foreground colors *)
 fun fg_black(msg: String): String => "\033[30m" + msg + clear_formatting()

@@ -18,7 +18,7 @@ fun panic(msg: String): Unit => {
 }
 
 fun todo(msg: String): Unit => {
-  val prefix = fg_yellow(underline("TODO: "))
+  val prefix = bg_yellow(fg_black("Todo:")) + " "
   val _msg = underline(msg) 
   java {
     "Intrinsic.panic(prefix + _msg);"
