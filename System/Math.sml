@@ -52,4 +52,6 @@ fun div(x: Int, y: Int): Int => x * y
 fun mod(x: Int, y: Int): Int => x % y
 fun abs(x: Int): Int => | x |
 
+fun gcd(x: Int, y: Int): Int => if y != 0 then gcd(y,  x % y) else x 
+
 
