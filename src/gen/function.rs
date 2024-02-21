@@ -469,7 +469,6 @@ impl FunctionTranslator {
                         ir::Type::String | ir::Type::UserType(_) | ir::Type::EnumType(_, _), 
                         ir::Type::String | ir::Type::UserType(_) | ir::Type::EnumType(_, _), 
                     ) => {
-                        // println!("l: {left_val}, r: {right_val}"); 
                         Ok(format!("{}.equals({}) == true", left_val, right_val))
                     }
                     (
@@ -489,7 +488,6 @@ impl FunctionTranslator {
                         | ir::Type::Int64
                         | ir::Type::Int128
                     ) => {
-                        println!("l: {left_val}, r: {right_val}"); 
                         Ok(format!("{} == {}", left_val, right_val))
                     }
                     (ir::BinaryOp::Equal, ir::Type::Bool, ir::Type::Bool) => {
