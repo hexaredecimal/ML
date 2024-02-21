@@ -2,7 +2,12 @@
 # Small ML language (SMLL) 
 
 <div align="center"> 
-    <p> A small, experimental, general purpose programming language created for exploring alternative ways of writing applications on the JVM </p>
+<img 
+    alt="larry the smll mascott"
+    src="https://github.com/hexaredecimal/ML/blob/master/assets/_bfbc2acb-e0df-470f-8cb4-ff6e3855fb45-removebg-preview.png" 
+    width="20%" />
+    
+<p> A small, experimental, general purpose programming language created for exploring alternative ways of writing applications on the JVM </p>
     
 ![example workflow](https://github.com/hexaredecimal/ML/actions/workflows/rust.yml/badge.svg)
     
