@@ -45,6 +45,7 @@ impl UnaryOp {
             UnaryOp::Minus => vec![Type::Int, Type::Float],
             UnaryOp::Not => vec![Type::Bool],
         };
+
         if !allowed_types.contains(operand) {
             return Err(CompilerError::WrongUnaryOperatorType(
                 operand.clone(),

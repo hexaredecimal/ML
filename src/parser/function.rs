@@ -147,8 +147,25 @@ pub fn import_statement(i: &str) -> IResult<&str, TopLevel, VerboseError<&str>> 
         TopLevel::Import { path }
     ))
 }
- 
+
+
+pub fn alias_of(i: &str) -> IResult<&str, TopLevel, VerboseError<&str>> {
+    let (i, (_, _, name, _, _, _, ty)) = tuple((
+        tag("type"),
+        sp, 
+        identifier,
+        sp,
+        tag("="), 
+        sp, 
+        type_literal
+    ))(i)?;
+
+    Ok((i, 
+        TopLevel::Alias { name: name.to_string(), value: ty }
+    ))
+}
+
 pub fn top_levels(i: &str) -> IResult<&str, TopLevel, VerboseError<&str>> {
-    let (i, e) = alt((import_statement, record_type, function, enum_type))(i)?;
+    let (i, e) = alt((import_statement, record_type, function, enum_type, alias_of))(i)?;
     Ok((i, e))
 }

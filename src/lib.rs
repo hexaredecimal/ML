@@ -1,7 +1,7 @@
 use crate::error::{CompilerError, Result};
 use crate::ir::raw::{RawFunction, RecordType, TopLevel};
 use gen::Jit;
-use ir::raw::{EnumType, Import};
+use ir::raw::{EnumType, Import, Alias};
 use nom::error::convert_error;
 use std::collections::{HashMap, HashSet};
 
@@ -26,6 +26,7 @@ pub fn compile_file(input: String) -> Result<(Vec<RawFunction>, Vec<RecordType>,
     let mut records: Vec<RecordType> = vec![];
     let mut enums: Vec<EnumType> = vec![]; 
     let mut imports: Vec<Import> = vec![]; 
+    let mut aliases: Vec<Alias> = vec![]; 
 
     for top in toplevels {
         match top {
@@ -42,7 +43,8 @@ pub fn compile_file(input: String) -> Result<(Vec<RawFunction>, Vec<RecordType>,
             }),
             TopLevel::RecordType { name, fields } => records.push(RecordType { name, fields }),
             TopLevel::EnumType { name, fields } => enums.push(EnumType { name, fields }),
-            TopLevel::Import { path } => imports.push(Import { path }), 
+            TopLevel::Import { path } => imports.push(Import { path }),
+            TopLevel::Alias { name, value } => aliases.push(Alias { name, value })
         }
     }
 
@@ -71,6 +73,7 @@ pub fn compile_and_run(config: config::Config) -> Result<String> {
     let mut records: Vec<RecordType> = vec![];
     let mut enums: Vec<EnumType> = vec![]; 
     let mut imports: Vec<Import> = vec![]; 
+    let mut aliases: Vec<Alias> = vec![]; 
 
     for top in toplevels {
         match top {
@@ -87,7 +90,8 @@ pub fn compile_and_run(config: config::Config) -> Result<String> {
             }),
             TopLevel::RecordType { name, fields } => records.push(RecordType { name, fields }),
             TopLevel::EnumType { name, fields } => enums.push(EnumType { name, fields }),
-            TopLevel::Import { path } => imports.push(Import { path }), 
+            TopLevel::Import { path } => imports.push(Import { path }),
+            TopLevel::Alias { name, value } => aliases.push(Alias { name, value })
         }
     }
 
@@ -186,6 +190,7 @@ pub fn compile_and_run(config: config::Config) -> Result<String> {
 
     let mut ts: HashMap<String, RecordType> = HashMap::new();
     let mut es: HashMap<String, EnumType> = HashMap::new();
+    let mut ali: HashMap<String, Alias> = HashMap::new();
     
     for record in records.clone() {
         ts.insert(record.name.clone(), record.clone());
@@ -194,21 +199,26 @@ pub fn compile_and_run(config: config::Config) -> Result<String> {
     for en in enums.clone() {
         es.insert(en.name.clone(), en.clone()); 
     }
-    let mut ctx =
-        ir::sem::SemContext::from_funs(functions.iter().map(|f| (f.name.clone(), f.ty.clone())));
+
+    for alias in aliases.clone() {
+        ali.insert(alias.name.clone(), alias.clone()); 
+    }
+
+    let mut ctx = ir::sem::SemContext::from_funs(functions.iter().map(|f| (f.name.clone(), f.ty.clone())));
 
     ctx.records = ts.clone();
     ctx.enums = es.clone(); 
+    ctx.aliases = ali.clone(); 
 
     let mut typed_functions = Vec::new();
     for func in functions.into_iter() {
         typed_functions.push(ir::sem::SemFunction::analyze(func, &mut ctx)?);
     }
 
-
     let mut jit = Jit::new();
     jit.records = ts.clone();
     jit.enums = es.clone(); 
+    jit.aliases = ali.clone(); 
 
     let ens = jit.process_enumns(enums)?; 
     let rcs = jit.process_records(records, true)?;

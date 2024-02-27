@@ -88,7 +88,7 @@ pub struct SemContext {
     vars: HashMap<String, Type>,
     pub records: HashMap<String, RecordType>, 
     pub enums: HashMap<String, EnumType>,
- 
+    pub aliases: HashMap<String, Alias>,
 }
 
 impl SemContext {
@@ -97,12 +97,15 @@ impl SemContext {
         let vars = HashMap::new();
         let records: HashMap<String, RecordType> = HashMap::new();
         let enums: HashMap<String, EnumType> = HashMap::new();
+        let aliases: HashMap<String, Alias> = HashMap::new();
 
-        Self { funs, vars, records, enums }
+        Self { funs, vars, records, enums, aliases }
     }
+
     pub fn funs(&self) -> &HashMap<String, Type> {
         &self.funs
     }
+
     pub fn vars(&self) -> &HashMap<String, Type> {
         &self.vars
     }
@@ -125,20 +128,24 @@ impl SemContext {
 
         let records = self.records.clone(); 
         let enums = self.enums.clone(); 
-        Self { funs, vars, records, enums }
+        let aliases = self.aliases.clone(); 
+        Self { funs, vars, records, enums, aliases }
     }
 
     #[allow(unused)]
     pub fn extend_vars(&self, it: impl IntoIterator<Item = (String, Type)>) -> Self {
         let funs = self.funs.clone();
         let mut vars = self.vars.clone();
+        
         for (id, ty) in it {
             vars.insert(id, ty);
         }
+
         let records = self.records.clone(); 
         let enums = self.enums.clone(); 
+        let aliases = self.aliases.clone(); 
 
-        Self { funs, vars, records, enums }
+        Self { funs, vars, records, enums, aliases }
     }
 }
 

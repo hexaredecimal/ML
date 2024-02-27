@@ -1,5 +1,5 @@
 use crate::error::{CompilerError, Result};
-use crate::ir::raw::{RecordType,EnumType, EnumField};
+use crate::ir::raw::{RecordType, EnumType, EnumField, Alias};
 use crate::ir::sem::*;
 use crate::ir::{self, Type};
 use std::collections::HashMap;
@@ -13,6 +13,7 @@ mod function;
 pub struct Jit {
     pub records: HashMap<String, RecordType>,
     pub enums: HashMap<String, EnumType>,
+    pub aliases: HashMap<String, Alias>,
 }
 
 impl Jit {
@@ -20,6 +21,7 @@ impl Jit {
         Self {
             records: HashMap::new(),
             enums: HashMap::new(),
+            aliases: HashMap::new()
         }
     }
 

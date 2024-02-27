@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use super::*;
 
 #[derive(Debug, Clone)]
@@ -21,9 +23,19 @@ pub enum TopLevel {
 
     Import {
         path: Vec<String>
+    },
+
+    Alias {
+        name: String, 
+        value: Type
     }
 }
 
+#[derive(Debug, Clone)]
+pub struct Alias {
+    pub name: String,
+    pub value: Type
+}
 
 #[derive(Debug, Clone)]
 pub struct Import {
