@@ -2,6 +2,7 @@ use crate::error::{CompilerError, Result};
 pub mod raw;
 pub mod sem;
 
+use sem::SemContext; 
 #[derive(Debug, PartialEq, Clone)]
 pub enum UnaryOp {
     Minus,
@@ -57,7 +58,7 @@ impl UnaryOp {
 }
 
 impl BinaryOp {
-    pub fn check_ty(&self, left_operand: &Type, right_operand: &Type) -> Result<()> {
+    pub fn check_ty(&self, left_operand: &Type, right_operand: &Type, ctx: &mut SemContext) -> Result<()> {
         if let BinaryOp::ArrayDeref = self {
             if let Type::Array(_, _) = left_operand {
                 if right_operand != &Type::Int {
@@ -136,7 +137,7 @@ impl BinaryOp {
                 BinaryOp::ArrayDeref => unreachable!(),
             };
 
-            left_operand.assert_eq(right_operand)?;
+            left_operand.assert_eq(right_operand, ctx)?;
             let operand = left_operand; // same types
             if !allowed_types.contains(operand) {
                 return Err(CompilerError::WrongBinaryOperatorType(
@@ -212,16 +213,16 @@ impl Type {
             _ => panic!("Not a Function type"),
         }
     }
-    pub fn assert_eq(&self, other: &Self) -> Result<()> {
+    pub fn assert_eq(&self, other: &Self, ctx: &mut SemContext) -> Result<()> {
         if self != other {
             match (self, other) {
                 (Type::List(list_ty), Type::Array(_, ty)) => {
-                    list_ty.assert_eq(ty).unwrap(); 
+                    list_ty.assert_eq(ty, ctx).unwrap(); 
                     return Ok(());
                 }
                 (Type::Any, _) => return Ok(()),
                 (Type::Array(_, t), Type::List(i)) => {
-                    let e = t.assert_eq(i);
+                    let e = t.assert_eq(i, ctx);
                     if e.is_err() {
                         return Err(CompilerError::TypeConflict(self.clone(), other.clone()));
                     }
@@ -267,10 +268,16 @@ impl Type {
                     | Type::Int32
                     | Type::Int64
                     | Type::Int128
-                    | Type::Bool, 
+                    | Type::Bool,
 
-                    Type::String | Type::UserType(_)
+                    Type::UserType(tname)
                 ) => {
+                    if ctx.aliases.contains_key(tname) {
+                        let alias = ctx.aliases.get(tname).unwrap();
+                        let ty = alias.value.clone(); 
+                        // println!("{tname} -> {ty}"); 
+                        return self.assert_eq(&ty, ctx);
+                    } 
                     return Err(CompilerError::TypeConflict(self.clone(), other.clone())); 
                 }
 
@@ -293,7 +300,9 @@ impl Type {
                     | Type::Bool => {
                         return Ok(())
                     },
-                    _ => return Err(CompilerError::TypeConflict(self.clone(), other.clone())),
+                    _ => {
+                        return Err(CompilerError::TypeConflict(self.clone(), other.clone()));
+                    }
                 },
             };
         }

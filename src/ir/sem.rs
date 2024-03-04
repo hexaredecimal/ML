@@ -53,7 +53,7 @@ impl SemFunction {
 
         ctx.append_new_vars(args.iter().cloned());
         let root = SemNode::analyze(fun.root, ctx)?;
-        (&*root.ty()).assert_eq(&*ret)?;
+        (&*root.ty()).assert_eq(&*ret, ctx)?;
         let ty = Type::Function(ret.clone(), arg_types);
 
         if fun.name == "main".to_string() && *ret.clone() != Type::Unit {
@@ -227,7 +227,7 @@ impl SemNode {
                     }
 
                     let e = SemNode::analyze(passed_expr, ctx)?;
-                    expected_type.assert_eq(e.ty())?;
+                    expected_type.assert_eq(e.ty(), ctx)?;
                     args.push((passed_name, e)); 
                 }
 
@@ -534,7 +534,7 @@ impl SemNode {
                     };
 
                     for ((_arg_name, arg_type), arg_node) in argdefs.iter().zip(args.iter()) {
-                        arg_type.assert_eq(arg_node.ty())?;
+                        arg_type.assert_eq(arg_node.ty(), ctx)?;
                     }
                     (*ret).clone()
                 };
@@ -563,7 +563,7 @@ impl SemNode {
                     Type::Any
                 };
                 for val in vals.iter() {
-                    val.ty().assert_eq(&inner_type)?;
+                    val.ty().assert_eq(&inner_type, ctx)?;
                 }
                 Type::Array(vals.len() as u64, Box::new(inner_type))
             }
@@ -575,7 +575,7 @@ impl SemNode {
                 }
             }
             SemExpression::BinaryOp(op, a, b) => {
-                op.check_ty(a.ty(), b.ty())?;
+                op.check_ty(a.ty(), b.ty(), ctx)?;
                 match op {
 
                     BinaryOp::Multiply | BinaryOp::Divide | BinaryOp::Add | BinaryOp::Sub | BinaryOp::Mod => {
@@ -601,8 +601,8 @@ impl SemNode {
                 }
             }
             SemExpression::Conditional(cond, then, alt) => {
-                cond.ty().assert_eq(&Type::Bool)?;
-                then.ty().assert_eq(alt.ty())?;
+                cond.ty().assert_eq(&Type::Bool, ctx)?;
+                then.ty().assert_eq(alt.ty(), ctx)?;
                 then.ty().clone()
             }
         };

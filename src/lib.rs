@@ -220,9 +220,9 @@ pub fn compile_and_run(config: config::Config) -> Result<String> {
     jit.enums = es.clone(); 
     jit.aliases = ali.clone(); 
 
-    let ens = jit.process_enumns(enums)?; 
-    let rcs = jit.process_records(records, true)?;
-    let code_ptr = jit.compile(&typed_functions)?;
+    let ens = jit.process_enumns(enums, &mut ctx)?; 
+    let rcs = jit.process_records(records, true, &mut ctx)?;
+    let code_ptr = jit.compile(&typed_functions, &mut ctx)?;
 
     Ok(format!("{}\n{}\n{}", ens, rcs, code_ptr))
 }

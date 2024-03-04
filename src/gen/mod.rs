@@ -37,7 +37,7 @@ impl Jit {
 
 
 
-    pub fn process_enumns(&mut self, records: Vec<EnumType>) -> Result<String> {
+    pub fn process_enumns(&mut self, records: Vec<EnumType>, ctx: &mut SemContext) -> Result<String> {
         let mut recs: String = String::new();
 
         for record in records.clone() {
@@ -48,7 +48,7 @@ impl Jit {
                 .map(|f| {
                     match f {
                         EnumField::Rec(rec) => {
-                            let recc = self.process_records(vec![rec], false).unwrap();
+                            let recc = self.process_records(vec![rec], false, ctx).unwrap();
                             let recc = recc.trim_end(); 
                             let recc = format!("\t{recc} implements {name} {}", "{}");
                             recc
@@ -66,7 +66,7 @@ impl Jit {
     }
 
 
-    pub fn process_records(&mut self, records: Vec<RecordType>, close: bool) -> Result<String> {
+    pub fn process_records(&mut self, records: Vec<RecordType>, close: bool, ctx: &mut SemContext) -> Result<String> {
         let mut recs: String = String::new();
 
         for record in records.clone() {
@@ -76,7 +76,7 @@ impl Jit {
                 .into_iter()
                 .map(|f| {
                     let (name, ty) = f;
-                    let ty = self.clone().real_type(&ty).unwrap();
+                    let ty = self.clone().real_type(&ty, ctx).unwrap();
                     format!("{} {}", ty, name)
                 })
                 .collect();
@@ -88,17 +88,17 @@ impl Jit {
         Ok(recs)
     }
 
-    pub fn compile(&mut self, funcs: &[SemFunction]) -> Result<String> {
+    pub fn compile(&mut self, funcs: &[SemFunction], ctx: &mut SemContext) -> Result<String> {
         let mut s = String::new();
         for fun in funcs {
-            let a = self.translate_function(fun)?;
+            let a = self.translate_function(fun, ctx)?;
             s.push_str(a.as_str());
             s.push_str("\n");
         }
         Ok(s.clone())
     }
 
-    fn translate_function(&mut self, func: &SemFunction) -> Result<String> {
+    fn translate_function(&mut self, func: &SemFunction, ctx: &mut SemContext) -> Result<String> {
         let name: String = func.name().to_string();
 
         let len = func.args().len();
@@ -123,7 +123,7 @@ impl Jit {
                         Ok(format!("Object ...var_args"))
                     }
                     _ => {
-                        let ty = self.clone().real_type(ty).unwrap();
+                        let ty = self.clone().real_type(ty, ctx).unwrap();
                         Ok(format!("{} {}", ty, name))
                     }
                 };
@@ -135,7 +135,7 @@ impl Jit {
         let args = args.join(", ");
 
         let ret_type = if let ir::Type::Function(ret, _args) = func.ty() {
-            self.clone().real_type(ret)?
+            self.clone().real_type(ret, ctx)?
         } else {
             return Err(CompilerError::BackendError(format!(
                 "{:?} is not a function type",
@@ -157,7 +157,7 @@ impl Jit {
         let mut trans = FunctionTranslator::new(self.clone());
 
         let root = func.root().clone();
-        let return_value = trans.translate_expr(func.root(), &mut variables)?;
+        let return_value = trans.translate_expr(func.root(), &mut variables, ctx)?;
 
         let mut s = if name == "main" {
             format!("{} {}({}) ", "void", name, args,)
@@ -301,12 +301,12 @@ impl Jit {
         }
     }
 
-    pub fn real_type(self, ty: &ir::Type) -> Result<String> {
+    pub fn real_type(self, ty: &ir::Type, ctx: &mut SemContext) -> Result<String> {
         match ty {
             ir::Type::Lambda(_ret, args) => {
                 let len = args.len(); 
-                let ret = self.clone().real_type(_ret)?; 
-                let args: Vec<_> = args.into_iter().map(|f| self.clone().real_type(f).unwrap()).collect(); 
+                let ret = self.clone().real_type(_ret, ctx)?; 
+                let args: Vec<_> = args.into_iter().map(|f| self.clone().real_type(f, ctx).unwrap()).collect(); 
                 Ok(format!("Lambda_{len}<{ret}, {}>", args.join(", ")))
             }
             ir::Type::Any => Ok("Object".to_string()),
@@ -326,13 +326,13 @@ impl Jit {
             ir::Type::Int128 => Ok("i128".to_string()), */
             ir::Type::Array(_num, _inner) => {
                 let inner = *_inner.clone();
-                let t = self.real_type(&inner)?;
+                let t = self.real_type(&inner, ctx)?;
                 let e:String = String::from(_num.to_string());
                 Ok(format!("{}[{}]", t, if *_num == 0 { "".to_string() } else { e }))
             }
             ir::Type::List(_inner) => {
                 let inner = *_inner.clone();
-                let t = self.real_type(&inner)?;
+                let t = self.real_type(&inner, ctx)?;
                 Ok(format!("{}[]", t))
             }
             ir::Type::EnumType(name, _arg) => {
@@ -381,10 +381,15 @@ impl Jit {
             }
             ir::Type::UserType(t) => {
                 let jit = self.clone();
-                if self.record_type_exists(t.clone()).is_ok() {
+                if self.clone().record_type_exists(t.clone()).is_ok() {
                     Ok(t.clone())
-                } else if jit.enum_type_exists(t.clone()).is_ok() {
+                } else if jit.clone().enum_type_exists(t.clone()).is_ok() {
                     Ok(t.clone())
+                } else if jit.aliases.contains_key(t) {
+                    let alias = jit.aliases.get(t).unwrap(); 
+                    let ty = alias.value.clone(); 
+                    let ty = self.real_type(&ty, ctx);
+                    ty
                 } else {
                     Err(CompilerError::BackendError(format!(
                         "Invalid struct/enum/alias type {:?}",
