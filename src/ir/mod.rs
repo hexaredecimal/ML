@@ -268,8 +268,8 @@ impl Type {
                     | Type::Int32
                     | Type::Int64
                     | Type::Int128
+                    | Type::Unit
                     | Type::Bool,
-
                     Type::UserType(tname)
                 ) => {
                     if ctx.aliases.contains_key(tname) {
@@ -280,7 +280,17 @@ impl Type {
                     } 
                     return Err(CompilerError::TypeConflict(self.clone(), other.clone())); 
                 }
-
+                (Type::UserType(tname), Type::Unit) => {
+                    if ctx.aliases.contains_key(tname) {
+                        let alias = ctx.aliases.get(tname).unwrap();
+                        let ty = alias.value.clone(); 
+                        // println!("{tname} -> {ty}"); 
+                        if ty == Type::Unit {
+                            return Ok(()); 
+                        }
+                    } 
+                    return Err(CompilerError::TypeConflict(self.clone(), other.clone())); 
+                }
                 (Type::String, Type::Any) => return Ok(()), 
                 (Type::String, _) => {
                     return Err(CompilerError::TypeConflict(self.clone(), other.clone())); 
