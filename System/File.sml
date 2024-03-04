@@ -9,7 +9,7 @@
 using System::Result
 
 fun read_to_string(filename: String): Result => {
-  val e = Result.Err("Failed to open file: " + filename) as Result
+  val e = Result.Err("Failed to open file: " + filename) as Result (* case Result.Err to Result*)
   java {
     "File fp = new File(filename);"
     "if (fp.exists() == false || fp == null)"
