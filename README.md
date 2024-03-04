@@ -8,7 +8,9 @@
     width="20%" />
     
 <p> A small, experimental, general purpose programming language created for exploring alternative ways of writing applications on the JVM </p>
-    
+<h2>NOTE</h2>
+<p style="color:red"><b>Native backends are being developed, due to the performance of the JVM</b></p>
+
 ![example workflow](https://github.com/hexaredecimal/ML/actions/workflows/rust.yml/badge.svg)
     
 </div>
