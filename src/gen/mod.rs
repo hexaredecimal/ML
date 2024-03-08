@@ -393,8 +393,9 @@ impl Jit {
                     ty
                 } else {
                     Err(CompilerError::BackendError(format!(
-                        "Invalid struct/enum/alias type {:?}",
-                        t.clone()
+                        "Invalid struct/enum/alias type {:?} -> {:?}",
+                        t.clone(), 
+                        jit.aliases.clone()
                     )))
                 }
             }

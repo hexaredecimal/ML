@@ -12,7 +12,7 @@ mod ir;
 mod parser;
 
 
-pub fn compile_file(input: String) -> Result<(Vec<RawFunction>, Vec<RecordType>, Vec<EnumType>)> {
+pub fn compile_file(input: String) -> Result<(Vec<RawFunction>, Vec<RecordType>, Vec<EnumType>, Vec<Alias>)> {
     let program = match std::fs::read_to_string(input.to_string()) {
         Ok(x) => x, 
         Err(e) => {
@@ -53,15 +53,16 @@ pub fn compile_file(input: String) -> Result<(Vec<RawFunction>, Vec<RecordType>,
             let path = import.path.clone(); 
             let path = path.join("/");
             let path = format!("./{path}.sml"); 
-            let (f, r, e) = compile_file(path)?;
+            let (f, r, e, a) = compile_file(path)?;
 
             functions = [functions, f].concat(); 
             records = [records, r].concat(); 
             enums = [enums, e].concat(); 
+            aliases = [aliases, a].concat();
         }
     }
 
-    Ok((functions, records, enums))
+    Ok((functions, records, enums, aliases))
 }
 
 
@@ -99,7 +100,7 @@ pub fn compile_and_run(config: config::Config) -> Result<String> {
         let path = import.path; 
         let path = path.join("/");
         let path = format!("./{path}.sml"); 
-        let (f, r, e) = compile_file(path.clone())?;
+        let (f, r, e, a) = compile_file(path.clone())?;
         // println!("symbols imported from {:?}\nfuncs: {:?}\nrecords: {:?}\n,imports: {:?}", path, f, r, e);
     
         for fx in f.clone().into_iter() {
@@ -148,6 +149,22 @@ pub fn compile_and_run(config: config::Config) -> Result<String> {
                 enums.push(enm); 
             }
         }
+
+        for ali in a.clone().into_iter() {
+            let import_ali_name = ali.name.clone();
+            let mut is_found = false; 
+            for alias in aliases.clone() {
+                let ali_name = alias.name.clone();
+                if import_ali_name == ali_name {
+                    is_found = true; 
+                }
+            }
+
+            if !is_found {
+                aliases.push(ali); 
+            }
+        }
+
         // functions = [f, functions].concat(); 
         // records = [records, r].concat(); 
         // enums = [enums, e].concat(); 
