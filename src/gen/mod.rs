@@ -306,8 +306,14 @@ impl Jit {
             ir::Type::Lambda(_ret, args) => {
                 let len = args.len(); 
                 let ret = self.clone().real_type(_ret, ctx)?; 
-                let args: Vec<_> = args.into_iter().map(|f| self.clone().real_type(f, ctx).unwrap()).collect(); 
-                Ok(format!("Lambda_{len}<{ret}, {}>", args.join(", ")))
+                let args: Vec<_> = args.into_iter().map(|f| self.clone().real_type(f, ctx).unwrap()).collect();
+                let args = if len == 0 {
+                    "".to_string()
+                } else {
+                    format!(", {}", args.join(", "))
+                };
+
+                Ok(format!("Lambda_{len}<{ret}{}>", args))
             }
             ir::Type::Any => Ok("Object".to_string()),
             ir::Type::Unit => Ok("Void".to_string()),
