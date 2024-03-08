@@ -318,6 +318,7 @@ impl Jit {
             ir::Type::Bool => Ok("Boolean".to_string()),
             ir::Type::Float => Ok("Float".to_string()),
             ir::Type::Double => Ok("Double".to_string()),
+            ir::Type::TypeLift(inner) => Ok(inner.clone()),
             /*
             ir::Type::Int8 => Ok("i8".to_string()),
             ir::Type::Int16 => Ok("i16".to_string()),

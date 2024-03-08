@@ -198,6 +198,7 @@ pub enum Type {
     Function(Box<Type>, Vec<(String, Type)>),
     EnumType(String, String),
     UserType(String), // Tobe looked up in the type table
+    TypeLift(String),
 }
 
 impl Type {
@@ -349,6 +350,7 @@ impl std::fmt::Display for Type {
                 Type::Bool => "Bool".to_string(),
                 Type::Float => "Float".to_string(),
                 Type::Array(len, ty) => format!("[{};{}]", ty, len),
+                Type::TypeLift(ty) => format!("{ty}"),
                 Type::Function(ret, args) => format!(
                     "fun ({}): {}",
                     args.iter()

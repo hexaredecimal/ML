@@ -4,11 +4,11 @@ use super::{identifier, sp};
 use crate::ir::raw::*; 
 use crate::ir::Type;
 use nom::branch::alt;
-use nom::bytes::complete::tag;
 use nom::error::VerboseError;
 use nom::multi::separated_list0;
 use nom::sequence::tuple;
 use nom::IResult;
+use nom::bytes::complete::{tag, take_while1, take_until};
 
 
 fn normargument(i: &str) -> IResult<&str, (String, Type), VerboseError<&str>> {
@@ -149,6 +149,25 @@ pub fn import_statement(i: &str) -> IResult<&str, TopLevel, VerboseError<&str>> 
 }
 
 
+pub fn str_literal(_i: &str) -> IResult<&str, String, VerboseError<&str>> {
+    let (i, (_, c, _)) = tuple((tag("\""), take_until("\""), tag("\"")))(_i)?;
+
+    let c = c.to_string(); 
+    let c = c.replace("\n", "\\n"); 
+    Ok((i, c.to_string()))
+}
+
+fn lift(i: &str) -> IResult<&str, Type, VerboseError<&str>> {
+    let (i, j) = str_literal(i)?;
+    Ok((i, 
+        Type::TypeLift(j)
+    ))
+}
+
+fn type_or_lift(i: &str) -> IResult<&str, Type, VerboseError<&str>> {
+    alt((type_literal, lift))(i)
+}
+
 pub fn alias_of(i: &str) -> IResult<&str, TopLevel, VerboseError<&str>> {
     let (i, (_, _, name, _, _, _, ty)) = tuple((
         tag("type"),
@@ -157,7 +176,7 @@ pub fn alias_of(i: &str) -> IResult<&str, TopLevel, VerboseError<&str>> {
         sp,
         tag("="), 
         sp, 
-        type_literal
+        type_or_lift
     ))(i)?;
 
     Ok((i, 

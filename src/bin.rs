@@ -18,6 +18,7 @@ static IMPORTS: &'static str =
 r#"
 import java.io.*;
 import java.util.*;
+import javax.swing.*;
 "#;
 
 fn main() {
