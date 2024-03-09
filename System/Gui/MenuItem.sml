@@ -10,4 +10,15 @@ fun menuitem_new(title: String): JMenuItem => {
   menuitem
 }
 
+fun menuitem_set_onclick(item: JMenuItem, callback: fn(): Unit): Unit => {
+  java {
+    "item.addActionListener(new ActionListener() {"
+    "   @Override"
+    "   public void actionPerformed(ActionEvent e) {"
+    "     callback.apply();"
+    "   }"
+    "});"
+  }
+  ()
+} 
 
