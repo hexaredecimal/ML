@@ -12,7 +12,7 @@ mod ir;
 mod parser;
 
 
-pub fn compile_file(input: String) -> Result<(Vec<RawFunction>, Vec<RecordType>, Vec<EnumType>, Vec<Alias>)> {
+pub fn compile_file(input: String, cache: &mut Vec<String>) -> Result<(Vec<RawFunction>, Vec<RecordType>, Vec<EnumType>, Vec<Alias>)> {
     let program = match std::fs::read_to_string(input.to_string()) {
         Ok(x) => x, 
         Err(e) => {
@@ -52,13 +52,20 @@ pub fn compile_file(input: String) -> Result<(Vec<RawFunction>, Vec<RecordType>,
         for import in imports {
             let path = import.path.clone(); 
             let path = path.join("/");
-            let path = format!("./{path}.sml"); 
-            let (f, r, e, a) = compile_file(path)?;
+            let path = format!("{path}.sml");
 
-            functions = [functions, f].concat(); 
-            records = [records, r].concat(); 
-            enums = [enums, e].concat(); 
-            aliases = [aliases, a].concat();
+            if cache.contains(&path) == false {
+                cache.push(path.clone());
+                let (f, r, e, a) = compile_file(path, cache)?;
+                functions = [functions, f].concat(); 
+                records = [records, r].concat(); 
+                enums = [enums, e].concat(); 
+                aliases = [aliases, a].concat();
+            } else {
+                // TODO: log a message if verbosity is allowed
+                // println!("{path} has been skipped");
+            }
+
         }
     }
 
@@ -96,11 +103,20 @@ pub fn compile_and_run(config: config::Config) -> Result<String> {
         }
     }
 
+    let mut cache: Vec<String> = Vec::new(); 
+    
     for import in imports {
         let path = import.path; 
         let path = path.join("/");
-        let path = format!("./{path}.sml"); 
-        let (f, r, e, a) = compile_file(path.clone())?;
+        let path = format!("{path}.sml"); 
+        // println!("trying: {path}, with cache: {:?}", cache); 
+
+        if cache.contains(&path) == true {
+            continue;
+        }
+
+        cache.push(path.clone());
+        let (f, r, e, a) = compile_file(path.clone(), &mut cache)?;
         // println!("symbols imported from {:?}\nfuncs: {:?}\nrecords: {:?}\n,imports: {:?}", path, f, r, e);
     
         for fx in f.clone().into_iter() {
