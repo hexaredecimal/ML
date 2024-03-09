@@ -1,3 +1,4 @@
+using System::Gui::MenuBar
 type JFrame = "JFrame"
 
 fun window_new(title: String): JFrame => {
@@ -25,6 +26,13 @@ fun window_set_visible(window: JFrame, toggle: Bool): Unit => {
 fun window_add(window: JFrame, child: Any): Unit => {
   java {
     "window.add((Component) child);"
+  }
+  ()
+}
+
+fun window_set_menubar(window: JFrame, menubar: JMenuBar): Unit => {
+  java {
+    "window.setJMenuBar(menubar);"
   }
   ()
 }
