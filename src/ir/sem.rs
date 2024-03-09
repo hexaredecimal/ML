@@ -179,7 +179,8 @@ impl SemNode {
     pub fn analyze(node: RawNode, ctx: &mut SemContext) -> Result<Self> {
         let expr = match node.into_expr() {
             RawExpression::Lambda(_args, _ret, _body) => {
-                todo!()
+                let bd = SemNode::analyze(*_body, ctx)?;
+                SemExpression::Lambda(_args, _ret, Box::new(bd))
             }
             RawExpression::Destructure(dest, e) => {
                 let expr = SemNode::analyze(*e, ctx)?; 
@@ -452,7 +453,10 @@ impl SemNode {
         };
 
         let ty = match &expr {
-            SemExpression::Lambda(_, ret, _) => *ret.clone(), 
+            SemExpression::Lambda(args, ret, _) => {
+                let args: Vec<_> = args.into_iter().map(|f| f.1.clone()).collect();
+                Type::Lambda(ret.clone(), args)
+            }
             SemExpression::Destructure(_, _) => Type::Any,
             SemExpression::SimpleNullCheck(_) => Type::Bool,
             SemExpression::LambdaCall(_, _) => todo!(), 
