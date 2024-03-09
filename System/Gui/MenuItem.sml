@@ -1,4 +1,3 @@
-using System::Gui::Menu
 
 type JMenuItem = "JMenuItem"
 
