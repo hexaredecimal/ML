@@ -6,7 +6,9 @@
 *                   Date: 17-02-2024 
 * *)
 
-fun stdin(): Int => 0
-fun stdout(): Int => 1
-fun stderr(): Int => 2
+type StdFileId = Int
+fun stdin(): StdFileId => 0
+fun stdout(): StdFileId => 1
+fun stderr(): StdFileId => 2
+
 
