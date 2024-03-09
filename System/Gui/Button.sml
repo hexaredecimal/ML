@@ -15,7 +15,7 @@ fun button_set_onclick(btn: JButton, callback: fn(): Unit): Unit => {
     "btn.addActionListener(new ActionListener() {"
     "   @Override"
     "   public void actionPerformed(ActionEvent e) {"
-    "     JOptionPane.showMessageDialog(null, msg);"
+    "     callback.apply();"
     "   }"
     "});"
   }
