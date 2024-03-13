@@ -79,7 +79,7 @@ impl Config {
     }
 
     /// Parse command line arguments and create a config.
-    pub fn parse() -> Self {
+    pub fn parse() -> Box<Self> {
         let mut conf = Config::new();
         let name = conf.clone().parse_name();
         conf.program_name = name;
@@ -158,8 +158,7 @@ impl Config {
                 c.file = arg;
             }
         }
-
-        c
+        Box::new(c)
     }
 
     fn args() -> Vec<String> {

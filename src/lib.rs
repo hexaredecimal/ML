@@ -73,8 +73,8 @@ pub fn compile_file(input: String, cache: &mut Vec<String>) -> Result<(Vec<RawFu
 }
 
 
-pub fn compile_and_run(config: config::Config) -> Result<String> {
-    let program = std::fs::read_to_string(config.file).unwrap();
+pub fn compile_and_run(config: &config::Config) -> Result<String> {
+    let program = std::fs::read_to_string(&config.file).unwrap();
     let toplevels = parse(program.as_str())?;
 
     let mut functions: Vec<RawFunction> = vec![];
@@ -106,134 +106,98 @@ pub fn compile_and_run(config: config::Config) -> Result<String> {
     let mut cache: Vec<String> = Vec::new(); 
     
     for import in imports {
-        let path = import.path; 
-        let path = path.join("/");
+        let path = import.path.join("/");
         let path = format!("{path}.sml"); 
-        // println!("trying: {path}, with cache: {:?}", cache); 
 
         if cache.contains(&path) == true {
             continue;
         }
 
         cache.push(path.clone());
-        let (f, r, e, a) = compile_file(path.clone(), &mut cache)?;
+        let (f, r, e, a) = compile_file(path, &mut cache)?;
         // println!("symbols imported from {:?}\nfuncs: {:?}\nrecords: {:?}\n,imports: {:?}", path, f, r, e);
     
-        for fx in f.clone().into_iter() {
-            let import_func_name = fx.name.clone();
+        for fx in &f {
+            let import_func_name = &fx.name;
             let mut is_found = false; 
-            for func in functions.clone() {
-                let func_name = func.name.clone();
-                if import_func_name == func_name {
+            for func in &functions {
+                let func_name = &func.name;
+                if *import_func_name == *func_name {
                     is_found = true; 
                 }
             }
 
             if !is_found {
-                functions.push(fx); 
+                functions.push(fx.clone()); 
             }
         }
 
 
-        for rec in r.clone().into_iter() {
-            let import_rec_name = rec.name.clone();
+        for rec in &r {
+            let import_rec_name = &rec.name;
             let mut is_found = false; 
-            for record in records.clone() {
-                let rec_name = record.name.clone();
-                if import_rec_name == rec_name {
+            for record in &records {
+                let rec_name = &record.name;
+                if *import_rec_name == *rec_name {
                     is_found = true; 
                 }
             }
 
             if !is_found {
-                records.push(rec); 
+                records.push(rec.clone()); 
             }
         }
 
 
-        for enm in e.clone().into_iter() {
-            let import_enm_name = enm.name.clone();
+        for enm in &e {
+            let import_enm_name = &enm.name;
             let mut is_found = false; 
-            for enmm in enums.clone() {
-                let enum_name = enmm.name.clone();
-                if import_enm_name == enum_name {
+            for enmm in &enums {
+                let enum_name = &enmm.name;
+                if *import_enm_name == *enum_name {
                     is_found = true; 
                 }
             }
 
             if !is_found {
-                enums.push(enm); 
+                enums.push(enm.clone()); 
             }
         }
 
-        for ali in a.clone().into_iter() {
-            let import_ali_name = ali.name.clone();
+        for ali in &a {
+            let import_ali_name = &ali.name;
             let mut is_found = false; 
             for alias in aliases.clone() {
-                let ali_name = alias.name.clone();
-                if import_ali_name == ali_name {
+                let ali_name = &alias.name;
+                if *import_ali_name == *ali_name {
                     is_found = true; 
                 }
             }
 
             if !is_found {
-                aliases.push(ali); 
+                aliases.push(ali.clone()); 
             }
         }
-
-        // functions = [f, functions].concat(); 
-        // records = [records, r].concat(); 
-        // enums = [enums, e].concat(); 
     }
-
 
     let mut uniq = HashSet::new();
-
-/*    fn count_dups(name: String, fxs: Vec<RawFunction>) -> i32 {
-        let mut count = 0; 
-        for fx in fxs.into_iter() {
-            let nm = fx.name.clone(); 
-            if nm == name {
-                count += 1;
-            }
-        }
-        count
-    }
-
-    fn remove_dups(name: String, fxs: &mut Vec<RawFunction>) {
-        let mut all_ones = true;
-        for (i, fx) in fxs.clone().into_iter().enumerate() {
-            let dups = count_dups(name.clone(), fxs.clone());
-            if dups > 1 {
-                all_ones = false; 
-                fxs.remove(i);
-            }
-        }
-
-        if !all_ones {
-            remove_dups(name, fxs);
-        }
-    }*/
-    
-
     if !functions.iter().all(|x| uniq.insert(x.name.clone())) {
         panic!("Duplicate function name");
     }
-
 
     let mut ts: HashMap<String, RecordType> = HashMap::new();
     let mut es: HashMap<String, EnumType> = HashMap::new();
     let mut ali: HashMap<String, Alias> = HashMap::new();
     
-    for record in records.clone() {
+    for record in &records {
         ts.insert(record.name.clone(), record.clone());
     }
 
-    for en in enums.clone() {
+    for en in &enums {
         es.insert(en.name.clone(), en.clone()); 
     }
 
-    for alias in aliases.clone() {
+    for alias in &aliases {
         ali.insert(alias.name.clone(), alias.clone()); 
     }
 
