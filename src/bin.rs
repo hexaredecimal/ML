@@ -72,7 +72,7 @@ fn try_main() -> Result<()> {
         } else {
             println!("process exited with status: {}", output.status);
         }
-
+        fs::remove_file(format!("{out_name}.java")).unwrap();
     }
 
     if conf.ir == false && conf.run {
