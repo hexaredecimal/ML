@@ -8,7 +8,7 @@ use nom::error::VerboseError;
 use nom::multi::separated_list0;
 use nom::sequence::tuple;
 use nom::IResult;
-use nom::bytes::complete::{tag, take_while1, take_until};
+use nom::bytes::complete::{tag, take_until};
 
 
 fn normargument(i: &str) -> IResult<&str, (String, Type), VerboseError<&str>> {
