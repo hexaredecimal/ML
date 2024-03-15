@@ -54,8 +54,8 @@ impl FunctionTranslator {
                             let first = first.join("\n");
 
                             let last = splits.last().unwrap(); 
-                            block.push_str(format!("{}\n", first).as_str()); 
-                            block.push_str(format!("var tmp_{} = {};\n", self.block_count, last).as_str());
+                            block.push_str(&format!("{}\n", first)); 
+                            block.push_str(&format!("var tmp_{} = {};\n", self.block_count, last));
                         }, 
                         _ => {
                             block.push_str(e.as_str())
@@ -75,7 +75,7 @@ impl FunctionTranslator {
 
                 match &last.expr() {
                     SemExpression::Embed(_) => {
-                        block.push_str(e.as_str());
+                        block.push_str(&e);
                         block.push_str(";\n}");
                     }
 
@@ -85,19 +85,19 @@ impl FunctionTranslator {
                         let first = lines.get(0..len - 1).unwrap();
                         let first = first.join("\n");
                         block.push_str("\t");
-                        block.push_str(first.as_str());
+                        block.push_str(&first);
 
                         let last = lines.last().unwrap();
-                        block.push_str(format!("\treturn {};\n{}", last, "}").as_str());
+                        block.push_str(&format!("\treturn {last};\n{}", "}"));
                     }
                     _ => {
                         block.push_str("\treturn ");
-                        block.push_str(e.as_str());
+                        block.push_str(&e);
                         block.push_str(";\n}");
                     }
                 }
                 let header_format = format!("() -> {}", block);
-                let finished_block = format!("Block<{real_ty}> block_{} = {};\n", self.block_count, header_format);
+                let finished_block = format!("Block<{real_ty}> block_{} = {header_format};\n", self.block_count);
 
                 let block_invoker = format!("block_{}.run()", self.block_count);
                 self.block_count += 1;
@@ -157,7 +157,7 @@ impl FunctionTranslator {
                         let rest = self.indent_lines(rest, 1);
                         let expr = format!("{rest}return {last};");
                         let expr = self.indent_lines(expr, 1);
-                        format!("{}\n{}\n{}", "{", expr, "}")
+                        format!("{}\n{expr}\n{}", "{", "}")
                     }
                     _ => self.translate_expr(bd, &mut sc, ctx)?
                 };
@@ -173,7 +173,7 @@ impl FunctionTranslator {
 
                 let mut str = String::new(); 
                 let tmp_name = format!("destruct_tmp_{}", self.block_count + names.len() as i32); 
-                str.push_str(format!("var {tmp_name} = {};\n", expr).as_str());
+                str.push_str(&format!("var {tmp_name} = {expr};\n"));
 
                 match &e.ty() {
                     Type::UserType(x) => {
@@ -183,14 +183,14 @@ impl FunctionTranslator {
                                 let (cond, i) = jit.clone().record_contains_field(&name, &rec.fields); 
                                 if cond == false {
                                     return Err(CompilerError::BackendError(format!(
-                                        "Cannot destructure field with name `{}` from type `{}`",name, e.ty(),
+                                        "Cannot destructure field with name `{name}` from type `{}`", e.ty(),
                                     )));
                                 }
 
                                 let (_name, ty) = rec.fields.get(i).unwrap(); 
                                 scope.insert(name.to_string(), ty.clone());
                                 let line = format!("\tvar {name} = {tmp_name}.{name}();\n"); 
-                                str.push_str(line.as_str()); 
+                                str.push_str(&line); 
                             }
                             Ok(str)
                         } else {
@@ -200,7 +200,7 @@ impl FunctionTranslator {
                         }
                     }
                     Type::EnumType(parent, child) => {
-                        jit.clone().enum_type_exists(parent.clone()).unwrap(); 
+                        jit.clone().enum_type_exists(parent).unwrap(); 
                         let args = self.jit.enums.get(parent).unwrap(); 
                         let found = self.jit.clone().extract_record_type(child, &args.fields).unwrap();
                         
@@ -218,7 +218,7 @@ impl FunctionTranslator {
                                     let (_name, ty) = rec.fields.get(i).unwrap(); 
                                     scope.insert(name.to_string(), ty.clone());
                                     let line = format!("\tvar {name} = {tmp_name}.{name}();\n"); 
-                                    str.push_str(line.as_str()); 
+                                    str.push_str(&line);
                                 }
                                 return Ok(str)
                             }
@@ -237,10 +237,9 @@ impl FunctionTranslator {
                 }
             }
             SemExpression::EnumLiteral(parent, expr) => {
-                let name = parent.clone();
                 let jit = self.jit.clone(); 
-                jit.enum_type_exists(name.clone()).unwrap(); 
-                let args = self.jit.enums.get(&name).unwrap(); 
+                jit.enum_type_exists(parent).unwrap(); 
+                let args = self.jit.enums.get(parent).unwrap(); 
                 let e = match expr.expr() {
                     SemExpression::FunCall(name, args_) => {
                         let _n = name.clone(); 
@@ -282,7 +281,7 @@ impl FunctionTranslator {
                     _ => unreachable!(), 
                 }; 
 
-                Ok(format!("new {}.{}", name, e))
+                Ok(format!("new {parent}.{e}"))
             }
             SemExpression::RecordLiteral(name, args) => {
                 let jit = self.jit.clone();
@@ -439,7 +438,7 @@ impl FunctionTranslator {
 
                 let mut ret = format!("switch ({}) ", c);
                 ret.push_str("{\n");
-                ret.push_str(rest.as_str());
+                ret.push_str(&rest);
                 ret.push_str("\n\t}");
 
                 Ok(ret)
@@ -817,7 +816,7 @@ impl FunctionTranslator {
                     };
                     let a = self.translate_val(name.as_str(), &exprl, &mut sc, real_ty.clone(), ctx)?;
                     s.push_str("\t\t");
-                    s.push_str(a.as_str());
+                    s.push_str(&a);
                 }
 
                 match expr.expr() {
@@ -825,15 +824,15 @@ impl FunctionTranslator {
                         let real_ty = self.jit.clone().real_type(expr.ty(), ctx)?; 
                         let (block, ret) = self.extract_block(expr, &mut sc, real_ty, ctx)?;
 
-                        s.push_str(format!("\t\t{}", block).as_str());
+                        s.push_str(&format!("\t\t{}", block));
                         s.push_str("\t\treturn ");
-                        s.push_str(ret.as_str());
+                        s.push_str(&ret);
                         s.push_str(";\n\t}");
                     }
                     _ => {
                         let e = self.translate_expr(expr, &mut sc, ctx)?; 
                         s.push_str("\t\treturn ");
-                        s.push_str(e.as_str());
+                        s.push_str(&e);
                         s.push_str(";\n\t}");
                     }
                 }; 
@@ -842,8 +841,7 @@ impl FunctionTranslator {
 
                 let h = format!("() -> {}", s);
                 let var = format!("Block<{real_ty}> block_{} = {};\n", self.block_count, h);
-
-                let s = format!("{}\n\tblock_{}.run()", var.as_str(), self.block_count);
+                let s = format!("{var}\n\tblock_{}.run()", self.block_count);
                 self.block_count += 1;
                 Ok(s)
             }
@@ -911,7 +909,7 @@ impl FunctionTranslator {
         let cond = match cond.expr() {
             SemExpression::Block(_) => {
                 let (block, ret) = self.extract_block(cond, scope, cond_ty.to_string(), ctx)?;
-                ret_str.push_str(block.as_str());
+                ret_str.push_str(&block);
                 ret_str.push_str("\n");
                 ret
             },
@@ -921,7 +919,7 @@ impl FunctionTranslator {
         let then = match then.expr() {
             SemExpression::Block(_) => {
                 let (block, ret) = self.extract_block(then, scope, then_ty, ctx)?;
-                ret_str.push_str(block.as_str()); 
+                ret_str.push_str(&block); 
                 ret_str.push_str("\n");
                 ret
             },
@@ -931,7 +929,7 @@ impl FunctionTranslator {
         let alt = match alt.expr() {
             SemExpression::Block(_) => {
                 let (block, ret) = self.extract_block(alt, scope, alt_ty, ctx)?;
-                ret_str.push_str(block.as_str()); 
+                ret_str.push_str(&block); 
                 ret_str.push_str("\n");
                 ret
             },

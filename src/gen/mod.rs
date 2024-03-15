@@ -279,8 +279,8 @@ impl Jit {
         None
     }
 
-    pub fn enum_type_exists(self, ty: String) -> Result<bool> {
-        if !self.enums.contains_key(&ty) {
+    pub fn enum_type_exists(self, ty: &String) -> Result<bool> {
+        if !self.enums.contains_key(ty) {
             Err(CompilerError::BackendError(format!(
                 "Invalid enum type {}",
                 ty
@@ -344,7 +344,7 @@ impl Jit {
             }
             ir::Type::EnumType(name, _arg) => {
                 let jit = self.clone();
-                if jit.enum_type_exists(name.clone()).is_ok() {
+                if jit.enum_type_exists(name).is_ok() {
                     let name = name.clone(); 
                     let arg = _arg.clone(); 
                     let enm = self.enums.get(&name).unwrap();
@@ -390,19 +390,14 @@ impl Jit {
                 let jit = self.clone();
                 if self.clone().record_type_exists(t).is_ok() {
                     Ok(t.clone())
-                } else if jit.clone().enum_type_exists(t.clone()).is_ok() {
+                } else if jit.clone().enum_type_exists(t).is_ok() {
                     Ok(t.clone())
                 } else if jit.aliases.contains_key(t) {
                     let alias = jit.aliases.get(t).unwrap(); 
-                    let ty = alias.value.clone(); 
-                    let ty = self.real_type(&ty, ctx);
+                    let ty = self.real_type(&alias.value, ctx);
                     ty
                 } else {
-                    Err(CompilerError::BackendError(format!(
-                        "Invalid struct/enum/alias type {:?} -> {:?}",
-                        t.clone(), 
-                        jit.aliases.clone()
-                    )))
+                    Err(CompilerError::BackendError(format!("Invalid struct/enum/alias type {t}")))
                 }
             }
             _ => Err(CompilerError::BackendError(format!(
