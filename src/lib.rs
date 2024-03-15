@@ -4,6 +4,8 @@ use gen::Jit;
 use ir::raw::{EnumType, Import, Alias};
 use nom::error::convert_error;
 use std::collections::{HashMap, HashSet};
+use rust_embed::RustEmbed;
+
 
 pub mod config;
 pub mod error;
@@ -11,16 +13,28 @@ mod gen;
 mod ir;
 mod parser;
 
+#[derive(RustEmbed)]
+#[folder = "lib"]
+struct Asset;
 
 pub fn compile_file(input: String, cache: &mut Vec<String>) -> Result<(Vec<RawFunction>, Vec<RecordType>, Vec<EnumType>, Vec<Alias>)> {
-    let program = match std::fs::read_to_string(input.to_string()) {
-        Ok(x) => x, 
-        Err(e) => {
-            return Err(CompilerError::BackendError(format!("failed to import file with path: {}, with reason: {e}", input)));
+    let program = match Asset::get(&input) {
+        Some(data) =>  {
+            let dt = data.clone(); 
+            let dt = dt.data.clone();
+            String::from_utf8(dt.to_vec()).unwrap()
+        }, 
+        None => {
+            match std::fs::read_to_string(input.to_string()) {
+                Ok(x) => x, 
+                Err(e) => {
+                    return Err(CompilerError::BackendError(format!("failed to import file with path: {}, with reason: {e}", input)));
+                }
+            }
         }
     };
     
-    let toplevels = parse(program.as_str())?;
+    let toplevels = parse(&program)?;
 
     let mut functions: Vec<RawFunction> = vec![];
     let mut records: Vec<RecordType> = vec![];

@@ -1,6 +1,6 @@
 use std::{fs, process::Command};
 use std::io::{self, Write};
-
+use rust_embed::RustEmbed;
 use smll_lang::{config::Config, error::Result};
 
 
@@ -29,6 +29,9 @@ fn main() {
         std::process::exit(1);
     }
 }
+#[derive(RustEmbed)]
+#[folder = "sys/"]
+struct Asset;
 
 fn try_main() -> Result<()> {
     let conf = Config::parse();
@@ -36,16 +39,14 @@ fn try_main() -> Result<()> {
         conf.clone().report(format!("no input files provided"));
     }
 
-    let syspath = "./sys/";
-    let conv = format!("{syspath}SystConv.java");
-
-    let convs = fs::read_to_string(conv).expect("failed to real sys file");
+    let data_conv = Asset::get("SystConv.java").unwrap(); 
+    let convs = std::str::from_utf8(data_conv.data.as_ref()).unwrap();
 
     let lambdas = generate_lambdas(20); 
     let head2 = format!("{}\n{}\n\n{}{}\n", IMPORTS, lambdas, convs, HEAD);
     let res = smll_lang::compile_and_run(&conf)?;
     let program = format!("{head2}\n{}", res);
-    let out_name = make_output_file_name(conf.file);
+    let out_name = make_output_file_name(&conf.file);
     if conf.ir {
         println!("{}", res);
     } else {
@@ -125,7 +126,7 @@ fn generate_lambdas(max: i32) -> String {
     format!("{comment}\n{}\n{comment}\n", lambdas.join("\n"))
 }
 
-fn make_output_file_name(file_name: String) -> String {
+fn make_output_file_name(file_name: &String) -> String {
     if file_name.ends_with(".sml") == false {
         println!(
             "Invalid input file. expected a file with `.sml` extension but found `{}`",

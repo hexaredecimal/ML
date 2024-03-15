@@ -122,7 +122,7 @@ impl Config {
                     }
                     "--version" => {
                         c.clone()
-                            .report(format!("{} version 0.5.1", c.program_name.clone()));
+                            .report(format!("{} version 1.0", c.program_name.clone()));
                     }
                     "--help" => {
                         c.clone().report(c.clone().help().to_string());
@@ -187,6 +187,26 @@ usage: {} [options] - <file>
         --verbose               Enables the verbosity of the compiler
         --version               Shows the version of the program
         --help                  Prints this help file
+
+                  ___           ___                                 
+                 /  /\         /__/\                                
+                /  /:/_       |  |::\                               
+               /  /:/ /\      |  |:|:\    ___     ___   ___     ___ 
+              /  /:/ /::\   __|__|:|\:\  /__/\   /  /\ /__/\   /  /\
+             /__/:/ /:/\:\ /__/::::| \:\ \  \:\ /  /:/ \  \:\ /  /:/
+             \  \:\/:/~/:/ \  \:\~~\__\/  \  \:\  /:/   \  \:\  /:/ 
+              \  \::/ /:/   \  \:\         \  \:\/:/     \  \:\/:/  
+               \__\/ /:/     \  \:\         \  \::/       \  \::/   
+                 /__/:/       \  \:\         \__\/         \__\/    
+                 \__\/         \__\/
+
+                                         _            _                             
+     ___ ___ ___ ___ ___ ___ _____ _____|_|___ ___   | |___ ___ ___ _ _ ___ ___ ___ 
+    | . |  _| . | . |  _| .'|     |     | |   | . |  | | .'|   | . | | | .'| . | -_|
+    |  _|_| |___|_  |_| |__,|_|_|_|_|_|_|_|_|_|_  |  |_|__,|_|_|_  |___|__,|_  |___|
+    |_|         |___|                         |___|            |___|       |___|
+
+                    v1.0 - Made with <3 and rust - Gama Sibusiso
 
 "#,
             name.clone(),
