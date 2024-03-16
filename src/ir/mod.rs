@@ -105,17 +105,14 @@ impl BinaryOp {
                         Type::Any,
                     ];
 
-                    match self {
-                        BinaryOp::Add => match (left_operand, right_operand) {
-                            (Type::String, Type::UserType(_)) => ts.push(right_operand.clone()),
-                            (Type::String, Type::EnumType(_, _)) => ts.push(right_operand.clone()), 
-                            (Type::UserType(_), Type::String) => ts.push(left_operand.clone()),
-                            (Type::EnumType(_, _), Type::String) => ts.push(left_operand.clone()),
-                            _ => (),
-                        },
-                        _ => (),
-                    };
 
+                    if self == &BinaryOp::Add { match (left_operand, right_operand) {
+                        (Type::String, Type::YourType(_)) => ts.push(right_operand.clone()),
+                        (Type::String, Type::EnumType(_, _)) => ts.push(right_operand.clone()), 
+                        (Type::YourType(_), Type::String) => ts.push(left_operand.clone()),
+                        (Type::EnumType(_, _), Type::String) => ts.push(left_operand.clone()),
+                        _ => (),
+                    } };
                     ts
                 }
                 BinaryOp::Equal | BinaryOp::NotEqual => {
@@ -197,8 +194,8 @@ pub enum Type {
     Lambda(Box<Type>, Vec<Type>),
     Function(Box<Type>, Vec<(String, Type)>),
     EnumType(String, String),
-    UserType(String), // Tobe looked up in the type table
-    TypeLift(String),
+    YourType(String), // Tobe looked up in the type table
+    Lifter(String),
 }
 
 impl Type {
@@ -230,20 +227,20 @@ impl Type {
                     return Ok(());
 
                 }
-                (Type::UserType(t1), Type::UserType(t2)) => {
+                (Type::YourType(t1), Type::YourType(t2)) => {
                     let (t1, t2) = (t1.clone(), t2.clone());
                     if t2 != t1 {
                         return Err(CompilerError::UserTypeConflict(t1, t2));
                     }
                     return Ok(());
                 }
-                (Type::UserType(user_name), Type::EnumType(parent, _child)) => {
+                (Type::YourType(user_name), Type::EnumType(parent, _child)) => {
                     if user_name != parent {
                         return Err(CompilerError::TypeConflict(self.clone(), other.clone()));
                     }
                     return Ok(());
                 }
-                (Type::EnumType(parent, _), Type::UserType(_parent)) => {
+                (Type::EnumType(parent, _), Type::YourType(_parent)) => {
                     if parent == _parent {
                         return Ok(());
                     } else {
@@ -258,7 +255,7 @@ impl Type {
                     }
                 }
                 (Type::String, Type::EnumType(_, _)) => return Ok(()), 
-                (Type::String, Type::UserType(_)) => return Ok(()),
+                (Type::String, Type::YourType(_)) => return Ok(()),
                 (
                     Type::Float
                     | Type::Int
@@ -271,7 +268,7 @@ impl Type {
                     | Type::Int128
                     | Type::Unit
                     | Type::Bool,
-                    Type::UserType(tname)
+                    Type::YourType(tname)
                 ) => {
                     if ctx.aliases.contains_key(tname) {
                         let alias = ctx.aliases.get(tname).unwrap();
@@ -281,7 +278,7 @@ impl Type {
                     } 
                     return Err(CompilerError::TypeConflict(self.clone(), other.clone())); 
                 }
-                (Type::UserType(tname), Type::Unit) => {
+                (Type::YourType(tname), Type::Unit) => {
                     if ctx.aliases.contains_key(tname) {
                         let alias = ctx.aliases.get(tname).unwrap();
                         let ty = alias.value.clone(); 
@@ -328,11 +325,11 @@ impl std::fmt::Display for Type {
             "{}",
             match self {
                 Type::Lambda(_ret, args) => {
-                    let args: Vec<_> = args.into_iter().map(|f| format!("{f}")).collect(); 
-                    format!("{}", args.join(","))
+                    let args: Vec<_> = args.iter().map(|f| format!("{f}")).collect(); 
+                    args.join(",")
                 }
                 Type::EnumType(name, p) => format!("{}.{}", name, p), 
-                Type::UserType(s) => s.clone(),
+                Type::YourType(s) => s.clone(),
                 Type::VarArgs => "...".to_string(),
                 Type::Unit => "()".to_string(),
                 Type::Usize => "usize".to_string(),
@@ -350,7 +347,7 @@ impl std::fmt::Display for Type {
                 Type::Bool => "Bool".to_string(),
                 Type::Float => "Float".to_string(),
                 Type::Array(len, ty) => format!("[{};{}]", ty, len),
-                Type::TypeLift(ty) => format!("{ty}"),
+                Type::Lifter(ty) => ty.to_owned(),
                 Type::Function(ret, args) => format!(
                     "fun ({}): {}",
                     args.iter()

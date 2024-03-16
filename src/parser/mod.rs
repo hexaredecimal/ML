@@ -41,6 +41,6 @@ pub fn comments_ommited(i: &str) -> IResult<&str, String, VerboseError<&str>> {
 }
 
 pub fn program(i: &str) -> IResult<&str, Vec<TopLevel>, VerboseError<&str>> {
-    let (i, (_, funs, _)) = all_consuming(tuple((sp, separated_list0(sp, top_levels), sp)))(&i)?;
+    let (i, (_, funs, _)) = all_consuming(tuple((sp, separated_list0(sp, top_levels), sp)))(i)?;
     Ok((i, funs))
 }
