@@ -152,8 +152,6 @@ impl Config {
                     c.import_paths.push(arg);
                     c = c.clone();
                 }
-            } else if collect_file {
-                c.file = arg;
             } else {
                 c.file = arg;
             }
@@ -167,7 +165,7 @@ impl Config {
 
     fn parse_name(self) -> String {
         let name = self.args.first().unwrap().clone();
-        let names_split: Vec<&str> = name.split("/").collect();
+        let names_split: Vec<&str> = name.split('/').collect();
         let names_split = names_split.to_vec();
         names_split.last().unwrap().to_string()
     }

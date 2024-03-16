@@ -42,13 +42,13 @@ impl FunctionTranslator {
 
                 let mut block = String::from("{\n");
 
-                for val in rest.into_iter() {
+                for val in rest.iter() {
                     let v = val.clone();
                     let e = self.translate_expr(&v, scope, ctx)?;
-                    block.push_str("\t");
+                    block.push('\t');
                     match &val.expr() {
                         SemExpression::Conditional(_, _, _) => {
-                            let splits: Vec<_> = e.split("\n").collect();
+                            let splits: Vec<_> = e.split('\n').collect();
                             let len = splits.len(); 
                             let first = splits.get(0 .. len -1).unwrap(); 
                             let first = first.join("\n");
@@ -63,7 +63,7 @@ impl FunctionTranslator {
                     }
 
                     match &val.expr() {
-                        SemExpression::Embed(_) => block.push_str("\n"),
+                        SemExpression::Embed(_) => block.push('\n'),
                         SemExpression::Val(_, _) => (),
                         SemExpression::Lets(_, _) => block.push_str(";\n"),
                         _ => block.push_str(";\n"),
@@ -80,11 +80,11 @@ impl FunctionTranslator {
                     }
 
                     SemExpression::Lets(_, _) => {
-                        let lines: Vec<_> = e.split("\n").collect();
+                        let lines: Vec<_> = e.split('\n').collect();
                         let len = lines.len();
                         let first = lines.get(0..len - 1).unwrap();
                         let first = first.join("\n");
-                        block.push_str("\t");
+                        block.push('\t');
                         block.push_str(&first);
 
                         let last = lines.last().unwrap();
@@ -108,7 +108,7 @@ impl FunctionTranslator {
     }
 
     pub fn indent_lines(&self, lines: String, depth: i32) -> String {
-        let rest: Vec<_> = lines.split("\n").collect();
+        let rest: Vec<_> = lines.split('\n').collect();
         let tag = "\t".repeat(depth as usize); 
         let rest: Vec<_> = rest.into_iter().map(|f| format!("{tag}{f}")).collect(); 
         rest.join("\n")
@@ -142,7 +142,7 @@ impl FunctionTranslator {
                 }
 
                 let mut args_list: Vec<String> = vec![]; 
-                for arg in args.into_iter() {
+                for arg in args.iter() {
                     let (name, ty) = arg.clone(); 
                     let real_ty = self.jit.clone().real_type(&ty, ctx)?;
                     args_list.push(format!("{real_ty} {name}")); 
@@ -179,9 +179,9 @@ impl FunctionTranslator {
                     Type::YourType(x) => {
                         if records.contains_key(x) {
                             let rec = records.get(x).unwrap();
-                            for name in names.into_iter() {
-                                let (cond, i) = jit.clone().record_contains_field(&name, &rec.fields); 
-                                if cond == false {
+                            for name in names.iter() {
+                                let (cond, i) = jit.clone().record_contains_field(name, &rec.fields); 
+                                if !cond {
                                     return Err(CompilerError::BackendError(format!(
                                         "Cannot destructure field with name `{name}` from type `{}`", e.ty(),
                                     )));
@@ -194,9 +194,9 @@ impl FunctionTranslator {
                             }
                             Ok(str)
                         } else {
-                            return Err(CompilerError::BackendError(format!(
+                            Err(CompilerError::BackendError(format!(
                                 "Cannot destructure expression of type {}", e.ty(),
-                            )));
+                            )))
                         }
                     }
                     Type::EnumType(parent, child) => {
@@ -209,7 +209,7 @@ impl FunctionTranslator {
                                 let rec = r.clone(); 
                                 for name in names {
                                     let (cond, i) = jit.clone().record_contains_field(name, &rec.fields); 
-                                    if cond == false {
+                                    if !cond {
                                         return Err(CompilerError::BackendError(format!(
                                             "Cannot destructure field with name `{}` from type `{}`",name, e.ty(),
                                         )));
@@ -220,19 +220,19 @@ impl FunctionTranslator {
                                     let line = format!("\tvar {name} = {tmp_name}.{name}();\n"); 
                                     str.push_str(&line);
                                 }
-                                return Ok(str)
+                                Ok(str)
                             }
                             EnumField::Id(_) => {
-                                return Err(CompilerError::BackendError(format!(
+                                Err(CompilerError::BackendError(format!(
                                     "Cannot destructure expression of type {} because it has no fields", e.ty(),
-                                )));
+                                )))
                             }
-                        }; 
+                        }
                     }
                     _ => {
-                        return Err(CompilerError::BackendError(format!(
+                        Err(CompilerError::BackendError(format!(
                             "Cannot destructure expression of type {}", e.ty(),
-                        )));
+                        )))
                     }
                 }
             }
@@ -256,14 +256,14 @@ impl FunctionTranslator {
                             return Err(CompilerError::BackendError(format!(
                                 "Invalid number of initializer values when initializing enum value of `{}` in type `{}`, expected {} but found {}",
                                 name,
-                                parent.to_string(), 
+                                parent, 
                                 args_.len(),
                                 len
                             )));
                         }
 
                         let mut args: Vec<_> = vec![]; 
-                        for (i, arg) in args_.into_iter().enumerate() {
+                        for (i, arg) in args_.iter().enumerate() {
                             let expected_ty = fields.get(i).unwrap();
                             let (_, expected_ty) = expected_ty;
                             expected_ty.assert_eq(arg.ty(), ctx)?; 
@@ -298,7 +298,7 @@ impl FunctionTranslator {
                     )));
                 }
 
-                for (i, (arg_name, arg_expr)) in args.into_iter().enumerate() {
+                for (i, (arg_name, arg_expr)) in args.iter().enumerate() {
                     let (indexed_name, indexed_expr) = &record.fields.get(i).unwrap();
                     if *arg_name != *indexed_name {
                         return Err(CompilerError::BackendError(format!(
@@ -310,11 +310,11 @@ impl FunctionTranslator {
                 }
 
                 let args: Vec<String> = args
-                    .into_iter()
+                    .iter()
                     .map(|f| {
                         let (_, e) = f;
-                        let e = self.translate_expr(e, scope, ctx).unwrap();
-                        e
+                        
+                        self.translate_expr(e, scope, ctx).unwrap()
                     })
                     .collect();
                 let args = args.join(",");
@@ -322,7 +322,7 @@ impl FunctionTranslator {
             }
             SemExpression::Embed(x) => {
                 let e = self.translate_expr(x, scope, ctx)?;
-                let e: Vec<_> = e.split("\n").collect();
+                let e: Vec<_> = e.split('\n').collect();
                 let e: Vec<_> = e.into_iter().map(|f| f.to_string()).collect();
                 let e = e.join("\n");
                 let len = e.len();
@@ -330,11 +330,11 @@ impl FunctionTranslator {
                 Ok(e.to_string())
             }
             SemExpression::String(x) => Ok(format!("\"{x}\"")),
-            SemExpression::Unit => Ok(format!("Void.Unit")),
-            SemExpression::Null(_) => Ok(format!("null")),
+            SemExpression::Unit => Ok("Void.Unit".to_string()),
+            SemExpression::Null(_) => Ok("null".to_string()),
             SemExpression::Cast(expr, ty) => {
                 let is_sys_type = self.jit.clone().is_sys_type(ty);
-                let real_ty = self.jit.clone().real_type(&ty, ctx)?;
+                let real_ty = self.jit.clone().real_type(ty, ctx)?;
                 let e = self.translate_expr(expr, scope, ctx)?;
 
                 let cast = if is_sys_type {
@@ -432,7 +432,7 @@ impl FunctionTranslator {
                     .collect();
 
                 let (_, bo) = cases.last().unwrap();
-                let e = self.translate_expr(&bo, scope, ctx)?;
+                let e = self.translate_expr(bo, scope, ctx)?;
                 rest.push(format!("\t\tdefault -> {};", e));
                 let rest = rest.join("\n");
 
@@ -784,7 +784,7 @@ impl FunctionTranslator {
 
                 let ty = self.jit.clone().real_type(elem_ty, ctx)?;
                 let arr: Vec<String> = elems
-                    .into_iter()
+                    .iter()
                     .map(|f| self.translate_expr(f, scope, ctx).unwrap())
                     .collect();
 
@@ -872,17 +872,15 @@ impl FunctionTranslator {
                     Type::Int128 => Ok(format!("({}){}", real_ty, *val)),
                     _ => unreachable!(),
                 };
-                Ok(format!("{}", ty?))
+                Ok((ty?).to_string())
             }
 
             SemExpression::Decimal(val, t) => {
-                let ty = match *t.clone() {
+                match *t.clone() {
                     Type::Float => Ok(format!("{}", *val)),
                     Type::Double => Ok(format!("{}", *val)),
                     _ => unreachable!(),
-                };
-
-                ty
+                }
             }
         }
     }
