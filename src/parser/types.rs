@@ -114,7 +114,7 @@ fn user_type(i: &str) -> IResult<&str, Type, VerboseError<&str>> {
     let (i, t) = tuple((identifier,))(i)?;
     let (t,) = t;
 
-    Ok((i, Type::UserType(t.to_string())))
+    Ok((i, Type::YourType(t.to_string())))
 }
 
 fn enum_type(i: &str) -> IResult<&str, Type, VerboseError<&str>> {

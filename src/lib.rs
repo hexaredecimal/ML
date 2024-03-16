@@ -16,8 +16,8 @@ mod parser;
 #[derive(RustEmbed)]
 #[folder = "lib"]
 struct Asset;
-
-pub fn compile_file(input: String, cache: &mut Vec<String>) -> Result<(Vec<RawFunction>, Vec<RecordType>, Vec<EnumType>, Vec<Alias>)> {
+type CompilationUnit = (Vec<RawFunction>, Vec<RecordType>, Vec<EnumType>, Vec<Alias>);
+pub fn compile_file(input: String, cache: &mut Vec<String>) -> Result<CompilationUnit> {
     let program = match Asset::get(&input) {
         Some(data) =>  {
             let dt = data.clone(); 
@@ -25,7 +25,7 @@ pub fn compile_file(input: String, cache: &mut Vec<String>) -> Result<(Vec<RawFu
             String::from_utf8(dt.to_vec()).unwrap()
         }, 
         None => {
-            match std::fs::read_to_string(input.to_string()) {
+            match std::fs::read_to_string(&input) {
                 Ok(x) => x, 
                 Err(e) => {
                     return Err(CompilerError::BackendError(format!("failed to import file with path: {}, with reason: {e}", input)));
@@ -62,13 +62,13 @@ pub fn compile_file(input: String, cache: &mut Vec<String>) -> Result<(Vec<RawFu
         }
     }
 
-    if imports.len() > 0 {
+    if !imports.is_empty() {
         for import in imports {
             let path = import.path.clone(); 
             let path = path.join("/");
             let path = format!("{path}.sml");
 
-            if cache.contains(&path) == false {
+            if cache.contains(&path) {
                 cache.push(path.clone());
                 let (f, r, e, a) = compile_file(path, cache)?;
                 functions = [functions, f].concat(); 
@@ -123,7 +123,7 @@ pub fn compile_and_run(config: &config::Config) -> Result<String> {
         let path = import.path.join("/");
         let path = format!("{path}.sml"); 
 
-        if cache.contains(&path) == true {
+        if cache.contains(&path) {
             continue;
         }
 
@@ -239,7 +239,7 @@ pub fn compile_and_run(config: &config::Config) -> Result<String> {
 }
 
 fn parse(text: &str) -> Result<Vec<TopLevel>> {
-    let (_, text) = match parser::comments_ommited(&text) {
+    let (_, text) = match parser::comments_ommited(text) {
         Ok(res) => res,
         Err(nom::Err::Incomplete(n)) => {
             return Err(CompilerError::Syntax(format!(

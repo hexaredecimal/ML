@@ -85,7 +85,7 @@ impl Config {
         conf.program_name = name;
         let len = conf.args.len();
         if len == 1 {
-            conf.clone().report("no input file provided".to_string());
+            conf.clone().report("no input file provided");
         }
 
         let mut c = conf.clone();
@@ -122,10 +122,10 @@ impl Config {
                     }
                     "--version" => {
                         c.clone()
-                            .report(format!("{} version 1.0", c.program_name.clone()));
+                            .report(&format!("{} version 1.0", c.program_name.clone()));
                     }
                     "--help" => {
-                        c.clone().report(c.clone().help().to_string());
+                        c.clone().report(&c.clone().help());
                     }
                     "--init" => {
                         c.clone().init();
@@ -136,7 +136,7 @@ impl Config {
                     }
                     d => {
                         c.clone()
-                            .report(format!("invalid argument `{}` provided", d));
+                            .report(&format!("invalid argument `{}` provided", d));
                     }
                 }
             } else if arg.as_str() == "-" {
@@ -217,7 +217,7 @@ usage: {} [options] - <file>
     }
 
     /// report a Config error
-    pub fn report(self, message: String) {
+    pub fn report(self, message: &str) {
         println!("{}", message);
         std::process::exit(1);
     }

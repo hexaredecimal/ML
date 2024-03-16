@@ -4,7 +4,7 @@ use rust_embed::RustEmbed;
 use smll_lang::{config::Config, error::Result};
 
 
-static HEAD: &'static str = r#"
+static HEAD: &str = r#"
 interface Block<T> {
     T run(); 
 }
@@ -14,7 +14,7 @@ enum Void {
 }
 "#;
 
-static IMPORTS: &'static str = 
+static IMPORTS: &str = 
 r#"
 import java.io.*;
 import java.util.*;
@@ -35,8 +35,8 @@ struct Asset;
 
 fn try_main() -> Result<()> {
     let conf = Config::parse();
-    if conf.file == "".to_string() {
-        conf.clone().report(format!("no input files provided"));
+    if conf.file.is_empty() {
+        conf.clone().report("no input files provided");
     }
 
     let data_conv = Asset::get("SystConv.java").unwrap(); 
@@ -62,7 +62,7 @@ fn try_main() -> Result<()> {
 
         let output = cmd
             .output()
-            .expect(format!("failed to execute command {:?}", cmd).as_str());
+            .unwrap_or_else(|_| panic!("failed to execute command {:?}", cmd));
 
         let status = output.status.code().unwrap(); 
 
@@ -76,17 +76,17 @@ fn try_main() -> Result<()> {
         fs::remove_file(format!("{out_name}.java")).unwrap();
     }
 
-    if conf.ir == false && conf.run {
+    if !conf.ir && conf.run {
         let mut cmd = Command::new("java"); 
         let cmd = cmd
             .arg("--enable-preview")
             .arg("-classpath")
             .arg("./build")
-            .arg(format!("{}", out_name));
+            .arg(out_name);
 
         let output = cmd
             .output()
-            .expect(format!("failed to execute command {:?}", cmd).as_str());
+            .unwrap_or_else(|_| panic!("failed to execute command {:?}", cmd));
 
         let _status = output.status.code().unwrap(); 
 
@@ -113,8 +113,8 @@ fn generate_lambdas(max: i32) -> String {
         let input_generics = vs.join(", "); 
         let method_generics = vy.join(", "); 
 
-        let generics = format!("{ret}{}", if vs.len() >= 1 { format!(", {input_generics}") } else { "".to_string() }); 
-        let method_generics = if vy.len() >= 1 { format!("{method_generics}") } else { "".to_string() }; 
+        let generics = format!("{ret}{}", if !vs.is_empty() { format!(", {input_generics}") } else { "".to_string() }); 
+        let method_generics = if !vy.is_empty() { method_generics } else { "".to_string() }; 
 
         let method = format!("\t{ret} apply({method_generics});");
         let interface = format!("interface Lambda_{} <{generics}> {}\n{}\n{}", i, "{", method, "}");
@@ -127,7 +127,7 @@ fn generate_lambdas(max: i32) -> String {
 }
 
 fn make_output_file_name(file_name: &String) -> String {
-    if file_name.ends_with(".sml") == false {
+    if !file_name.ends_with(".sml") {
         println!(
             "Invalid input file. expected a file with `.sml` extension but found `{}`",
             file_name
@@ -142,7 +142,7 @@ fn make_output_file_name(file_name: &String) -> String {
     let out_file = out_file.to_lowercase();
 
 
-    let splits: Vec<_> = out_file.split("/").collect();
+    let splits: Vec<_> = out_file.split('/').collect();
 
     let name = if splits.len() > 1 {
         splits.last().unwrap().to_string()
@@ -156,5 +156,5 @@ fn make_output_file_name(file_name: &String) -> String {
     let rest = name.get(1..len).unwrap();
     first.push_str(rest);
 
-    format!("{}", first)
+    first
 }

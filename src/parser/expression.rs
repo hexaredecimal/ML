@@ -16,7 +16,7 @@ fn int_literal(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
         many0(tuple((sp, tag("of"), sp, type_literal))),
     ))(i)?;
 
-    let ty = if ty.len() == 0 {
+    let ty = if ty.is_empty() {
         Type::Int
     } else {
         let c = ty.first().unwrap();
@@ -38,7 +38,7 @@ fn float_literal(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
         many0(tuple((sp, tag("of"), sp, type_literal))),
     ))(i)?;
 
-    let ty = if conv.len() == 0 {
+    let ty = if conv.is_empty() {
         Type::Double
     } else {
         let c = conv.first().unwrap();
@@ -84,7 +84,7 @@ fn array_literal(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
 fn null_of(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     let (i, (_, t)) = tuple((tag("null"), many0(tuple((sp, tag("of"), sp, type_literal)))))(i)?;
     
-    let ty = if t.len() == 0 {
+    let ty = if t.is_empty() {
         Box::new(Type::Any)
     } else {
         let (_, _, _, last) = t.first().unwrap(); 
@@ -105,7 +105,7 @@ fn str_literal(_i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     let (i, (_, c, _)) = tuple((tag("\""), take_until("\""), tag("\"")))(_i)?;
 
     let c = c.to_string(); 
-    let c = c.replace("\n", "\\n"); 
+    let c = c.replace('\n', "\\n"); 
     Ok((i, RawNode::new(RawExpression::String(c.to_string()))))
 }
 
@@ -484,16 +484,16 @@ fn val_expr(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
 
     match ids {
         TempExpr::Id(id) => {
-            return Ok((
+            Ok((
                 i,
                 RawNode::new(RawExpression::Val(id.to_string(), Box::new(val))),
-            )); 
+            )) 
         }
         TempExpr::Ids(v) => {
-            return Ok((
+            Ok((
                 i, 
                 RawNode::new(RawExpression::Destructure(v.clone(), Box::new(val))),
-            )); 
+            )) 
         }
     }
 }
@@ -656,23 +656,19 @@ pub fn expression_null_check(i: &str) -> IResult<&str, RawNode, VerboseError<&st
     ))(i)?;
 
 
-    if a.len() == 0 {
+    if a.is_empty() {
         return Ok((i, e));
     }
 
-
-    let t = a.last().unwrap();
-    let e = match t {
-        (_, _, t) => {
-            if t.len() == 0 {
-                RawExpression::SimpleNullCheck(Box::new(e))
-            } else {
-                let ty = t.last().unwrap();
-                let ty = ty.clone();
-                RawExpression::NullCheck(Box::new(e), Box::new(ty))
-            }
-        }
+    let (_, _, t) = a.last().unwrap();
+    let e = if t.is_empty() {
+        RawExpression::SimpleNullCheck(Box::new(e))
+    } else {
+        let ty = t.last().unwrap();
+        let ty = ty.clone();
+        RawExpression::NullCheck(Box::new(e), Box::new(ty))
     };
+
 
     Ok((i, RawNode::new(e)))
 }
@@ -683,7 +679,7 @@ pub fn expression(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
         many0(tuple((sp, tag("as"), sp, type_literal))),
     ))(i)?;
 
-    if a.len() == 0 {
+    if a.is_empty() {
         return Ok((i, e));
     }
 

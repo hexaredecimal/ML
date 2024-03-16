@@ -26,13 +26,13 @@ impl Jit {
     }
 
 
-    fn record_contains_field(self, name: &String, rec: &Vec<(String, Type)>) -> (bool, usize) {
-        for (i, (n, _)) in rec.into_iter().enumerate() {
+    fn record_contains_field(self, name: &String, rec: &[(String, Type)]) -> (bool, usize) {
+        for (i, (n, _)) in rec.iter().enumerate() {
             if *n == *name {
                 return (true, i)
             }
         }
-        (false, 1 as usize)
+        (false, 1_usize)
     }
 
 
@@ -93,7 +93,7 @@ impl Jit {
         for fun in funcs {
             let a = self.translate_function(fun, ctx)?;
             s.push_str(a.as_str());
-            s.push_str("\n");
+            s.push('\n');
         }
         Ok(s.clone())
     }
@@ -105,11 +105,11 @@ impl Jit {
 
         let args: Vec<Result<String>> = func
             .args()
-            .into_iter()
+            .iter()
             .enumerate()
             .map(|(i, f)| {
                 let (name, ty) = f;
-                let ty = match ty {
+                match ty {
                     ir::Type::VarArgs => {
                         if i < len - 1 {
                             let e: Result<CompilerError> =
@@ -120,14 +120,13 @@ impl Jit {
                             println!("{:?}", e);
                             std::process::exit(1);
                         }
-                        Ok(format!("Object ...var_args"))
+                        Ok("Object ...var_args".to_owned())
                     }
                     _ => {
                         let ty = self.clone().real_type(ty, ctx).unwrap();
                         Ok(format!("{} {}", ty, name))
                     }
-                };
-                ty
+                }
             })
             .collect();
 
@@ -146,7 +145,7 @@ impl Jit {
         // declare function block level variables
         let mut variables: HashMap<String, Type> = HashMap::new();
         for (name, _ty) in func.args().iter() {
-            let name = if name.is_empty() || name == "" {
+            let name = if name.is_empty() {
                 "var_args".to_string()
             } else {
                 name.clone()
@@ -169,12 +168,12 @@ impl Jit {
 
         s.push_str("// Variables \n");
         s.push_str(trans.vars.as_str());
-        s.push_str("\n");
+        s.push('\n');
         // Patch all collected lamda blocks
 
         s.push_str("// Block patching area\n");
         s.push_str(trans.blocks.as_str());
-        s.push_str("\n");
+        s.push('\n');
 
         if name == "main" {
             let return_value = match ret_type.as_str() {
@@ -182,14 +181,14 @@ impl Jit {
                     match root.expr() {
                         SemExpression::Block(_) => {
                             let sq = return_value.clone();
-                            let sq: Vec<_> = sq.split("\n").collect();
+                            let sq: Vec<_> = sq.split('\n').collect();
                             let len = sq.len();
 
                             let mut p = String::new(); 
                             let rest = sq.get(0..len - 1).unwrap();
                             for st in rest {
-                                p.push_str(*st);
-                                p.push_str("\n");
+                                p.push_str(st);
+                                p.push('\n');
                             }
 
                             let last = sq.last().unwrap();
@@ -212,24 +211,24 @@ impl Jit {
                 SemExpression::Block(_) => {
 
                     let sq = return_value.clone();
-                    let sq: Vec<_> = sq.split("\n").collect();
+                    let sq: Vec<_> = sq.split('\n').collect();
                     let len = sq.len();
 
                     let rest = sq.get(0..len - 1).unwrap();
                     for st in rest {
-                        s.push_str(*st);
-                        s.push_str("\n");
+                        s.push_str(st);
+                        s.push('\n');
                     }
 
                     let last = sq.last().unwrap();
                     s.push_str("return ");
                     s.push_str(last);
-                    s.push_str(";");
+                    s.push(';');
                 }
                 _ => {
                     s.push_str("return ");
                     s.push_str(return_value.as_str());
-                    s.push_str(";");
+                    s.push(';');
                 }
             }
         }
@@ -237,7 +236,7 @@ impl Jit {
         Ok(s)
     }
 
-    pub fn is_sys_type(self, ty: &ir::Type) -> bool {
+    pub fn is_sys_type(&self, ty: &ir::Type) -> bool {
         match ty {
             ir::Type::Any => true,
             ir::Type::Unit => true,
@@ -260,8 +259,8 @@ impl Jit {
         }
     }
 
-    pub fn extract_record_type(self, name: &String, ty: &Vec<EnumField>) -> Option<EnumField> {
-        for t in ty.clone() {
+    pub fn extract_record_type(self, name: &String, ty: &[EnumField]) -> Option<EnumField> {
+        for t in ty {
             match t.clone() {
                 EnumField::Rec(rec) => {
                     if rec.name == *name {
@@ -301,12 +300,12 @@ impl Jit {
         }
     }
 
-    pub fn real_type(self, ty: &ir::Type, ctx: &mut SemContext) -> Result<String> {
+    pub fn real_type(self, ty: &ir::Type, _ctx: &mut SemContext) -> Result<String> {
         match ty {
             ir::Type::Lambda(_ret, args) => {
                 let len = args.len(); 
-                let ret = self.clone().real_type(_ret, ctx)?; 
-                let args: Vec<_> = args.into_iter().map(|f| self.clone().real_type(f, ctx).unwrap()).collect();
+                let ret = self.clone().real_type(_ret, _ctx)?; 
+                let args: Vec<_> = args.iter().map(|f| self.clone().real_type(f, _ctx).unwrap()).collect();
                 let args = if len == 0 {
                     "".to_string()
                 } else {
@@ -324,7 +323,7 @@ impl Jit {
             ir::Type::Bool => Ok("Boolean".to_string()),
             ir::Type::Float => Ok("Float".to_string()),
             ir::Type::Double => Ok("Double".to_string()),
-            ir::Type::TypeLift(inner) => Ok(inner.clone()),
+            ir::Type::Lifter(inner) => Ok(inner.clone()),
             /*
             ir::Type::Int8 => Ok("i8".to_string()),
             ir::Type::Int16 => Ok("i16".to_string()),
@@ -333,13 +332,13 @@ impl Jit {
             ir::Type::Int128 => Ok("i128".to_string()), */
             ir::Type::Array(_num, _inner) => {
                 let inner = *_inner.clone();
-                let t = self.real_type(&inner, ctx)?;
-                let e:String = String::from(_num.to_string());
+                let t = self.real_type(&inner, _ctx)?;
+                let e:String = _num.to_string();
                 Ok(format!("{}[{}]", t, if *_num == 0 { "".to_string() } else { e }))
             }
             ir::Type::List(_inner) => {
                 let inner = *_inner.clone();
-                let t = self.real_type(&inner, ctx)?;
+                let t = self.real_type(&inner, _ctx)?;
                 Ok(format!("{}[]", t))
             }
             ir::Type::EnumType(name, _arg) => {
@@ -373,7 +372,7 @@ impl Jit {
                         }
                     }
 
-                    if found == false {
+                    if !found {
                         return Err(CompilerError::BackendError(format!(
                             "Invalid enum field lookup for field `{}`, in enum type {}",
                             _arg, 
@@ -383,19 +382,16 @@ impl Jit {
                     
                     Ok(format!("{}.{}", name, _arg))
                 } else {
-                    return Err(CompilerError::BackendError(format!("{} is not an enum", name))); 
+                    Err(CompilerError::BackendError(format!("{} is not an enum", name))) 
                 }
             }
-            ir::Type::UserType(t) => {
+            ir::Type::YourType(t) => {
                 let jit = self.clone();
-                if self.clone().record_type_exists(t).is_ok() {
-                    Ok(t.clone())
-                } else if jit.clone().enum_type_exists(t).is_ok() {
+                if self.clone().record_type_exists(t).is_ok() || self.clone().enum_type_exists(t).is_ok()  {
                     Ok(t.clone())
                 } else if jit.aliases.contains_key(t) {
                     let alias = jit.aliases.get(t).unwrap(); 
-                    let ty = self.real_type(&alias.value, ctx);
-                    ty
+                    self.real_type(&alias.value, _ctx)
                 } else {
                     Err(CompilerError::BackendError(format!("Invalid struct/enum/alias type {t}")))
                 }

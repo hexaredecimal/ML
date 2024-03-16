@@ -53,10 +53,10 @@ impl SemFunction {
 
         ctx.append_new_vars(args.iter().cloned());
         let root = SemNode::analyze(fun.root, ctx)?;
-        (&*root.ty()).assert_eq(&*ret, ctx)?;
+        root.ty().assert_eq(&ret, ctx)?;
         let ty = Type::Function(ret.clone(), arg_types);
 
-        if fun.name == "main".to_string() && *ret.clone() != Type::Unit {
+        if fun.name == "main" && *ret.clone() != Type::Unit {
             return Err(CompilerError::BackendError("entry point main must return a unit type".to_string()));
         }
 
@@ -171,9 +171,7 @@ impl SemNode {
                 }
             }
         }
-        return Err(CompilerError::BackendError(
-            format!("Invalid enum field lookup for field `{}`", name)
-        ));
+        Err(CompilerError::BackendError(format!("Invalid enum field lookup for field `{}`", name)))
     }
 
     pub fn analyze(node: RawNode, ctx: &mut SemContext) -> Result<Self> {
@@ -194,7 +192,7 @@ impl SemNode {
                 let records = ctx.records.clone();
                 let record_name = parent.clone(); 
 
-                if records.contains_key(&record_name) == false {
+                if !records.contains_key(&record_name) {
                     return Err(CompilerError::BackendError(
                         format!("Invalid struct expression, `{}` is not a record type", parent)
                     ));
@@ -238,7 +236,7 @@ impl SemNode {
                 let enums = ctx.enums.clone(); 
 
                 let enum_name = parent.clone(); 
-                if enums.contains_key(&enum_name) == false {
+                if !enums.contains_key(&enum_name) {
                     return Err(CompilerError::BackendError(
                         format!("Invalid enum expression, `{}` is not an enum type", parent)
                     ));
@@ -247,7 +245,7 @@ impl SemNode {
                 match child.expr() {
                     RawExpression::FunCall(name, args) => {
                         let mut arguments: Vec<SemNode> = Vec::new();  
-                        for arg in args.into_iter() {
+                        for arg in args.iter() {
                             let e = SemNode::analyze(arg.clone(), ctx)?; 
                             arguments.push(e); 
                         }
@@ -298,7 +296,7 @@ impl SemNode {
                             _ => false
                         }; 
 
-                        if is_else == false {
+                        if !is_else {
                             return Err(CompilerError::BackendError("expected last case to be the default case in match expression".to_string()));
                         } else {
                             let d = SemNode::analyze(b, ctx).unwrap();
@@ -312,7 +310,7 @@ impl SemNode {
                             RawExpression::EnumLiteral(parent, child) => {
                                 let enums = ctx.enums.clone(); 
 
-                                if enums.contains_key(parent) == false {
+                                if enums.contains_key(parent) {
                                     return Err(CompilerError::BackendError(
                                         format!("Invalid enum expression, `{}` is not an enum type", parent)
                                     ));
@@ -337,7 +335,7 @@ impl SemNode {
                                                 }
 
                                                 let mut _args: Vec<SemNode> = Vec::new(); 
-                                                for (node, f) in args.into_iter().zip(record.fields) {
+                                                for (node, f) in args.iter().zip(record.fields) {
                                                     let RawExpression::Id(n) = node.expr() else {
                                                         return Err(CompilerError::BackendError(
                                                             format!("Attempt to destructure an invalid expression in enum field `{name}` of enum type `{parent}`")
@@ -358,8 +356,7 @@ impl SemNode {
                                                 let call = SemExpression::FunCall(name.clone(), _args);
                                                 let call = SemNode {expr: call, ty: ty.clone()};
                                                 let enum_val = SemExpression::EnumLiteral(parent.clone(), Box::new(call));
-                                                let enum_val = SemNode {expr: enum_val, ty}; 
-                                                enum_val
+                                                SemNode {expr: enum_val, ty} 
                                             }
                                             EnumField::Id(_name) => {
                                                 unreachable!()
@@ -454,13 +451,13 @@ impl SemNode {
 
         let ty = match &expr {
             SemExpression::Lambda(args, ret, _) => {
-                let args: Vec<_> = args.into_iter().map(|f| f.1.clone()).collect();
+                let args: Vec<_> = args.iter().map(|f| f.1.clone()).collect();
                 Type::Lambda(ret.clone(), args)
             }
             SemExpression::Destructure(_, _) => Type::Any,
             SemExpression::SimpleNullCheck(_) => Type::Bool,
             SemExpression::LambdaCall(_, _) => todo!(), 
-            SemExpression::RecordLiteral(parent, _) => Type::UserType(parent.clone()),
+            SemExpression::RecordLiteral(parent, _) => Type::YourType(parent.clone()),
             SemExpression::EnumLiteral(parent, child) => {
                 let ty = match child.expr() {
                     SemExpression::FunCall(n,_) => n, 
@@ -476,7 +473,7 @@ impl SemNode {
             SemExpression::Cast(_, t) => *t.clone(), 
             SemExpression::Abs(x) => x.ty().clone(), 
             SemExpression::Match(_cond, cases) => {
-                if cases.len() == 0 {
+                if cases.is_empty() {
                     println!("Invalid match expression with no cases");
                     panic!();
                 }
@@ -488,7 +485,7 @@ impl SemNode {
             SemExpression::Char(_) => Type::Char, 
             SemExpression::NullCheck(_, _) => Type::Bool, 
             SemExpression::Block(v) => {
-                if v.len() == 0 {
+                if v.is_empty() {
                     return Err(CompilerError::InvalidBlock);
                 }
 
@@ -516,17 +513,14 @@ impl SemNode {
                 let (ret, argdefs) = ftype.as_function();
 
                 let mut is_varargs = false; 
-                if argdefs.len() > 0 {
+                if argdefs.is_empty() {
                     let (_, t) = argdefs.last().unwrap();
-                    match t {
-                        Type::VarArgs => {
-                            is_varargs = true;
-                        }
-                        _ => ()
+                    if t == &Type::VarArgs {
+                        is_varargs = true;
                     }
                 }
 
-                let ret = if is_varargs {
+                if is_varargs {
                     (*ret).clone()
                 } else {
                     if args.len() != argdefs.len() {
@@ -541,8 +535,7 @@ impl SemNode {
                         arg_type.assert_eq(arg_node.ty(), ctx)?;
                     }
                     (*ret).clone()
-                };
-                ret
+                }
             }
             SemExpression::Array(vals) => {
                 let inner_type = if !vals.is_empty() {
@@ -551,12 +544,11 @@ impl SemNode {
                         let seconds = vals[1].ty().clone();
                         match (first.clone(), seconds.clone()) {
                             (Type::EnumType(parent1, _), Type::EnumType(parent2, _)) => {
-                                let t = if parent1 == parent2 {
-                                    Type::UserType(parent2)
+                                if parent1 == parent2 {
+                                    Type::YourType(parent2)
                                 } else {
                                     first.clone()
-                                };
-                                t
+                                }
                             }
                             _ => first
                         }

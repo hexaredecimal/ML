@@ -153,14 +153,14 @@ pub fn str_literal(_i: &str) -> IResult<&str, String, VerboseError<&str>> {
     let (i, (_, c, _)) = tuple((tag("\""), take_until("\""), tag("\"")))(_i)?;
 
     let c = c.to_string(); 
-    let c = c.replace("\n", "\\n"); 
+    let c = c.replace('\n', "\\n"); 
     Ok((i, c.to_string()))
 }
 
 fn lift(i: &str) -> IResult<&str, Type, VerboseError<&str>> {
     let (i, j) = str_literal(i)?;
     Ok((i, 
-        Type::TypeLift(j)
+        Type::Lifter(j)
     ))
 }
 

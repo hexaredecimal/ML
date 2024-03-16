@@ -176,7 +176,7 @@ impl FunctionTranslator {
                 str.push_str(&format!("var {tmp_name} = {expr};\n"));
 
                 match &e.ty() {
-                    Type::UserType(x) => {
+                    Type::YourType(x) => {
                         if records.contains_key(x) {
                             let rec = records.get(x).unwrap();
                             for name in names.into_iter() {
@@ -455,8 +455,8 @@ impl FunctionTranslator {
 
                 match (op, left.ty(), right.ty()) {
                     (ir::BinaryOp::Equal, 
-                        ir::Type::String | ir::Type::UserType(_) | ir::Type::EnumType(_, _), 
-                        ir::Type::String | ir::Type::UserType(_) | ir::Type::EnumType(_, _), 
+                        ir::Type::String | ir::Type::YourType(_) | ir::Type::EnumType(_, _), 
+                        ir::Type::String | ir::Type::YourType(_) | ir::Type::EnumType(_, _), 
                     ) => {
                         Ok(format!("{}.equals({}) == true", left_val, right_val))
                     }
@@ -505,8 +505,8 @@ impl FunctionTranslator {
                         | ir::Type::Int128,
                     ) => Ok(format!("{} != {}", left_val, right_val)),
                     (ir::BinaryOp::NotEqual, 
-                        ir::Type::String | ir::Type::UserType(_) | ir::Type::EnumType(_, _), 
-                        ir::Type::String | ir::Type::UserType(_) | ir::Type::EnumType(_, _), 
+                        ir::Type::String | ir::Type::YourType(_) | ir::Type::EnumType(_, _), 
+                        ir::Type::String | ir::Type::YourType(_) | ir::Type::EnumType(_, _), 
                     ) => {
                         Ok(format!("{}.equals({}) == false", left_val, right_val))
                     }
@@ -609,8 +609,8 @@ impl FunctionTranslator {
                     ) => Ok(format!("{} + {}", left_val, right_val)),
                     (
                         ir::BinaryOp::Add,
-                        ir::Type::String | ir::Type::UserType(_) | ir::Type::EnumType(_, _),
-                        ir::Type::String | ir::Type::UserType(_) | ir::Type::EnumType(_, _),
+                        ir::Type::String | ir::Type::YourType(_) | ir::Type::EnumType(_, _),
+                        ir::Type::String | ir::Type::YourType(_) | ir::Type::EnumType(_, _),
                     ) => Ok(format!("{} + {}", left_val, right_val)),
                     (
                         ir::BinaryOp::Add,
@@ -889,9 +889,9 @@ impl FunctionTranslator {
 
     fn translate_conditional(
         &mut self,
-        cond: &Box<SemNode>,
-        then: &Box<SemNode>,
-        alt: &Box<SemNode>,
+        cond: &SemNode,
+        then: &SemNode,
+        alt: &SemNode,
         scope: &mut HashMap<String, Type>,
         ctx: &mut SemContext
     ) -> Result<String, CompilerError> {
@@ -910,7 +910,7 @@ impl FunctionTranslator {
             SemExpression::Block(_) => {
                 let (block, ret) = self.extract_block(cond, scope, cond_ty.to_string(), ctx)?;
                 ret_str.push_str(&block);
-                ret_str.push_str("\n");
+                ret_str.push('\n');
                 ret
             },
             _ => self.translate_expr(cond, scope, ctx)?
@@ -920,7 +920,7 @@ impl FunctionTranslator {
             SemExpression::Block(_) => {
                 let (block, ret) = self.extract_block(then, scope, then_ty, ctx)?;
                 ret_str.push_str(&block); 
-                ret_str.push_str("\n");
+                ret_str.push('\n');
                 ret
             },
             _ => self.translate_expr(then, scope, ctx)?
@@ -930,7 +930,7 @@ impl FunctionTranslator {
             SemExpression::Block(_) => {
                 let (block, ret) = self.extract_block(alt, scope, alt_ty, ctx)?;
                 ret_str.push_str(&block); 
-                ret_str.push_str("\n");
+                ret_str.push('\n');
                 ret
             },
             _ => self.translate_expr(alt, scope, ctx)?
@@ -945,7 +945,7 @@ impl FunctionTranslator {
     fn translate_val(
         &mut self,
         id: &str,
-        init: &Box<SemNode>,
+        init: &SemNode,
         scope: &mut HashMap<String, Type>,
         val_ty: String,
         ctx: &mut SemContext
@@ -957,7 +957,7 @@ impl FunctionTranslator {
 
         match init.expr() {
             SemExpression::Block(_) | SemExpression::Lets(_, _) => {
-                let splits: Vec<_> = val.split("\n").collect();
+                let splits: Vec<_> = val.split('\n').collect();
                 let len = splits.len();
                 let rest = splits.get(0..len - 1).unwrap();
                 let rest = rest.to_vec();
@@ -978,18 +978,18 @@ impl FunctionTranslator {
     fn translate_let(
         &mut self,
         id: &str,
-        init: &Box<SemNode>,
-        expr: &Box<SemNode>,
+        init: &SemNode,
+        expr: &SemNode,
         scope: &mut HashMap<String, Type>,
         ctx: &mut SemContext
     ) -> Result<String, CompilerError> {
         let ty = init.ty().clone();
         let val = self.translate_expr(init, scope, ctx)?;
-        let shadowed_var = scope.remove(id.into());
+        let shadowed_var = scope.remove(id);
         scope.insert(id.into(), ty);
         let res = self.translate_expr(expr, scope, ctx)?;
 
-        scope.remove(id.into());
+        scope.remove(id);
         if let Some(sv) = shadowed_var {
             scope.insert(id.into(), sv);
         }
