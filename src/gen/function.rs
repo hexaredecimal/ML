@@ -334,7 +334,7 @@ impl FunctionTranslator {
             SemExpression::Null(_) => Ok(format!("null")),
             SemExpression::Cast(expr, ty) => {
                 let is_sys_type = self.jit.clone().is_sys_type(ty);
-                let real_ty = self.jit.clone().real_type(&ty, ctx)?;
+                let real_ty = self.jit.clone().real_type(ty, ctx)?;
                 let e = self.translate_expr(expr, scope, ctx)?;
 
                 let cast = if is_sys_type {
@@ -432,7 +432,7 @@ impl FunctionTranslator {
                     .collect();
 
                 let (_, bo) = cases.last().unwrap();
-                let e = self.translate_expr(&bo, scope, ctx)?;
+                let e = self.translate_expr(bo, scope, ctx)?;
                 rest.push(format!("\t\tdefault -> {};", e));
                 let rest = rest.join("\n");
 
@@ -784,7 +784,7 @@ impl FunctionTranslator {
 
                 let ty = self.jit.clone().real_type(elem_ty, ctx)?;
                 let arr: Vec<String> = elems
-                    .into_iter()
+                    .iter()
                     .map(|f| self.translate_expr(f, scope, ctx).unwrap())
                     .collect();
 
@@ -872,17 +872,15 @@ impl FunctionTranslator {
                     Type::Int128 => Ok(format!("({}){}", real_ty, *val)),
                     _ => unreachable!(),
                 };
-                Ok(format!("{}", ty?))
+                Ok((ty?).to_string())
             }
 
             SemExpression::Decimal(val, t) => {
-                let ty = match *t.clone() {
+                match *t.clone() {
                     Type::Float => Ok(format!("{}", *val)),
                     Type::Double => Ok(format!("{}", *val)),
                     _ => unreachable!(),
-                };
-
-                ty
+                }
             }
         }
     }

@@ -152,8 +152,6 @@ impl Config {
                     c.import_paths.push(arg);
                     c = c.clone();
                 }
-            } else if collect_file {
-                c.file = arg;
             } else {
                 c.file = arg;
             }
