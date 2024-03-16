@@ -165,7 +165,7 @@ impl Config {
 
     fn parse_name(self) -> String {
         let name = self.args.first().unwrap().clone();
-        let names_split: Vec<&str> = name.split("/").collect();
+        let names_split: Vec<&str> = name.split('/').collect();
         let names_split = names_split.to_vec();
         names_split.last().unwrap().to_string()
     }
