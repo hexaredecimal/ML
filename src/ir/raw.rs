@@ -99,6 +99,7 @@ pub enum RawExpression {
     Cast(Box<RawNode>, Box<Type>),
     Lambda(Vec<(String, Type)>, Box<Type>, Box<RawNode>),
     Destructure(Vec<String>, Box<RawNode>),
+    FieldAccess(Box<RawNode>, Box<RawNode>)
 }
 
 pub enum TempExpr {

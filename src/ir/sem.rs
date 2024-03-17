@@ -34,6 +34,7 @@ pub enum SemExpression {
     Cast(Box<SemNode>, Box<Type>),
     Lambda(Vec<(String, Type)>, Box<Type>, Box<SemNode>),
     Destructure(Vec<String>, Box<SemNode>),
+    FieldAccess(Box<SemNode>, Box<SemNode>)
 }
 
 
@@ -176,6 +177,21 @@ impl SemNode {
 
     pub fn analyze(node: RawNode, ctx: &mut SemContext) -> Result<Self> {
         let expr = match node.into_expr() {
+            RawExpression::FieldAccess(e1, e2) => {
+                let expr_left = SemNode::analyze(*e1, ctx)?;
+                let expr_right = match e2.expr() {
+                    RawExpression::Id(name) => {
+                        let e = SemExpression::Id(name.clone()); 
+                        SemNode {expr: e, ty: Type::Any}
+                    }
+                    RawExpression::FieldAccess(_, _) => SemNode::analyze(*e2, ctx)?, 
+                    _ => return Err(CompilerError::InvalidExpression(
+                        "an idenfier or a field access".to_owned(), 
+                        format!("{:?}", e2)
+                    ))
+                }; 
+                SemExpression::FieldAccess(Box::new(expr_left), Box::new(expr_right))
+            }
             RawExpression::Lambda(_args, _ret, _body) => {
                 let bd = SemNode::analyze(*_body, ctx)?;
                 SemExpression::Lambda(_args, _ret, Box::new(bd))
@@ -450,6 +466,47 @@ impl SemNode {
         };
 
         let ty = match &expr {
+            SemExpression::FieldAccess(left, right) => {
+                let left_ty = left.ty();
+                let mut left_ty_name = String::new();
+                if let Type::YourType(left_ty) = left_ty {
+                    if !ctx.records.contains_key(left_ty) {
+                        return Err(CompilerError::InvalidStruct(left_ty.clone()));
+                    }
+                    left_ty_name = left_ty.clone();
+                } else {
+                    return Err(CompilerError::InvalidFieldAccessType(format!("{}", left_ty)));
+                }
+
+                match right.expr() {
+                    SemExpression::Id(name) => {
+                        let record = ctx.records.get(&left_ty_name).unwrap();
+                        
+                        let mut ty = Option::None;
+                        for field in &record.fields {
+                           if &field.0 == name {
+                               ty = Option::Some(field.1.clone());
+                           }
+                        }
+
+                        if ty.is_none() {
+                            return Err(CompilerError::BackendError(
+                               format!("{name} is not a field of type {left_ty_name}")
+                            ));
+                        }
+                        let ty = ty.unwrap();
+                        ty
+                    }
+                    SemExpression::FieldAccess(_, _) => right.ty().clone(),
+                    _ => return  Err(CompilerError::InvalidExpression(
+                        "an idenfier or field access".to_owned(), 
+                        format!(
+                            "{}", 
+                            left_ty
+                        )
+                    ))
+                }
+            }
             SemExpression::Lambda(args, ret, _) => {
                 let args: Vec<_> = args.iter().map(|f| f.1.clone()).collect();
                 Type::Lambda(ret.clone(), args)

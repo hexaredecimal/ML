@@ -632,10 +632,8 @@ pub fn lambda_expression(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> 
     Ok((i, RawNode::new(RawExpression::Lambda(args.clone(), Box::new(ret), Box::new(body)))))
 }
 
-
 pub fn expression_(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     alt((
-        lambda_expression,
         enum_expression,
         record_expression,
         embed_expr,
@@ -673,9 +671,24 @@ pub fn expression_null_check(i: &str) -> IResult<&str, RawNode, VerboseError<&st
     Ok((i, RawNode::new(e)))
 }
 
+pub fn field_access(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
+    let (i, (l, a)) = tuple((
+        expression_null_check,
+        many0(tuple((sp, tag("::"),sp, field_access))),
+    ))(i)?;
+
+    if a.is_empty() {
+        return Ok((i, l));
+    }
+
+    let (_, _, _, last) = a.first().unwrap();
+    let node = RawExpression::FieldAccess(Box::new(l), Box::new(last.clone()));
+    Ok((i, RawNode::new(node)))
+}
+
 pub fn expression(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     let (i, (e, a)) = tuple((
-        expression_null_check,
+        field_access,
         many0(tuple((sp, tag("as"), sp, type_literal))),
     ))(i)?;
 

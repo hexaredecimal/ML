@@ -123,6 +123,18 @@ impl FunctionTranslator {
         let real_ty = self.jit.clone().real_type(node.ty(), ctx)?;
 
         match node.expr() {
+            SemExpression::FieldAccess(left, right) => {
+                let left = self.translate_expr(left, scope, ctx)?;
+                let right = match right.expr() {
+                    SemExpression::Id(name) => {
+                        format!("{name}")
+                    }
+                    _ => {
+                        self.translate_expr(right, scope, ctx)?
+                    }
+                };
+                Ok(format!("{left}.{right}"))
+            }
             SemExpression::LambdaCall(e, args) => {
                 let mut vals: Vec<_> = Vec::new();
                 let _val = self.translate_expr(e, scope, ctx)?;
