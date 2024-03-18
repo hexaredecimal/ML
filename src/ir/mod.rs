@@ -214,6 +214,7 @@ impl Type {
     pub fn assert_eq(&self, other: &Self, ctx: &mut SemContext) -> Result<()> {
         if self != other {
             match (self, other) {
+                (Type::VarArgs, _) => return Ok(()),
                 (Type::List(list_ty), Type::Array(_, ty)) => {
                     list_ty.assert_eq(ty, ctx).unwrap(); 
                     return Ok(());
