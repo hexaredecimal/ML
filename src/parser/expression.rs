@@ -635,6 +635,7 @@ pub fn lambda_expression(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> 
 
 pub fn expression_(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     alt((
+        lambda_expression,
         enum_expression,
         record_expression,
         embed_expr,
