@@ -30,10 +30,11 @@ fun window_add(window: JFrame, child: Any): Unit => {
   ()
 }
 
-fun window_set_menubar(window: JFrame, menubar: JMenuBar): Unit => {
+fun window_pack(window: JFrame): Unit => {
   java {
-    "window.setJMenuBar(menubar);"
+    "window.pack();"
   }
   ()
 }
+
 
