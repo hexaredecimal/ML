@@ -580,7 +580,7 @@ impl SemNode {
                 let (ret, argdefs) = ftype.as_function();
 
                 let mut is_varargs = false; 
-                if argdefs.is_empty() {
+                if !argdefs.is_empty() {
                     let (_, t) = argdefs.last().unwrap();
                     if t == &Type::VarArgs {
                         is_varargs = true;
