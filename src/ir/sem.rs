@@ -178,6 +178,16 @@ impl SemNode {
     pub fn analyze(node: RawNode, ctx: &mut SemContext) -> Result<Self> {
         let expr = match node.into_expr() {
             RawExpression::FieldAccess(e1, e2) => {
+                let mut ct = ctx.clone();
+                
+                for rec in &ct.records {
+                    let rec_ty = rec.1; 
+                    for (name, ty) in &rec_ty.fields {
+                        ct.vars.insert(name.clone(), ty.clone());
+                    }
+                }
+
+                // println!("{:?} -> {:?}", e1, e2);
                 let expr_left = SemNode::analyze(*e1, ctx)?;
                 let expr_right = match e2.expr() {
                     RawExpression::Id(name) => {
