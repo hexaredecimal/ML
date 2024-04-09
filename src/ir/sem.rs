@@ -187,7 +187,6 @@ impl SemNode {
                     }
                 }
 
-                // println!("{:?} -> {:?}", e1, e2);
                 let expr_left = SemNode::analyze(*e1, ctx)?;
                 let expr_right = match e2.expr() {
                     RawExpression::Id(name) => {
