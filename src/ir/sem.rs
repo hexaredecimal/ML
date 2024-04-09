@@ -335,8 +335,7 @@ impl SemNode {
                         let c = match c.expr() {
                             RawExpression::EnumLiteral(parent, child) => {
                                 let enums = ctx.enums.clone(); 
-
-                                if enums.contains_key(parent) {
+                                if !enums.contains_key(parent) {
                                     return Err(CompilerError::BackendError(
                                         format!("Invalid enum expression, `{}` is not an enum type", parent)
                                     ));
