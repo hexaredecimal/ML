@@ -188,3 +188,60 @@ pub fn top_levels(i: &str) -> IResult<&str, TopLevel, VerboseError<&str>> {
     let (i, e) = alt((import_statement, record_type, function, enum_type, alias_of))(i)?;
     Ok((i, e))
 }
+
+#[test]
+fn function_no_args_test() {
+    let root = RawNode::new(RawExpression::Block(vec![
+        RawNode::new(RawExpression::FunCall("println".to_string(), vec![
+            RawNode::new(RawExpression::String("Hello".to_string()))
+        ]))
+    ]));
+
+    let stmt = TopLevel::RawFunction { name: "greet".to_string(), root, args: vec![], ty: Type::Function(Box::new(Type::Unit), vec![]) };
+    assert_eq!(function("fun greet(): Unit => { println(\"Hello\") }"), Ok(("", stmt))); 
+}
+
+
+#[test]
+fn inline_function_no_args_test() {
+    let root = RawNode::new(RawExpression::FunCall("println".to_string(), vec![
+        RawNode::new(RawExpression::String("Hello".to_string()))
+    ]));
+    let stmt = TopLevel::RawFunction { name: "greet".to_string(), root, args: vec![], ty: Type::Function(Box::new(Type::Unit), vec![]) };
+    assert_eq!(function("fun greet(): Unit => println(\"Hello\")"), Ok(("", stmt))); 
+}
+
+
+#[test]
+fn alias_test() {
+    let stmt = TopLevel::Alias { name: "Id".to_string(), value: Type::Int };
+    assert_eq!(alias_of("type Id = Int"), Ok(("", stmt))); 
+}
+
+#[test]
+fn enum_type_test() {
+    let stmt = TopLevel::EnumType { name: "Days".to_string(), fields: vec![
+        EnumField::Rec(RecordType { name: "Monday".to_string(), fields: vec![("activity".to_string(), Type::String)] }), 
+        EnumField::Id("Tuesday".to_string())
+    ]};
+    assert_eq!(enum_type("enum Days = Monday(activity: String) | Tuesday"), Ok(("", stmt))); 
+}
+
+
+#[test]
+fn record_type_test() {
+    let stmt = TopLevel::RecordType { name: "Foo".to_string(), fields: vec![
+        ("bar".to_string(), Type::String),
+        ("baz".to_string(), Type::Int),
+    ]};
+
+    assert_eq!(record_type("struct Foo (bar: String, baz: Int)"), Ok(("", stmt))); 
+}
+
+#[test]
+fn import_test() {
+    let stmt = TopLevel::Import { path: vec!["System".to_string(), "Io".to_string()] };
+    assert_eq!(import_statement("using System::Io"), Ok(("", stmt))); 
+}
+
+

@@ -692,6 +692,171 @@ pub fn expression(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
 }
 
 #[test]
+fn let_test() {
+
+    let left = RawNode::new(RawExpression::Lets(
+        vec![
+            RawExpression::Let("num".to_string(), Box::new(RawNode::new(RawExpression::Integer(10, Box::new(Type::Int))))),
+            RawExpression::Let("age".to_string(), Box::new(RawNode::new(RawExpression::Id("num".to_string()))))
+        ],
+        Box::new(RawNode::new(RawExpression::Id("num".to_string()))),
+    )); 
+
+    assert_eq!(
+        let_expr("let num = 10 age = num in num"), 
+        Ok(("", left))
+    );
+}
+
+#[test]
+fn val_test() {
+
+    let left = RawNode::new(RawExpression::Val(
+        "foo".to_string(),
+        Box::new(RawNode::new(RawExpression::Bool(false)))
+    )); 
+
+    assert_eq!(
+        val_expr("val foo = false"), 
+        Ok(("", left))
+    );
+}
+
+#[test]
+fn logical_and_test() {
+    let left = RawNode::new(RawExpression::BinaryOp(
+        BinaryOp::And,
+        Box::new(RawNode::new(RawExpression::Bool(true))),
+        Box::new(RawNode::new(RawExpression::Bool(false)))
+    )); 
+
+    assert_eq!(
+        logical_or_expr("true && false"), 
+        Ok(("", left))
+    );
+}
+
+#[test]
+fn logical_or_test() {
+    let left = RawNode::new(RawExpression::BinaryOp(
+        BinaryOp::Or,
+        Box::new(RawNode::new(RawExpression::Bool(true))),
+        Box::new(RawNode::new(RawExpression::Bool(false)))
+    )); 
+
+    assert_eq!(
+        logical_or_expr("true || false"), 
+        Ok(("", left))
+    );
+}
+
+#[test]
+fn abs_test() {
+    let left = RawNode::new(RawExpression::Abs(
+        Box::new(RawNode::new(RawExpression::Integer(100, Box::new(Type::Int))))
+    )); 
+
+    assert_eq!(
+        abs_expr("| 100 |"), 
+        Ok(("", left))
+    );
+}
+
+
+#[test]
+fn embed_test() {
+    let left = RawNode::new(RawExpression::Embed(
+        Box::new(
+            RawNode::new(RawExpression::String("System.out.println()".to_string()))
+        )
+    ));
+    assert_eq!(
+        embed_expr("java { \"System.out.println()\" }"), 
+        Ok(("", left))
+    );
+}
+
+
+#[test]
+fn block_test() {
+    let left = RawNode::new(RawExpression::Block(vec![RawNode::new(RawExpression::Id("bar".to_string()))]));
+    assert_eq!(
+        block_expr("{ bar }"), 
+        Ok(("", left))
+    );
+}
+
+#[test]
+fn empty_block_test() {
+    let left = RawNode::new(RawExpression::Block(vec![]));
+    assert_eq!(
+        block_expr("{}"), 
+        Ok(("", left))
+    );
+}
+
+#[test]
+fn simple_null_check_test() {
+    let left = RawNode::new(RawExpression::Id("Foo".to_string()));
+    assert_eq!(
+        expression_null_check("Foo?"), 
+        Ok((
+            "", 
+            RawNode::new(RawExpression::SimpleNullCheck(Box::new(left)))
+        ))
+    );
+}
+
+#[test]
+fn null_check_test() {
+    let left = RawNode::new(RawExpression::Id("Foo".to_string()));
+    assert_eq!(
+        expression_null_check("Foo?String"), 
+        Ok((
+            "", 
+            RawNode::new(RawExpression::NullCheck(Box::new(left), Box::new(Type::String)))
+        ))
+    );
+}
+
+#[test]
+fn record_literal_test() {
+    let mut args: Vec<(String, RawNode)> = vec![]; 
+    args.push(("bar".to_string(), RawNode::new(RawExpression::Integer(10, Box::new(Type::Int)))));
+    assert_eq!(
+        record_expression("Foo {bar: 10}"), 
+        Ok((
+            "", 
+            RawNode::new(RawExpression::RecordLiteral("Foo".to_string(), args))
+        ))
+    );
+}
+
+#[test]
+fn enum_literal_test() {
+    let args = RawNode::new(RawExpression::Id("Bar".to_string())); 
+    assert_eq!(
+        enum_expression("Foo.Bar"), 
+        Ok((
+            "", 
+            RawNode::new(RawExpression::EnumLiteral("Foo".to_string(), Box::new(args)))
+        ))
+    );
+}
+
+#[test]
+fn variant_enum_literal_test() {
+    let args = RawNode::new(RawExpression::FunCall("Bar".to_string(), vec![RawNode::new(RawExpression::Integer(0, Box::new(Type::Int)))])); 
+    assert_eq!(
+        enum_expression("Foo.Bar(0)"), 
+        Ok((
+            "", 
+            RawNode::new(RawExpression::EnumLiteral("Foo".to_string(), Box::new(args)))
+        ))
+    );
+}
+
+#[test]
 fn expression_test() {
     assert_eq!(
         relational_expr("1 < 2"),
@@ -749,3 +914,4 @@ fn expression_test() {
         ))
     );
 }
+
