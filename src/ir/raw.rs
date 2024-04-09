@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use super::*;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone,PartialEq)]
 pub enum TopLevel {
     RawFunction {
         name: String,
@@ -31,31 +31,31 @@ pub enum TopLevel {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Alias {
     pub name: String,
     pub value: Type
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Import {
     pub path: Vec<String>
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum EnumField {
     Rec(RecordType),
     Id(String)
 }
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct EnumType {
     pub name: String, 
     pub fields: Vec<EnumField>
 }
 
 
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct RecordType {
     pub name: String,
     pub fields: Vec<(String, Type)>,
