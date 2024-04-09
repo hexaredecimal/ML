@@ -68,7 +68,8 @@ pub fn compile_file(input: String, cache: &mut Vec<String>) -> Result<Compilatio
             let path = path.join("/");
             let path = format!("{path}.sml");
 
-            if cache.contains(&path) {
+            if !cache.contains(&path) {
+                // println!("{input} <- {path}"); 
                 cache.push(path.clone());
                 let (f, r, e, a) = compile_file(path, cache)?;
                 functions = [functions, f].concat(); 
