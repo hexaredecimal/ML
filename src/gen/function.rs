@@ -434,6 +434,7 @@ impl FunctionTranslator {
                                 let ret = format!("{ret};\n"); 
                                 let ret = self.indent_lines(ret, 3);
                                 let block = self.indent_lines(block, 3);
+                                let ret = self.indent_lines(ret, 3);
                                 let ret = format!("{block}\n{ret}");
                                 format!("{}\n{}{}\n", "{", ret , "\n\t\t}")
                             }
@@ -444,8 +445,22 @@ impl FunctionTranslator {
                     .collect();
 
                 let (_, bo) = cases.last().unwrap();
-                let e = self.translate_expr(bo, scope, ctx)?;
-                rest.push(format!("\t\tdefault -> {};", e));
+
+                let mut sc = scope.clone();
+                let bo = match bo.expr().clone() {
+                    SemExpression::Block(_) => {
+                        let real_ty = self.jit.clone().real_type(bo.ty(), ctx).unwrap(); 
+                        let (block, ret) = self.extract_block(&bo, &mut sc, real_ty, ctx).unwrap();
+                        let ret = format!("yield {ret};\n"); 
+                        let block = self.indent_lines(block, 3);
+                        let ret = self.indent_lines(ret, 3);
+                        let ret = format!("{block}\n{ret}");
+                        format!("{{\n{ret}\n\t\t}}\n")
+                    }
+                    _ => format!("{};", self.translate_expr(&bo, &mut sc, ctx).unwrap())
+                };
+
+                rest.push(format!("\t\tdefault -> {}", bo));
                 let rest = rest.join("\n");
 
                 let mut ret = format!("switch ({}) ", c);
