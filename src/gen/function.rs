@@ -348,12 +348,18 @@ impl FunctionTranslator {
                 let is_sys_type = self.jit.clone().is_sys_type(ty);
                 let real_ty = self.jit.clone().real_type(ty, ctx)?;
                 let e = self.translate_expr(expr, scope, ctx)?;
+                let is_expr_sys_type = self.jit.clone().is_sys_type(expr.ty());
 
                 let cast = if is_sys_type {
                     let ty = *ty.clone();
-                    match ty {
-                        ir::Type::String => format!("(String) {}", e),
-                        _ => format!("SysConv.to_{}({})", real_ty, e)
+                    match (ty, is_expr_sys_type) {
+                        (ir::Type::String, false) => {
+                            format!("(String) {}", e)
+                        }
+                        (ir::Type::String, true) => {
+                            format!("\"\" + {}", e)
+                        }
+                        _ => format!("SysConv.to{}({})", real_ty, e)
                     }
                 } else {
                     format!("(({}) {})", real_ty, e)
