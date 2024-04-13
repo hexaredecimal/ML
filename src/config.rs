@@ -1,4 +1,5 @@
-use std::io;
+use std::{fs, io};
+use tsu::*;
 
 /// Configuration struct for command line arguments
 #[derive(Debug, Clone)]
@@ -24,6 +25,10 @@ pub struct Config {
     ///
     pub args: Vec<String>,
 
+    /// Build the dependencies and the project
+    ///
+    pub build: bool,
+
     /// Run code after JIT compilation
     ///
     pub run: bool,
@@ -45,6 +50,7 @@ impl Config {
             verbose: false,
             import_paths: Vec::new(),
             args: Config::args(),
+            build: false,
             run: false,
             ir: false,
             defs: false,
@@ -53,6 +59,10 @@ impl Config {
 
     fn set_verbose(&mut self, v: bool) {
         self.verbose = v;
+    }
+
+    fn set_build(&mut self, v: bool) {
+        self.build = v;
     }
 
     fn set_run(&mut self, v: bool) {
@@ -68,14 +78,38 @@ impl Config {
     }
 
     fn init(&mut self) {
-        let init_message = r#"
-    Zulu programming language project setup 
-        "#;
-
+        let init_message = "Create new SMLL project";
         println!("{}", init_message);
-        println!("Enter entry point (default: Main.zulu): ");
-        let entry = io::read_to_string(io::stdin()).unwrap();
-        println!("{:?}", entry);
+        println!("Enter project name: [Default: Project]");
+        let mut entry = String::new();
+        io::stdin().read_line(&mut entry).unwrap();
+        let entry = if &entry == "\n" { "Project".to_owned() } else { entry };
+        
+        let project_config_path = "./project.toml";
+        let project_text = format!(r#"
+[project]
+name = "{entry}"
+version = "0.1.0"
+authors = ["You"]
+edition = "2024"
+
+[depends]
+Types = "1.0"
+System = "1.0"
+Fs = "1.0"
+        "#);
+        
+        fs::write(project_config_path, project_text).unwrap();
+        let project_src = "./code/main.sml";
+        let code = r#"
+(* main.smll - Happy coding *)
+fun main(): Unit => ()
+"#;
+        let _ = fs::create_dir("./code");
+        let _ = fs::create_dir("./.smll_deps");
+        fs::write("./.smll_deps/depends", "").unwrap();
+        fs::write(project_src, code).unwrap();
+        println!("Done creating smll project");
     }
 
     /// Parse command line arguments and create a config.
@@ -96,7 +130,7 @@ impl Config {
         let mut collect_paths = false;
         let mut collect_file = false;
         for (index, arg) in args.clone().into_iter().enumerate() {
-            if arg.starts_with("--") {
+            if !arg.is_empty() {
                 if held {
                     held = false;
                     if collect_paths {
@@ -104,39 +138,42 @@ impl Config {
                     }
                 }
                 match arg.as_str() {
-                    "--defs" => {
+                    "defs" => {
                         c = c.clone();
                         c.set_defs(true);
                     }
-                    "--run" => {
+                    "build" => {
+                        c = c.clone();
+                        c.set_build(true);
+                    }
+                    "run" => {
                         c = c.clone();
                         c.set_run(true);
                     }
-                    "--ir" => {
+                    "ir" => {
                         c = c.clone();
                         c.set_ir(true);
                     }
-                    "--verbose" => {
+                    "verbose" => {
                         c = c.clone();
                         c.set_verbose(true);
                     }
-                    "--version" => {
+                    "version" => {
                         c.clone()
                             .report(&format!("{} version 1.0", c.program_name.clone()));
                     }
-                    "--help" => {
+                    "help" => {
                         c.clone().report(&c.clone().help());
                     }
-                    "--init" => {
+                    "init" => {
                         c.clone().init();
                     }
-                    "--paths" => {
+                    "paths" => {
                         held = true;
                         collect_paths = true;
                     }
                     d => {
-                        c.clone()
-                            .report(&format!("invalid argument `{}` provided", d));
+                        c.file = arg;
                     }
                 }
             } else if arg.as_str() == "-" {
@@ -153,7 +190,6 @@ impl Config {
                     c = c.clone();
                 }
             } else {
-                c.file = arg;
             }
         }
         Box::new(c)
@@ -178,13 +214,15 @@ usage: {} [options] - <file>
     |  {} <file>
     
     [options]:
-        --run                   Runs the program after compilation is complete
-        --ir                    Print the ir for the program
-        --paths [path+]         Paths where imports are loaded from. paths are separed by spaces
-        --defs                  Prints the names and types of top level statements 
-        --verbose               Enables the verbosity of the compiler
-        --version               Shows the version of the program
-        --help                  Prints this help file
+        init                  Initialize a new project
+        build                 Build the project and the dependencies
+        run                   Runs the program after compilation is complete
+        ir                    Print the ir for the program
+        paths [path+]         Paths where imports are loaded from. paths are separed by spaces
+        defs                  Prints the names and types of top level statements 
+        verbose               Enables the verbosity of the compiler
+        version               Shows the version of the program
+        help                  Prints this help file
 
                   ___           ___                                 
                  /  /\         /__/\                                
@@ -215,7 +253,7 @@ usage: {} [options] - <file>
     }
 
     /// report a Config error
-    pub fn report(self, message: &str) {
+    pub fn report(&self, message: &str) {
         println!("{}", message);
         std::process::exit(1);
     }
