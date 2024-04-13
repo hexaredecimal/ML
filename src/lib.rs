@@ -4,11 +4,13 @@ use gen::Jit;
 use ir::raw::{EnumType, Import, Alias};
 use nom::error::convert_error;
 use std::collections::{HashMap, HashSet};
+use std::fs;
 use rust_embed::RustEmbed;
 
 
 pub mod config;
 pub mod error;
+pub mod manager;
 mod gen;
 mod ir;
 mod parser;
@@ -17,7 +19,7 @@ mod parser;
 #[folder = "lib"]
 struct Asset;
 type CompilationUnit = (Vec<RawFunction>, Vec<RecordType>, Vec<EnumType>, Vec<Alias>);
-pub fn compile_file(input: String, cache: &mut Vec<String>) -> Result<CompilationUnit> {
+pub fn compile_file(config: &config::Config, input: String, cache: &mut Vec<String>) -> Result<CompilationUnit> {
     let program = match Asset::get(&input) {
         Some(data) =>  {
             let dt = data.clone(); 
@@ -66,12 +68,20 @@ pub fn compile_file(input: String, cache: &mut Vec<String>) -> Result<Compilatio
         for import in imports {
             let path = import.path.clone(); 
             let path = path.join("/");
-            let path = format!("{path}.sml");
+            let mut path = format!("{path}.sml");
+
+            for dir_path in &config.import_paths  {
+                path = format!("{dir_path}{path}");
+                if !fs::metadata(&path).is_ok() {
+                    continue;
+                } else {
+                    break;
+                }
+            }
 
             if !cache.contains(&path) {
-                // println!("{input} <- {path}"); 
                 cache.push(path.clone());
-                let (f, r, e, a) = compile_file(path, cache)?;
+                let (f, r, e, a) = compile_file(config, path, cache)?;
                 functions = [functions, f].concat(); 
                 records = [records, r].concat(); 
                 enums = [enums, e].concat(); 
@@ -119,17 +129,26 @@ pub fn compile_and_run(config: &config::Config) -> Result<String> {
     }
 
     let mut cache: Vec<String> = Vec::new(); 
-    
-    for import in imports {
+
+
+    'outer: for import in imports {
         let path = import.path.join("/");
-        let path = format!("{path}.sml"); 
+        let mut path = format!("{path}.sml"); 
+        for dir_path in &config.import_paths  {
+            path = format!("{dir_path}{path}");
+            if !fs::metadata(&path).is_ok() {
+                continue;
+            } else {
+                break;
+            }
+        }
 
         if cache.contains(&path) {
             continue;
         }
 
         cache.push(path.clone());
-        let (f, r, e, a) = compile_file(path, &mut cache)?;
+        let (f, r, e, a) = compile_file(config, path, &mut cache)?;
         // println!("symbols imported from {:?}\nfuncs: {:?}\nrecords: {:?}\n,imports: {:?}", path, f, r, e);
     
         for fx in &f {

@@ -1,7 +1,8 @@
 use std::{fs, process::Command};
 use std::io::{self, Write};
 use rust_embed::RustEmbed;
-use smll_lang::{config::Config, error::Result};
+use smll_lang::config;
+use smll_lang::{config::Config, error::Result, manager::Manager};
 
 
 static HEAD: &str = r#"
@@ -42,26 +43,31 @@ fn try_main() -> Result<()> {
 
     let lambdas = generate_lambdas(20); 
     let head2 = format!("{}\n{}\n\n{}{}\n", IMPORTS, lambdas, convs, HEAD);
+    let package_manager = Manager::new();
     if conf.ir {
         let res = smll_lang::compile_and_run(&conf)?;
         println!("{}", res);
     } else if conf.build {
+        package_manager.resolve_dependencies();
         conf.file = "./code/main.sml".to_string();
         let res = smll_lang::compile_and_run(&conf)?;
         let program = format!("{head2}\n{}", res);
         let out_name = make_output_file_name(&conf.file);
         compile_to_java(&out_name, &program);
+        
     } else if !conf.file.is_empty() {
         let res = smll_lang::compile_and_run(&conf)?;
         let program = format!("{head2}\n{}", res);
         let out_name = make_output_file_name(&conf.file);
         compile_to_java(&out_name, &program);
-    } else {
-        let _ = &conf.report("no input files provided");
-    }
+    } else if !conf.ir && conf.run {
+        conf.file = "./code/main.sml".to_string();
 
-    if !conf.ir && conf.run {
+        let res = smll_lang::compile_and_run(&conf)?;
+        let program = format!("{head2}\n{}", res);
         let out_name = make_output_file_name(&conf.file);
+        compile_to_java(&out_name, &program);
+
         let mut cmd = Command::new("java"); 
         let cmd = cmd
             .arg("--enable-preview")
@@ -77,6 +83,8 @@ fn try_main() -> Result<()> {
 
         io::stdout().write_all(&output.stdout).unwrap();
         io::stderr().write_all(&output.stderr).unwrap();
+    } else {
+        let _ = &conf.report("no input files provided");
     }
     Ok(())
 }

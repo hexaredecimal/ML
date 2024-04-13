@@ -48,7 +48,7 @@ impl Config {
             program_name: String::new(),
             file: String::new(),
             verbose: false,
-            import_paths: Vec::new(),
+            import_paths: vec!["./".to_string(), "./.smll_deps/src/".to_string()],
             args: Config::args(),
             build: false,
             run: false,
@@ -84,7 +84,6 @@ impl Config {
         let mut entry = String::new();
         io::stdin().read_line(&mut entry).unwrap();
         let entry = if &entry == "\n" { "Project".to_owned() } else { entry };
-        
         let project_config_path = "./project.toml";
         let project_text = format!(r#"
 [project]
@@ -94,9 +93,7 @@ authors = ["You"]
 edition = "2024"
 
 [depends]
-Types = "1.0"
-System = "1.0"
-Fs = "1.0"
+Algebraic = "1.0"
         "#);
         
         fs::write(project_config_path, project_text).unwrap();
@@ -119,7 +116,7 @@ fun main(): Unit => ()
         conf.program_name = name;
         let len = conf.args.len();
         if len == 1 {
-            conf.clone().report("no input file provided");
+            conf.clone().report("no input file provided!!");
         }
 
         let mut c = conf.clone();
