@@ -71,10 +71,11 @@ pub fn compile_file(config: &config::Config, input: String, cache: &mut Vec<Stri
             let mut path = format!("{path}.sml");
 
             for dir_path in &config.import_paths  {
-                path = format!("{dir_path}{path}");
-                if !fs::metadata(&path).is_ok() {
+                let _path = format!("{dir_path}{path}");
+                if !fs::metadata(&_path).is_ok() {
                     continue;
                 } else {
+                    path = _path;
                     break;
                 }
             }
@@ -134,14 +135,17 @@ pub fn compile_and_run(config: &config::Config) -> Result<String> {
     'outer: for import in imports {
         let path = import.path.join("/");
         let mut path = format!("{path}.sml"); 
+
         for dir_path in &config.import_paths  {
-            path = format!("{dir_path}{path}");
-            if !fs::metadata(&path).is_ok() {
+            let _path = format!("{dir_path}{path}");
+            if !fs::metadata(&_path).is_ok() {
                 continue;
             } else {
+                path = _path;
                 break;
             }
         }
+
 
         if cache.contains(&path) {
             continue;
