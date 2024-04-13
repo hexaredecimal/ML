@@ -43,7 +43,7 @@ impl <'a> Manager <'a> {
         let (name, depends) = self.depends_list(path); 
         let deps_count = depends.keys().count();
         // TODO: Rewrite this and donot hard code the registry url, load it from file
-        let repos = "https://github.com/hexaredecimal";
+        let repos = "https://github.com/smllregistry";
         let lines = repos.lines();
 
         println!("Resolving dependencies for {name}");
