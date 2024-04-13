@@ -36,49 +36,32 @@ fn main() {
 struct Asset;
 
 fn try_main() -> Result<()> {
-    let conf = Config::parse();
-    if conf.file.is_empty() {
-        conf.clone().report("no input files provided");
-    }
-
+    let mut conf = Config::parse();
     let data_conv = Asset::get("SystConv.java").unwrap(); 
     let convs = std::str::from_utf8(data_conv.data.as_ref()).unwrap();
 
     let lambdas = generate_lambdas(20); 
     let head2 = format!("{}\n{}\n\n{}{}\n", IMPORTS, lambdas, convs, HEAD);
-    let res = smll_lang::compile_and_run(&conf)?;
-    let program = format!("{head2}\n{}", res);
-    let out_name = make_output_file_name(&conf.file);
     if conf.ir {
+        let res = smll_lang::compile_and_run(&conf)?;
         println!("{}", res);
+    } else if conf.build {
+        conf.file = "./code/main.sml".to_string();
+        let res = smll_lang::compile_and_run(&conf)?;
+        let program = format!("{head2}\n{}", res);
+        let out_name = make_output_file_name(&conf.file);
+        compile_to_java(&out_name, &program);
+    } else if !conf.file.is_empty() {
+        let res = smll_lang::compile_and_run(&conf)?;
+        let program = format!("{head2}\n{}", res);
+        let out_name = make_output_file_name(&conf.file);
+        compile_to_java(&out_name, &program);
     } else {
-        fs::write(format!("./{}.java", out_name), program.as_bytes()).unwrap();
-        let mut cmd = Command::new("javac"); 
-        let cmd = cmd
-            .arg("--enable-preview")
-            .arg("--source")
-            .arg("21")
-            .arg("-d")
-            .arg("./build")
-            .arg(format!("./{}.java", out_name));
-
-        let output = cmd
-            .output()
-            .unwrap_or_else(|_| panic!("failed to execute command {:?}", cmd));
-
-        let status = output.status.code().unwrap(); 
-
-        if status != 0 {
-            io::stdout().write_all(&output.stdout).unwrap();
-            io::stderr().write_all(&output.stderr).unwrap();
-            println!("process exited with status: {}", output.status);
-        } else {
-            println!("process exited with status: {}", output.status);
-        }
-        fs::remove_file(format!("{out_name}.java")).unwrap();
+        let _ = &conf.report("no input files provided");
     }
 
     if !conf.ir && conf.run {
+        let out_name = make_output_file_name(&conf.file);
         let mut cmd = Command::new("java"); 
         let cmd = cmd
             .arg("--enable-preview")
@@ -94,9 +77,35 @@ fn try_main() -> Result<()> {
 
         io::stdout().write_all(&output.stdout).unwrap();
         io::stderr().write_all(&output.stderr).unwrap();
-
     }
     Ok(())
+}
+
+fn compile_to_java(out_name: &str, program: &str) {
+    fs::write(format!("./{}.java", out_name), program.as_bytes()).unwrap();
+    let mut cmd = Command::new("javac"); 
+    let cmd = cmd
+        .arg("--enable-preview")
+        .arg("--source")
+        .arg("21")
+        .arg("-d")
+        .arg("./build")
+        .arg(format!("./{}.java", out_name));
+
+    let output = cmd
+        .output()
+        .unwrap_or_else(|_| panic!("failed to execute command {:?}", cmd));
+
+    let status = output.status.code().unwrap(); 
+
+    if status != 0 {
+        io::stdout().write_all(&output.stdout).unwrap();
+        io::stderr().write_all(&output.stderr).unwrap();
+        println!("process exited with status: {}", output.status);
+    } else {
+        println!("process exited with status: {}", output.status);
+    }
+    fs::remove_file(format!("{out_name}.java")).unwrap();
 }
 
 fn generate_lambdas(max: i32) -> String {
