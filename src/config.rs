@@ -1,5 +1,7 @@
 use std::{fs, io};
-use tsu::*;
+use std::io::Write;
+use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
+
 
 /// Configuration struct for command line arguments
 #[derive(Debug, Clone)]
@@ -78,12 +80,30 @@ impl Config {
     }
 
     fn init(&mut self) {
+        let green = Some(Color::Green);
+        let red = Some(Color::Red);
+        let yellow = Some(Color::Yellow);
+        let gray = Some(Color::Rgb(150, 150, 150));
+        let white = Some(Color::White);
+
+        let mut stdout = StandardStream::stdout(ColorChoice::Always);
+
         let init_message = "Create new SMLL project";
-        println!("{}", init_message);
-        println!("Enter project name: [Default: Project]");
+        let init_message = format!("{}", init_message);
+
+        stdout.set_color(ColorSpec::new().set_fg(yellow)).unwrap();
+        writeln!(&mut stdout, "{}", init_message).unwrap();
+
+        stdout.set_color(ColorSpec::new().set_fg(white)).unwrap();
+        write!(&mut stdout, "Enter project name: ").unwrap();
+
+        stdout.set_color(ColorSpec::new().set_fg(gray)).unwrap();
+        writeln!(&mut stdout, "[Default: Project]: ").unwrap();
+
+        // println!("Enter project name: [Default: Project]");
         let mut entry = String::new();
         io::stdin().read_line(&mut entry).unwrap();
-        let entry = if &entry == "\n" { "Project".to_owned() } else { entry };
+        let entry = if &entry == "\n" { "Project".to_owned() } else { entry.trim().to_owned() };
         let project_config_path = "./project.toml";
         let project_text = format!(r#"
 [project]
@@ -93,8 +113,8 @@ authors = ["You"]
 edition = "2024"
 
 [depends]
-Algebraic = "1.0"
-        "#);
+
+"#);
         
         fs::write(project_config_path, project_text).unwrap();
         let project_src = "./code/main.sml";
