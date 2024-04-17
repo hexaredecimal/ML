@@ -1,9 +1,8 @@
 use std::{fs, process::Command};
 use std::io::{self, Write};
 use rust_embed::RustEmbed;
-use smll_lang::config;
 use smll_lang::{config::Config, error::Result, manager::Manager};
-
+use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 
 static HEAD: &str = r#"
 interface Block<T> {
@@ -41,14 +40,64 @@ fn try_main() -> Result<()> {
     let data_conv = Asset::get("SystConv.java").unwrap(); 
     let convs = std::str::from_utf8(data_conv.data.as_ref()).unwrap();
 
+    let green = Some(Color::Green);
+    let red = Some(Color::Red);
+    let yellow = Some(Color::Yellow);
+    let gray = Some(Color::Rgb(150, 150, 150));
+    let white = Some(Color::White);
+
+    let mut stdout = StandardStream::stdout(ColorChoice::Always);
+
+    Config::init_dirs();
     let lambdas = generate_lambdas(20); 
     let head2 = format!("{}\n{}\n\n{}{}\n", IMPORTS, lambdas, convs, HEAD);
-    let package_manager = Manager::new();
+    let mut package_manager = Manager::new();
     if conf.ir {
         let res = smll_lang::compile_and_run(&conf)?;
         println!("{}", res);
     } else if conf.build {
         package_manager.resolve_dependencies();
+
+        if package_manager.tobuild.len() > 0 {
+            for (package, files) in &package_manager.tobuild {
+                stdout.set_color(ColorSpec::new().set_fg(green)).unwrap();
+                write!(&mut stdout,"Compiling ").unwrap();
+
+                stdout.set_color(ColorSpec::new().set_fg(gray)).unwrap();
+                writeln!(&mut stdout, "[{package}] ").unwrap();
+                let mut done = 0;
+                for file in files {
+                    conf.file = format!("{file}");
+                    let res = smll_lang::compile_and_run(&conf);
+                    if res.is_err() {
+                        done += 1;
+                    }
+                    // let program = format!("{head2}\n{}", res);
+                    // let out_name = make_output_file_name(&conf.file);
+                    // compile_to_java(&out_name, &program);
+                }
+
+                if done != 0 {
+                    stdout.set_color(ColorSpec::new().set_fg(red)).unwrap();
+                    write!(&mut stdout, "Builing failed: ").unwrap();
+
+                    stdout.set_color(ColorSpec::new().set_fg(gray)).unwrap();
+                    write!(&mut stdout, "{done} / {}", files.len()).unwrap();
+
+                    stdout.set_color(ColorSpec::new().set_fg(red)).unwrap();
+                    writeln!(&mut stdout, " built. ").unwrap();
+                    return Ok(());
+                } else {
+                    stdout.set_color(ColorSpec::new().set_fg(green)).unwrap();
+                    write!(&mut stdout,"Done compiling ").unwrap();
+
+                    stdout.set_color(ColorSpec::new().set_fg(gray)).unwrap();
+                    writeln!(&mut stdout, "[{package}] ").unwrap();
+                }
+            }
+        }
+
+        stdout.set_color(ColorSpec::new().set_fg(Some(Color::Rgb(255, 255, 255)))).unwrap();
         conf.file = "./code/main.sml".to_string();
         let res = smll_lang::compile_and_run(&conf)?;
         let program = format!("{head2}\n{}", res);

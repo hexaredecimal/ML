@@ -6,12 +6,13 @@ use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 pub struct Manager <'a> {
     depends: &'a str,
     path: &'a str,
+    pub tobuild: Vec<(String, Vec<String>)>
 }
 
 
 impl <'a> Manager <'a> {
     pub fn new() -> Self {
-        Self { depends: "depends", path: "./.smll_deps" }
+        Self { depends: "depends", path: "./.smll_deps", tobuild: vec![] }
     }
 
     fn depends_list(&self, path: &str) -> (String, HashMap<String, String>){
@@ -35,13 +36,13 @@ impl <'a> Manager <'a> {
         (project_name.as_str().unwrap().to_string(), deps)
     }
 
-    pub fn resolve_dependencies(&self) {
+    pub fn resolve_dependencies(&mut self) {
         let r = self.process("./project.toml"); 
         println!("{r}");
     }
 
 
-    fn process(&self, path: &str) -> PackageResult {
+    fn process(&mut self, path: &str) -> PackageResult {
         let (name, depends) = self.depends_list(path); 
         let deps_count = depends.keys().count();
         // TODO: Rewrite this and donot hard code the registry url, load it from file
@@ -110,6 +111,17 @@ impl <'a> Manager <'a> {
                         stdout.set_color(ColorSpec::new().set_fg(gray)).unwrap();
                         writeln!(&mut stdout, "{key}").unwrap();
                         let inner = format!("{dest}/project.toml");
+
+                        let mut v: Vec<String> = vec![];
+                        for element in std::path::Path::new(&dest).read_dir().unwrap() {
+                            let path = element.unwrap().path();
+                            if let Some(extension) = path.extension() {
+                                if extension == "sml" {
+                                    v.push(format!("{}", path.to_str().unwrap()));
+                                }
+                            }
+                        }
+                        self.tobuild.push((key.clone(), v));
                         self.process(&inner);
                     }, 
                     Err(e) => {

@@ -129,6 +129,15 @@ fun main(): Unit => ()
         println!("Done creating smll project");
     }
 
+    pub fn init_dirs() {
+        let _ = fs::create_dir("./code");
+        let _ = fs::create_dir("./.smll_deps");
+
+        let deps = "./.smll_deps/depends"; 
+        if fs::metadata(deps).is_err() {
+            fs::write(deps, "").unwrap();
+        }
+    }
     /// Parse command line arguments and create a config.
     pub fn parse() -> Box<Self> {
         let mut conf = Config::new();
