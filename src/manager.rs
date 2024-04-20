@@ -42,7 +42,7 @@ impl <'a> Manager <'a> {
             let values = project_statics.as_table().unwrap(); 
 
             for (_, lib) in values {
-                let lib = lib.to_string();
+                let lib = lib.to_string().replace("\"", "");
                 statics.push_str(&format!("{lib}\n"));
             }
 
@@ -57,7 +57,7 @@ impl <'a> Manager <'a> {
             let values = project_imports.as_table().unwrap(); 
 
             for (_, lib) in values {
-                let lib = lib.to_string();
+                let lib = lib.to_string().replace("\"", "");
                 imports.push_str(&format!("{lib}\n"));
             }
 
