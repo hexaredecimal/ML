@@ -1,5 +1,5 @@
-syn match smllComment "(*"
-syntax region smllComment start="(*" end="*)"
+syn match smllComment "(\*"
+syntax region smllComment start="(\*" end="\*)"
 hi def link smllComment Comment
 
 syn match smllCArrayModifier "'[cC]"
