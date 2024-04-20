@@ -15,24 +15,12 @@ mod gen;
 mod ir;
 mod parser;
 
-#[derive(RustEmbed)]
-#[folder = "lib"]
-struct Asset;
 type CompilationUnit = (Vec<RawFunction>, Vec<RecordType>, Vec<EnumType>, Vec<Alias>);
 pub fn compile_file(config: &config::Config, input: String, cache: &mut Vec<String>) -> Result<CompilationUnit> {
-    let program = match Asset::get(&input) {
-        Some(data) =>  {
-            let dt = data.clone(); 
-            let dt = dt.data.clone();
-            String::from_utf8(dt.to_vec()).unwrap()
-        }, 
-        None => {
-            match std::fs::read_to_string(&input) {
-                Ok(x) => x, 
-                Err(e) => {
-                    return Err(CompilerError::BackendError(format!("failed to import file with path: {}, with reason: {e}", input)));
-                }
-            }
+    let program = match std::fs::read_to_string(&input) {
+        Ok(x) => x, 
+        Err(e) => {
+            return Err(CompilerError::BackendError(format!("failed to import file with path: {}, with reason: {e}", input)));
         }
     };
     
@@ -68,7 +56,7 @@ pub fn compile_file(config: &config::Config, input: String, cache: &mut Vec<Stri
         for import in imports {
             let path = import.path.clone(); 
             let path = path.join("/");
-            let mut path = format!("{path}.sml");
+            let mut path = format!("{path}.smll");
 
             for dir_path in &config.import_paths  {
                 let _path = format!("{dir_path}{path}");
@@ -134,7 +122,7 @@ pub fn compile_and_run(config: &config::Config) -> Result<String> {
 
     'outer: for import in imports {
         let path = import.path.join("/");
-        let mut path = format!("{path}.sml"); 
+        let mut path = format!("{path}.smll"); 
 
         for dir_path in &config.import_paths  {
             let _path = format!("{dir_path}{path}");

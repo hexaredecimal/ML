@@ -144,8 +144,27 @@ fun main(): Unit => ()
         let name = conf.clone().parse_name();
         conf.program_name = name;
         let len = conf.args.len();
+
+        let red = Some(Color::Red);
+        let yellow = Some(Color::Yellow);
+        let gray = Some(Color::Rgb(150, 150, 150));
+        let white = Some(Color::White);
+
+        let mut stdout = StandardStream::stdout(ColorChoice::Always);
+
         if len == 1 {
-            conf.clone().report("no input file provided!!");
+            stdout.set_color(ColorSpec::new().set_fg(red)).unwrap();
+            write!(&mut stdout, "Error: ").unwrap();
+
+            stdout.set_color(ColorSpec::new().set_fg(white)).unwrap();
+            write!(&mut stdout, "no command line options passed, try `").unwrap();
+            
+            stdout.set_color(ColorSpec::new().set_fg(yellow)).unwrap();
+            write!(&mut stdout, "help").unwrap();
+            
+            stdout.set_color(ColorSpec::new().set_fg(white)).unwrap();
+            writeln!(&mut stdout, "`").unwrap();
+            std::process::exit(21);
         }
 
         let mut c = conf.clone();
