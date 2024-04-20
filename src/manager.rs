@@ -116,7 +116,7 @@ impl <'a> Manager <'a> {
                         for element in std::path::Path::new(&dest).read_dir().unwrap() {
                             let path = element.unwrap().path();
                             if let Some(extension) = path.extension() {
-                                if extension == "sml" {
+                                if extension == "smll" {
                                     v.push(format!("{}", path.to_str().unwrap()));
                                 }
                             }
