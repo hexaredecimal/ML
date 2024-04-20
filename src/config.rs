@@ -117,7 +117,7 @@ edition = "2024"
 "#);
         
         fs::write(project_config_path, project_text).unwrap();
-        let project_src = "./code/main.sml";
+        let project_src = "./code/main.smll";
         let code = r#"
 (* main.smll - Happy coding *)
 fun main(): Unit => ()
