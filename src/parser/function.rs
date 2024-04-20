@@ -8,6 +8,7 @@ use nom::error::VerboseError;
 use nom::multi::separated_list0;
 use nom::sequence::tuple;
 use nom::IResult;
+use nom::error::context;
 use nom::bytes::complete::{tag, take_until};
 
 
@@ -29,7 +30,7 @@ fn argument(i: &str) -> IResult<&str, (String, Type), VerboseError<&str>> {
 }
 
 pub fn record_type(i: &str) -> IResult<&str, TopLevel, VerboseError<&str>> {
-    let (i, (_, _, name, _, _, args, _)) = tuple((
+    let (i, (_, _, name, _, _, args, _)) = context("Struct declaration", tuple((
         tag("struct"),
         sp,
         identifier,
@@ -37,7 +38,7 @@ pub fn record_type(i: &str) -> IResult<&str, TopLevel, VerboseError<&str>> {
         tag("("),
         separated_list0(tuple((sp, tag(","), sp)), normargument),
         tag(")"),
-    ))(i)?;
+    )))(i)?;
 
     Ok((
         i,
@@ -104,23 +105,24 @@ pub fn enum_type(i: &str) -> IResult<&str, TopLevel, VerboseError<&str>> {
 
 
 pub fn function(i: &str) -> IResult<&str, TopLevel, VerboseError<&str>> {
-    let (i, (_, _, name, _, _, args, _, _, _, _, return_type, _, _, _, root)) = tuple((
-        tag("fun"),
-        sp,
-        identifier,
-        sp,
-        tag("("),
-        separated_list0(tuple((sp, tag(","), sp)), argument),
-        tag(")"),
-        sp,
-        tag(":"),
-        sp,
-        type_literal,
-        sp,
-        tag("=>"),
-        sp,
-        expression,
-    ))(i)?;
+    let (i, (_, _, name, _, _, args, _, _, _, _, return_type, _, _, _, root)) = context("", 
+        tuple((
+            tag("fun"),
+            sp,
+            identifier,
+            sp,
+            tag("("),
+            separated_list0(tuple((sp, tag(","), sp)), argument),
+            tag(")"),
+            sp,
+            tag(":"),
+            sp,
+            type_literal,
+            sp,
+            tag("=>"),
+            sp,
+            expression,
+        )))(i)?;
 
     let args_types = args.to_vec();
     Ok((

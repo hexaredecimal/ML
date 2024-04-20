@@ -5,7 +5,7 @@ use crate::parser::types::type_literal;
 use nom::branch::alt;
 use nom::bytes::complete::{tag, take_while1, take_until};
 use nom::combinator::opt;
-use nom::error::VerboseError;
+use nom::error::{context, VerboseError};
 use nom::multi::{many0, many1, separated_list0};
 use nom::sequence::tuple;
 use nom::IResult;
@@ -71,13 +71,13 @@ fn bool_literal(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
 }
 
 fn array_literal(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
-    let (i, (_, _, exprs, _, _)) = tuple((
+    let (i, (_, _, exprs, _, _)) = context("Array literal", tuple((
         tag("["),
         sp,
         separated_list0(tuple((sp, tag(","), sp)), expression),
         sp,
         tag("]"),
-    ))(i)?;
+    )))(i)?;
     Ok((i, RawNode::new(RawExpression::Array(exprs.to_vec()))))
 }
 
