@@ -33,6 +33,37 @@ impl <'a> Manager <'a> {
                 deps.insert(key.clone(), val.to_string());
             }
         }
+
+        let mut statics = String::new();
+        let project_statics = project_toml.get("statics");
+
+        if project_statics.is_some() {
+            let project_statics = project_statics.unwrap(); 
+            let values = project_statics.as_table().unwrap(); 
+
+            for (_, lib) in values {
+                let lib = lib.to_string();
+                statics.push_str(&format!("{lib}\n"));
+            }
+
+            fs::write("./.smll_deps/statics", statics).unwrap();
+        }
+
+        let mut imports = String::new();
+        let project_imports = project_toml.get("imports");
+
+        if project_imports.is_some() {
+            let project_imports = project_imports.unwrap(); 
+            let values = project_imports.as_table().unwrap(); 
+
+            for (_, lib) in values {
+                let lib = lib.to_string();
+                imports.push_str(&format!("{lib}\n"));
+            }
+
+            fs::write("./.smll_deps/imports", imports).unwrap();
+        }
+
         (project_name.as_str().unwrap().to_string(), deps)
     }
 

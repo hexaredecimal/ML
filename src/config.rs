@@ -125,6 +125,8 @@ fun main(): Unit => ()
         let _ = fs::create_dir("./code");
         let _ = fs::create_dir("./.smll_deps");
         fs::write("./.smll_deps/depends", "").unwrap();
+        fs::write("./.smll_deps/statics", "").unwrap();
+        fs::write("./.smll_deps/imports", "java.util.Scanner").unwrap();
         fs::write(project_src, code).unwrap();
         println!("Done creating smll project");
     }
@@ -136,6 +138,8 @@ fun main(): Unit => ()
         let deps = "./.smll_deps/depends"; 
         if fs::metadata(deps).is_err() {
             fs::write(deps, "").unwrap();
+            fs::write("./.smll_deps/statics", "").unwrap();
+            fs::write("./.smll_deps/imports", "").unwrap();
         }
     }
     /// Parse command line arguments and create a config.
