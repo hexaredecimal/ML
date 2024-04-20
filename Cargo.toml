@@ -15,10 +15,8 @@ path = "src/bin.rs"
 [dependencies]
 nom = "6.1.2"
 err-derive = "0.3.0"
-codegen = "0.1.3"
 rust-embed = "8.3.0"
 tsu = "1.0.1"
-clap = { version = "4.5.4", features = ["derive"] }
 git2 = "0.18.3"
 termcolor = "1.4.1"
 
