@@ -98,7 +98,7 @@ fn try_main() -> Result<()> {
         }
 
         stdout.set_color(ColorSpec::new().set_fg(Some(Color::Rgb(255, 255, 255)))).unwrap();
-        conf.file = "./code/main.sml".to_string();
+        conf.file = "./code/main.smll".to_string();
         let res = smll_lang::compile_and_run(&conf)?;
         let program = format!("{head2}\n{}", res);
         let out_name = make_output_file_name(&conf.file);
@@ -110,7 +110,7 @@ fn try_main() -> Result<()> {
         let out_name = make_output_file_name(&conf.file);
         compile_to_java(&out_name, &program);
     } else if !conf.ir && conf.run {
-        conf.file = "./code/main.sml".to_string();
+        conf.file = "./code/main.smll".to_string();
 
         let res = smll_lang::compile_and_run(&conf)?;
         let program = format!("{head2}\n{}", res);
@@ -195,7 +195,7 @@ fn generate_lambdas(max: i32) -> String {
 }
 
 fn make_output_file_name(file_name: &String) -> String {
-    if !file_name.ends_with(".sml") {
+    if !file_name.ends_with(".smll") {
         println!(
             "Invalid input file. expected a file with `.sml` extension but found `{}`",
             file_name
