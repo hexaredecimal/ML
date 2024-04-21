@@ -1,10 +1,3 @@
-
-
-
-final class MlIO {
-  final static Scanner stdin = new Scanner(System.in); 
-}
-
 class SysConv {
   // Convert to Character
     
