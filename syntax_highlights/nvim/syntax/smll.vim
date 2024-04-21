@@ -11,7 +11,7 @@ hi def link smllLiteralKeyword Boolean
 
 " statements
 syn keyword smllConditionalKeyword defer else if match
-hi def link smllConditionalKeyword Conditional
+hi def link smllConditionalKeyword Keyword
 
 " syn keyword smllLoopKeyword for while loop
 " hi def link smllLoopKeyword Repeat
@@ -35,7 +35,7 @@ syn keyword smllOtherKeyword java
 hi def link smllOtherKeyword Keyword
 
 " top-level keywords
-syn keyword smllTopLevelKeyword fun using type enum struct
+syn keyword smllTopLevelKeyword fun using type enum struct val let
 hi def link smllTopLevelKeyword Keyword
 
 " macros
