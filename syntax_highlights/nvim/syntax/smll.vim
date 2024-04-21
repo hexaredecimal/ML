@@ -157,8 +157,9 @@ syn sync maxlines=500
 " 
 " hi def link smllCharErr      Error
 " 
-" hi def link smllComment      Comment
-" 
+hi def link smllComment      Comment
+
+ " 
 hi def link smllModPath      Include
 hi def link smllModule       Include
 hi def link smllModParam1    Include
