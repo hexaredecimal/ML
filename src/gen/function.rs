@@ -985,6 +985,17 @@ impl FunctionTranslator {
         scope.insert(id.to_string(), ty);
 
         match init.expr() {
+            SemExpression::Lambda(args, ret, _) => {
+                let mut aa = vec![]; 
+                for arg in args {
+                    let (_, t) = arg;
+                    aa.push(t.clone());
+                }
+
+                let ty = Type::Lambda(ret.clone(), aa);
+                let real_ty = self.jit.clone().real_type(&ty, ctx)?;
+                Ok(format!("{} {} = {};\n", real_ty, id, val.clone()))
+            }
             SemExpression::Block(_) | SemExpression::Lets(_, _) => {
                 let splits: Vec<_> = val.split('\n').collect();
                 let len = splits.len();
@@ -996,7 +1007,6 @@ impl FunctionTranslator {
                 let last = last.trim();
                 Ok(format!("{}\t{} {} = {};\n", rest, "var", id, last))
             }
-            SemExpression::Lambda(_, _, _) =>  Ok(format!("{} {} = {};\n", val_ty, id, val.clone())),
             SemExpression::Null(_) => Ok(format!("{} {} = {};\n", val_ty, id, val.clone())),
             _ => Ok(format!("{} {} = {};\n", "var", id, val.clone())),
         }
