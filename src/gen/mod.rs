@@ -110,7 +110,7 @@ impl Jit {
             .map(|(i, f)| {
                 let (name, ty) = f;
                 match ty {
-                    ir::Type::VarArgs => {
+                    ir::Type::VarArgs(inner) => {
                         if i < len - 1 {
                             let e: Result<CompilerError> =
                                 Result::Err(CompilerError::BackendError(
@@ -120,7 +120,22 @@ impl Jit {
                             println!("{:?}", e);
                             std::process::exit(1);
                         }
-                        Ok("Object ...var_args".to_owned())
+
+                        let ty_list = match *inner.clone() {
+                            Type::YourType(x) => {
+                                if x.is_empty() {
+                                    format!("Object... ")
+                                } else {
+                                    format!("{x}... ")
+                                }
+                            }
+                            other => {
+                                let ty = self.clone().real_type(&other, ctx).unwrap();
+                                format!("{ty}... ")
+                            }
+                        };
+
+                        Ok(format!("{ty_list} var_args"))
                     }
                     _ => {
                         let ty = self.clone().real_type(ty, ctx).unwrap();
