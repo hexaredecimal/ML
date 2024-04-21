@@ -174,7 +174,7 @@ impl std::fmt::Display for BinaryOp {
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum Type {
-    VarArgs,
+    VarArgs(Box<Type>),
     Unit,
     String,
     Any,
@@ -214,7 +214,38 @@ impl Type {
     pub fn assert_eq(&self, other: &Self, ctx: &mut SemContext) -> Result<()> {
         if self != other {
             match (self, other) {
-                (Type::VarArgs, _) => return Ok(()),
+                (Type::VarArgs(bx), t) => {
+                    match *bx.clone() {
+                        Type::YourType(x) => {
+                            if x.is_empty() {
+                                return Ok(());
+                            } 
+                            return bx.assert_eq(t, ctx);
+                        }
+                        ty => {
+                            return ty.assert_eq(t, ctx);
+                        }
+                    }
+                }
+
+                (
+                    Type::YourType(_),
+                    Type::Float
+                    | Type::Int
+                    | Type::Double
+                    | Type::Char
+                    | Type::Int8
+                    | Type::Int16
+                    | Type::Int32
+                    | Type::Int64
+                    | Type::Int128
+                    | Type::Unit
+                    | Type::Bool
+                    | Type::String
+                ) => {
+                    return Err(CompilerError::TypeConflict(self.clone(), other.clone()));
+                }
+
                 (Type::List(list_ty), Type::Array(_, ty)) => {
                     list_ty.assert_eq(ty, ctx).unwrap(); 
                     return Ok(());
@@ -257,6 +288,7 @@ impl Type {
                 }
                 (Type::String, Type::EnumType(_, _)) => return Ok(()), 
                 (Type::String, Type::YourType(_)) => return Ok(()),
+
                 (
                     Type::Float
                     | Type::Int
@@ -331,7 +363,18 @@ impl std::fmt::Display for Type {
                 }
                 Type::EnumType(name, p) => format!("{}.{}", name, p), 
                 Type::YourType(s) => s.clone(),
-                Type::VarArgs => "...".to_string(),
+                Type::VarArgs(ty) => {
+                    match *ty.clone() {
+                        Type::YourType(x) => {
+                            if x.is_empty() {
+                                "...".to_string()
+                            } else {
+                                format!("{x}... ")
+                            }
+                        }
+                        other => format!("{other}... ")
+                    }
+                }
                 Type::Unit => "()".to_string(),
                 Type::Usize => "usize".to_string(),
                 Type::String => "String".to_string(),
