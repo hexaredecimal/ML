@@ -50,8 +50,11 @@ fn try_main() -> Result<()> {
 
     Config::init_dirs();
 
-    let imports = fs::read_to_string("./.smll_deps/statics").unwrap();
+    let statics = fs::read_to_string("./.smll_deps/statics").unwrap();
+    let imports = fs::read_to_string("./.smll_deps/imports").unwrap();
     let jars = fs::read_to_string("./.smll_deps/jars").unwrap();
+
+    let imports = format!("{statics}\n\n{imports}\n\n");
 
     let lambdas = generate_lambdas(20); 
     let head2 = format!("{}\n{}\n\n{}{}\n", imports, lambdas, convs, HEAD);
@@ -121,11 +124,17 @@ fn try_main() -> Result<()> {
         let out_name = make_output_file_name(&conf.file);
         compile_to_java(&out_name, &program, &jars);
 
-        let mut cmd = Command::new("java"); 
+        let mut cmd = Command::new("java");
+        let mut classes = vec!["./build"];
+        if !jars.is_empty() {
+            classes.push(&jars); 
+        }
+
+        let jars = classes.join(":");
         let cmd = cmd
             .arg("--enable-preview")
-            .arg("-classpath")
-            .arg("./build")
+            .arg("--class-path")
+            .arg(format!("{jars}"))
             .arg(out_name);
 
         let output = cmd
@@ -146,7 +155,7 @@ fn compile_to_java(out_name: &str, program: &str, class_path: &str) {
     fs::write(format!("./{}.java", out_name), program.as_bytes()).unwrap();
     let mut cmd = Command::new("javac"); 
     let cmd = cmd
-        .arg("-cp")
+        .arg("--class-path")
         .arg(format!("{class_path}"))
         .arg("--enable-preview")
         .arg("--source")
