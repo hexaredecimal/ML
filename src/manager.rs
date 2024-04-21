@@ -2,13 +2,16 @@ use std::{collections::HashMap, fmt::Display, fs};
 use git2::Repository; 
 use std::io::Write;
 use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
+use std::fs::File;
+use std::io::copy;
+use lib_traxex::download::download;
+
 
 pub struct Manager <'a> {
     depends: &'a str,
     path: &'a str,
     pub tobuild: Vec<(String, Vec<String>)>
 }
-
 
 impl <'a> Manager <'a> {
     pub fn new() -> Self {
@@ -43,7 +46,7 @@ impl <'a> Manager <'a> {
 
             for (_, lib) in values {
                 let lib = lib.to_string().replace("\"", "");
-                statics.push_str(&format!("{lib}\n"));
+                statics.push_str(&format!("import static {lib};\n"));
             }
 
             fs::write("./.smll_deps/statics", statics).unwrap();
@@ -58,13 +61,73 @@ impl <'a> Manager <'a> {
 
             for (_, lib) in values {
                 let lib = lib.to_string().replace("\"", "");
-                imports.push_str(&format!("{lib}\n"));
+                imports.push_str(&format!("import {lib};\n"));
             }
 
             fs::write("./.smll_deps/imports", imports).unwrap();
         }
 
+        let mut jars = String::new();
+        let project_jars = project_toml.get("libs");
+
+        if project_jars.is_some() {
+            let project_jars = project_jars.unwrap(); 
+            let values = project_jars.as_table().unwrap(); 
+
+            let sz = values.keys().count();
+
+            for (i, (dest, lib)) in values.into_iter().enumerate() {
+                let lib = lib.to_string().replace("\"", "");
+                let mut lib = format!("{lib}"); 
+                let nm = dest.to_string().replace("\"", "");
+                let dest = format!("./.smll_deps/libs/{nm}.jar");
+
+                if fs::metadata(&dest).is_err() {
+                    let _ = self.download_lib(&nm, &dest, &lib);
+                }
+                if i < sz - 1 {
+                    lib.push_str(":");
+                }
+                jars.push_str(&dest);
+            }
+
+            fs::write("./.smll_deps/jars", jars).unwrap();
+        }
+
         (project_name.as_str().unwrap().to_string(), deps)
+    }
+
+    fn download_lib(&self, name: &str, dest: &str, url: &str) -> bool {
+        let green = Some(Color::Green);
+        let red = Some(Color::Red);
+        let yellow = Some(Color::Yellow);
+        let gray = Some(Color::Rgb(150, 150, 150));
+        let white = Some(Color::White);
+
+        let mut stdout = StandardStream::stdout(ColorChoice::Always);
+
+        stdout.set_color(ColorSpec::new().set_fg(yellow)).unwrap();
+        write!(&mut stdout, "Downloading jar for: ").unwrap();
+
+        stdout.set_color(ColorSpec::new().set_fg(gray)).unwrap();
+        writeln!(&mut stdout, "[{name}]").unwrap();
+        let dl = download(url, Some(dest)); 
+        match dl {
+            Err(_why) => {
+                stdout.set_color(ColorSpec::new().set_fg(red)).unwrap();
+                write!(&mut stdout, "Failed to download: ").unwrap();
+                stdout.set_color(ColorSpec::new().set_fg(gray)).unwrap();
+                writeln!(&mut stdout, "[{name}]").unwrap();
+                return false;
+            }
+            Ok(_display) => {
+                stdout.set_color(ColorSpec::new().set_fg(green)).unwrap();
+                write!(&mut stdout, "Done downloading: ").unwrap();
+                stdout.set_color(ColorSpec::new().set_fg(gray)).unwrap();
+                writeln!(&mut stdout, "[{name}]").unwrap();
+            }
+        }
+        true
     }
 
     pub fn resolve_dependencies(&mut self) {
