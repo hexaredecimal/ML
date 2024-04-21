@@ -120,17 +120,17 @@ pub fn compile_and_run(config: &config::Config) -> Result<String> {
     let mut cache: Vec<String> = Vec::new(); 
 
 
-    'outer: for import in imports {
+    for import in imports {
         let path = import.path.join("/");
         let mut path = format!("{path}.smll"); 
 
-        for dir_path in &config.import_paths  {
+        'inner: for dir_path in &config.import_paths  {
             let _path = format!("{dir_path}{path}");
             if !fs::metadata(&_path).is_ok() {
-                continue;
+                continue 'inner;
             } else {
                 path = _path;
-                break;
+                break 'inner;
             }
         }
 
