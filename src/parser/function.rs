@@ -10,6 +10,7 @@ use nom::sequence::tuple;
 use nom::IResult;
 use nom::error::context;
 use nom::bytes::complete::{tag, take_until};
+use nom::multi::many0;
 
 
 fn normargument(i: &str) -> IResult<&str, (String, Type), VerboseError<&str>> {
@@ -18,9 +19,15 @@ fn normargument(i: &str) -> IResult<&str, (String, Type), VerboseError<&str>> {
 }
 
 fn vargument(i: &str) -> IResult<&str, (String, Type), VerboseError<&str>> {
-    let (i, _) = tuple((tag("..."),))(i)?;
+    let (i, (_, dest)) = tuple((tag("..."), many0(tuple((sp, type_literal)))))(i)?;
 
-    Ok((i, ("".to_string(), Type::VarArgs)))
+    if dest.is_empty() {
+        Ok((i, ("".to_string(), Type::VarArgs(Box::new(Type::YourType("".to_string()))))))
+    } else {
+        let last = dest.last().unwrap();
+        let (_, ty) = last; 
+        Ok((i, ("".to_string(), Type::VarArgs(Box::new(ty.clone())))))
+    }
 }
 
 fn argument(i: &str) -> IResult<&str, (String, Type), VerboseError<&str>> {
