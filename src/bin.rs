@@ -14,7 +14,7 @@ enum Void {
 }
 "#;
 
-static IMPORTS: &str = 
+/*static IMPORTS: &str = 
 r#"
 import java.io.*;
 import java.util.*;
@@ -23,7 +23,7 @@ import java.awt.*;
 import javax.swing.*;
 import java.time.*;
 import java.time.format.DateTimeFormatter;
-"#;
+"#;*/
 
 fn main() {
     if let Err(err) = try_main() {
@@ -42,15 +42,19 @@ fn try_main() -> Result<()> {
 
     let green = Some(Color::Green);
     let red = Some(Color::Red);
-    let yellow = Some(Color::Yellow);
+    let _yellow = Some(Color::Yellow);
     let gray = Some(Color::Rgb(150, 150, 150));
-    let white = Some(Color::White);
+    let _white = Some(Color::White);
 
     let mut stdout = StandardStream::stdout(ColorChoice::Always);
 
     Config::init_dirs();
+
+    let imports = fs::read_to_string("./.smll_deps/statics").unwrap();
+    let jars = fs::read_to_string("./.smll_deps/jars").unwrap();
+
     let lambdas = generate_lambdas(20); 
-    let head2 = format!("{}\n{}\n\n{}{}\n", IMPORTS, lambdas, convs, HEAD);
+    let head2 = format!("{}\n{}\n\n{}{}\n", imports, lambdas, convs, HEAD);
     let mut package_manager = Manager::new();
     if conf.ir {
         let res = smll_lang::compile_and_run(&conf)?;
@@ -102,20 +106,20 @@ fn try_main() -> Result<()> {
         let res = smll_lang::compile_and_run(&conf)?;
         let program = format!("{head2}\n{}", res);
         let out_name = make_output_file_name(&conf.file);
-        compile_to_java(&out_name, &program);
+        compile_to_java(&out_name, &program, &jars);
         
     } else if !conf.file.is_empty() {
         let res = smll_lang::compile_and_run(&conf)?;
         let program = format!("{head2}\n{}", res);
         let out_name = make_output_file_name(&conf.file);
-        compile_to_java(&out_name, &program);
+        compile_to_java(&out_name, &program, &jars);
     } else if !conf.ir && conf.run {
         conf.file = "./code/main.smll".to_string();
 
         let res = smll_lang::compile_and_run(&conf)?;
         let program = format!("{head2}\n{}", res);
         let out_name = make_output_file_name(&conf.file);
-        compile_to_java(&out_name, &program);
+        compile_to_java(&out_name, &program, &jars);
 
         let mut cmd = Command::new("java"); 
         let cmd = cmd
@@ -138,10 +142,12 @@ fn try_main() -> Result<()> {
     Ok(())
 }
 
-fn compile_to_java(out_name: &str, program: &str) {
+fn compile_to_java(out_name: &str, program: &str, class_path: &str) {
     fs::write(format!("./{}.java", out_name), program.as_bytes()).unwrap();
     let mut cmd = Command::new("javac"); 
     let cmd = cmd
+        .arg("-cp")
+        .arg(format!("{class_path}"))
         .arg("--enable-preview")
         .arg("--source")
         .arg("21")
