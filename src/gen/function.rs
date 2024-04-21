@@ -135,16 +135,14 @@ impl FunctionTranslator {
                 };
                 Ok(format!("{left}.{right}"))
             }
-            SemExpression::LambdaCall(e, args) => {
+            SemExpression::LambdaCall(id, args) => {
                 let mut vals: Vec<_> = Vec::new();
-                let _val = self.translate_expr(e, scope, ctx)?;
                 for arg in args.clone().into_iter() {
                     let expr = self.translate_expr(&arg, scope, ctx)?;
                     vals.push(expr); 
                 }
 
-                println!("({})", vals.join(", "));
-                todo!()
+                Ok(format!("{id}.apply({})", vals.join(", ")))
             }
             SemExpression::Lambda(args, _, bd) => {
                 let mut sc = scope.clone();  
