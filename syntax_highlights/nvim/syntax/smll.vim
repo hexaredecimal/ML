@@ -100,10 +100,10 @@ syn region   smllNone matchgroup=smlKeyword start="\<if\>" matchgroup=smlKeyword
 " syn region   smllKeyword start="\<signature\>" matchgroup=smlModule end="\<\w\(\w\|'\)*\>" contains=smlComment skipwhite skipempty nextgroup=smlMTDef
 " syn match    smllMTDef "=\s*\w\(\w\|'\)*\>"hs=s+1,me=s
 
-syn keyword  smllKeyword  fun type struct enum using
-syn keyword  smllKeyword  val let in if then else match fn 
+syn keyword  smllKeyword  fun type struct enum using java
+syn keyword  smllKeyword  val let in if then else match fn null of 
 
-syn keyword  smllType     Int Any Float Double Char Unit String Result Option Either
+syn keyword  smllType     Int List Any Float Double Char Unit String Bool Long Short Byte Result Option Either
 
 
 syn keyword  smllBoolean      true false
