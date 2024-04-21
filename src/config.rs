@@ -128,7 +128,7 @@ fun main(): Unit => ()
         fs::write("./.smll_deps/depends", "").unwrap();
         fs::write("./.smll_deps/statics", "").unwrap();
         fs::write("./.smll_deps/jars", "").unwrap();
-        fs::write("./.smll_deps/imports", "java.util.Scanner").unwrap();
+        fs::write("./.smll_deps/imports", "").unwrap();
         fs::write(project_src, code).unwrap();
         println!("Done creating smll project");
     }
