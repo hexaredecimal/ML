@@ -14,7 +14,7 @@ pub enum SemExpression {
     String(String),
     Null(Box<Type>),
     Array(Vec<SemNode>),
-    LambdaCall(Box<SemNode>, Vec<SemNode>),
+    LambdaCall(String, Vec<SemNode>),
     FunCall(String, Vec<SemNode>),
     Id(String), // TODO: semantic checking step
     BinaryOp(BinaryOp, Box<SemNode>, Box<SemNode>),
@@ -292,7 +292,7 @@ impl SemNode {
                 let expr = SemNode::analyze(*e, ctx)?; 
                 SemExpression::SimpleNullCheck(Box::new(expr))
             },
-            RawExpression::LambdaCall(_, _) => todo!("Implement invoking a lamda expresssion"),
+            RawExpression::LambdaCall(_) => todo!("Implement invoking a lamda expresssion"),
             RawExpression::Embed(x) => {
                 let e = SemNode::analyze(*x, ctx)?; 
                 SemExpression::Embed(Box::new(e))
@@ -469,7 +469,22 @@ impl SemNode {
                 for a in args {
                     out_args.push(Self::analyze(a, ctx)?);
                 }
-                SemExpression::FunCall(id, out_args)
+                match ctx.funs().get(&id) {
+                    Some(ty) => SemExpression::FunCall(id, out_args),
+                    None => {
+                        match ctx.vars().get(&id) {
+                            Some(var) => {
+                                match var {
+                                    Type::Lambda(_, _) => {
+                                        SemExpression::LambdaCall(id, out_args)
+                                    }
+                                    _ => return Err(CompilerError::BackendError(format!("Attemmpt to call `{id}` of type `{var}` as a function")))
+                                }
+                            }, 
+                            None => return Err(CompilerError::UnknownFunction(id.to_string())),
+                        }
+                    }
+                }
             }
         };
 
@@ -521,7 +536,66 @@ impl SemNode {
             }
             SemExpression::Destructure(_, _) => Type::Any,
             SemExpression::SimpleNullCheck(_) => Type::Bool,
-            SemExpression::LambdaCall(_, _) => todo!(), 
+            SemExpression::LambdaCall(id, args) => {
+                match ctx.clone().vars().get(id) {
+                    Some(var) => {
+                        match var {
+                            Type::Lambda(ret, arg_types) => {
+                                let (ret, argdefs) = (*ret.clone(), arg_types);
+
+                                let mut is_varargs = false; 
+                                if !argdefs.is_empty() {
+                                    let t = argdefs.last().unwrap();
+                                    if let Type::VarArgs(_) = t {
+                                        is_varargs = true;
+                                    }
+                                }
+
+                                let ty = if is_varargs {
+                                    let t = argdefs.last().unwrap();
+                                    let t = if let Type::VarArgs(inner) = t {
+                                        let inner = match *inner.clone() {
+                                            Type::YourType(t) => {
+                                                if t.is_empty() {
+                                                    Type::Any
+                                                } else {
+                                                    *inner.clone()
+                                                }
+                                            }
+                                            other => other
+                                        };
+
+                                        for arg in args {
+                                            let arg_ty = arg.ty(); 
+                                            inner.assert_eq(arg_ty, ctx)?;
+                                        }
+                                        ret
+                                    } else {
+                                        unreachable!()
+                                    };
+                                    t
+                                } else {
+                                    if args.len() != argdefs.len() {
+                                        return Err(CompilerError::WrongNumberOfArguments(
+                                            id.to_string(),
+                                            argdefs.len(),
+                                            args.len(),
+                                        ));
+                                    };
+
+                                    for (arg_type, arg_node) in argdefs.iter().zip(args.iter()) {
+                                        arg_type.assert_eq(arg_node.ty(), ctx)?;
+                                    }
+                                    ret
+                                }; 
+                                ty
+                            }
+                            _ => unreachable!()
+                        }
+                    }, 
+                    None => unreachable!(),
+                }
+            }
             SemExpression::RecordLiteral(parent, _) => Type::YourType(parent.clone()),
             SemExpression::EnumLiteral(parent, child) => {
                 let ty = match child.expr() {
@@ -580,13 +654,33 @@ impl SemNode {
                 let mut is_varargs = false; 
                 if !argdefs.is_empty() {
                     let (_, t) = argdefs.last().unwrap();
-                    if t == &Type::VarArgs {
+                    if let Type::VarArgs(_) = t {
                         is_varargs = true;
                     }
                 }
 
                 if is_varargs {
-                    (*ret).clone()
+                    let (_, t) = argdefs.last().unwrap();
+                    if let Type::VarArgs(inner) = t {
+                        let inner = match *inner.clone() {
+                            Type::YourType(t) => {
+                                if t.is_empty() {
+                                    Type::Any
+                                } else {
+                                    *inner.clone()
+                                }
+                            }
+                            other => other
+                        };
+
+                        for arg in args {
+                            let arg_ty = arg.ty(); 
+                            inner.assert_eq(arg_ty, ctx)?;
+                        }
+                        (*ret).clone()
+                    } else {
+                        unreachable!()
+                    }
                 } else {
                     if args.len() != argdefs.len() {
                         return Err(CompilerError::WrongNumberOfArguments(

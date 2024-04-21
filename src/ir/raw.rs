@@ -79,7 +79,7 @@ pub enum RawExpression {
     String(String),
     Null(Box<Type>),
     Array(Vec<RawNode>),
-    LambdaCall(Box<RawNode>, Vec<RawNode>),
+    LambdaCall(Vec<RawNode>),
     FunCall(String, Vec<RawNode>),
     Id(String), // TODO: semantic checking step
     BinaryOp(BinaryOp, Box<RawNode>, Box<RawNode>),
