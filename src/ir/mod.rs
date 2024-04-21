@@ -214,6 +214,8 @@ impl Type {
     pub fn assert_eq(&self, other: &Self, ctx: &mut SemContext) -> Result<()> {
         if self != other {
             match (self, other) {
+                (Type::Lambda(ret, _), other) => return ret.assert_eq(other, ctx),
+                (other, Type::Lambda(ret, _)) => return ret.assert_eq(other, ctx),
                 (Type::VarArgs(bx), t) => {
                     match *bx.clone() {
                         Type::YourType(x) => {

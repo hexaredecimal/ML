@@ -202,7 +202,12 @@ impl SemNode {
                 SemExpression::FieldAccess(Box::new(expr_left), Box::new(expr_right))
             }
             RawExpression::Lambda(_args, _ret, _body) => {
-                let bd = SemNode::analyze(*_body, ctx)?;
+                let mut ct = ctx.clone(); 
+                for arg in &_args {
+                    let (name, ty) = arg;
+                    ct.vars.insert(name.clone(), ty.clone());
+                }
+                let bd = SemNode::analyze(*_body, &mut ct)?;
                 SemExpression::Lambda(_args, _ret, Box::new(bd))
             }
             RawExpression::Destructure(dest, e) => {
@@ -324,7 +329,7 @@ impl SemNode {
                         if !is_else {
                             return Err(CompilerError::BackendError("expected last case to be the default case in match expression".to_string()));
                         } else {
-                            let d = SemNode::analyze(b, ctx).unwrap();
+                            let d = SemNode::analyze(b, ctx)?;
                             cs.push((d.clone(), d));
 
                         }
@@ -425,18 +430,46 @@ impl SemNode {
             RawExpression::Decimal(val, t) => SemExpression::Decimal(val, t.clone()),
             RawExpression::Id(val) => SemExpression::Id(val),
             RawExpression::Val(id, val) => {
-                let val_ = Box::new(Self::analyze(*val.clone(), ctx)?);
-                ctx.append_new_var(id.clone(), val_.ty().clone()); 
-                SemExpression::Val(id, val_) 
+                match val.expr() {
+                    RawExpression::Lambda(args, ret,_) => {
+                        let mut tyy = vec![]; 
+                        for (_, t) in args {
+                            tyy.push(t.clone());
+                        }
+                        let ty = Type::Lambda(ret.clone(), tyy);
+                        ctx.append_new_var(id.clone(), ty);
+                        let val = Box::new(Self::analyze(*val, ctx)?);
+                        SemExpression::Val(id, val) 
+                    }
+                    _ => {
+                        let val = Box::new(Self::analyze(*val, ctx)?);
+                        ctx.append_new_var(id.clone(), val.ty().clone());
+                        SemExpression::Val(id, val) 
+                    }
+                }
             }
             RawExpression::Lets(lhss, expr) => {
                 let mut es: Vec<SemExpression> = Vec::new(); 
                 for lhs in lhss {
                     match lhs {
                         RawExpression::Let(name, val) => {
-                            let val = Box::new(Self::analyze(*val, ctx)?);
-                            ctx.append_new_var(name.clone(), val.ty().clone());
-                            es.push(SemExpression::Let(name, val));
+                            match val.expr() {
+                                RawExpression::Lambda(args, ret,_) => {
+                                    let mut tyy = vec![]; 
+                                    for (_, t) in args {
+                                        tyy.push(t.clone());
+                                    }
+                                    let ty = Type::Lambda(ret.clone(), tyy);
+                                    ctx.append_new_var(name.clone(), ty);
+                                    let val = Box::new(Self::analyze(*val, ctx)?);
+                                    es.push(SemExpression::Let(name, val));
+                                }
+                                _ => {
+                                    let val = Box::new(Self::analyze(*val, ctx)?);
+                                    ctx.append_new_var(name.clone(), val.ty().clone());
+                                    es.push(SemExpression::Let(name, val));
+                                }
+                            }
                         }
                         _ => unreachable!()
                     } 
@@ -565,15 +598,19 @@ impl SemNode {
                                             other => other
                                         };
 
+                                        let mut tyy = vec![];
                                         for arg in args {
-                                            let arg_ty = arg.ty(); 
+                                            let arg_ty = arg.ty();
+                                            tyy.push(arg_ty.clone());
                                             inner.assert_eq(arg_ty, ctx)?;
                                         }
-                                        ret
+                                        (Box::new(ret), tyy)
                                     } else {
                                         unreachable!()
                                     };
-                                    t
+                                    let (t, args) = t;
+                                    // Type::Lambda(t, args)
+                                    *t.clone()
                                 } else {
                                     if args.len() != argdefs.len() {
                                         return Err(CompilerError::WrongNumberOfArguments(
@@ -583,10 +620,13 @@ impl SemNode {
                                         ));
                                     };
 
+                                    let mut tyy = vec![];
                                     for (arg_type, arg_node) in argdefs.iter().zip(args.iter()) {
+                                        tyy.push(arg_node.ty().clone());
                                         arg_type.assert_eq(arg_node.ty(), ctx)?;
                                     }
-                                    ret
+                                    ret.clone()
+                                    // Type::Lambda(Box::new(ret), tyy)
                                 }; 
                                 ty
                             }
