@@ -9,7 +9,10 @@
 <p> A small, experimental, general purpose programming language created for exploring alternative ways of writing applications on the JVM </p>
 
 ![example workflow](https://github.com/hexaredecimal/ML/actions/workflows/rust.yml/badge.svg)
-    
+
+[![Hits](https://hits.seeyoufarm.com/api/count/incr/badge.svg?url=https%3A%2F%2Fgithub.com%2Fgjbae1212%2Fhit-counter&count_bg=%2379C83D&title_bg=%23555555&icon=codeigniter.svg&icon_color=%23E7E7E7&title=Visitiors&edge_flat=false)](https://hits.seeyoufarm.com)
+
+
 </div>
 
 # What is needed to run this?
