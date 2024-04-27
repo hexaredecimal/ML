@@ -24,18 +24,6 @@ impl JavaTables {
         }
     }
 
-
-    pub fn record_contains_field(self, name: &String, rec: &[(String, Type)]) -> (bool, usize) {
-        for (i, (n, _)) in rec.iter().enumerate() {
-            if *n == *name {
-                return (true, i)
-            }
-        }
-        (false, 1_usize)
-    }
-
-
-
     pub fn process_enumns(&mut self, records: Vec<EnumType>, ctx: &mut SemContext) -> Result<String> {
         let mut recs: String = String::new();
 

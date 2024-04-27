@@ -3,6 +3,7 @@ use crate::ir::raw::EnumField;
 use crate::ir::sem::*;
 use crate::ir::{self, Type};
 use crate::JavaTables;
+use super::utils::Utils;
 
 use std::collections::hash_map::HashMap;
 
@@ -190,7 +191,7 @@ impl JavaBackend {
                         if records.contains_key(x) {
                             let rec = records.get(x).unwrap();
                             for name in names.iter() {
-                                let (cond, i) = jit.clone().record_contains_field(name, &rec.fields); 
+                                let (cond, i) = Utils::record_contains_field(name, &rec.fields); 
                                 if !cond {
                                     return Err(CompilerError::BackendError(format!(
                                         "Cannot destructure field with name `{name}` from type `{}`", e.ty(),
@@ -218,7 +219,7 @@ impl JavaBackend {
                             EnumField::Rec(r) => {
                                 let rec = r.clone(); 
                                 for name in names {
-                                    let (cond, i) = jit.clone().record_contains_field(name, &rec.fields); 
+                                    let (cond, i) = Utils::record_contains_field(name, &rec.fields); 
                                     if !cond {
                                         return Err(CompilerError::BackendError(format!(
                                             "Cannot destructure field with name `{}` from type `{}`",name, e.ty(),
