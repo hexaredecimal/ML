@@ -1,6 +1,6 @@
 use crate::error::{CompilerError, Result};
 use crate::ir::raw::{RawFunction, RecordType, TopLevel};
-use gen::Jit;
+use gen::javatables::JavaTables;
 use ir::raw::{EnumType, Import, Alias};
 use nom::error::convert_error;
 use std::collections::{HashMap, HashSet};
@@ -238,7 +238,7 @@ pub fn compile_and_run(config: &config::Config) -> Result<String> {
         typed_functions.push(ir::sem::SemFunction::analyze(func, &mut ctx)?);
     }
 
-    let mut jit = Jit::new();
+    /*let mut jit = JavaTables::new();
     jit.records = ts.clone();
     jit.enums = es.clone(); 
     jit.aliases = ali.clone(); 
@@ -247,7 +247,9 @@ pub fn compile_and_run(config: &config::Config) -> Result<String> {
     let rcs = jit.process_records(records, true, &mut ctx)?;
     let code_ptr = jit.compile(&typed_functions, &mut ctx)?;
 
-    Ok(format!("{}\n{}\n{}", ens, rcs, code_ptr))
+    Ok(format!("{}\n{}\n{}", ens, rcs, code_ptr))*/
+
+    todo!()
 }
 
 fn parse(text: &str) -> Result<Vec<TopLevel>> {
