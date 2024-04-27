@@ -2,19 +2,19 @@ use crate::error::CompilerError;
 use crate::ir::raw::EnumField;
 use crate::ir::sem::*;
 use crate::ir::{self, Type};
-use crate::Jit;
+use crate::JavaTables;
 
 use std::collections::hash_map::HashMap;
 
-pub(crate) struct FunctionTranslator {
-    jit: Jit,
+pub(crate) struct JavaBackend {
+    jit: JavaTables,
     block_count: i32,
     pub blocks: String,
     pub vars: String,
 }
 
-impl FunctionTranslator {
-    pub fn new(jit: Jit) -> Self {
+impl JavaBackend {
+    pub fn new(jit: JavaTables) -> Self {
         Self {
             jit,
             blocks: String::new(),
@@ -357,7 +357,7 @@ impl FunctionTranslator {
                         (ir::Type::String, true) => {
                             format!("\"\" + {}", e)
                         }
-                        _ => format!("SysConv.to{}({})", real_ty, e)
+                        _ => format!("SysConv.to_{}({})", real_ty, e)
                     }
                 } else {
                     format!("(({}) {})", real_ty, e)
