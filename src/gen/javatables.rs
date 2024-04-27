@@ -5,7 +5,9 @@ use crate::ir::sem::*;
 use crate::ir::{self, Type};
 use std::collections::HashMap;
 
+use super::utils::Utils;
 use super::javacodegen::JavaBackend;
+
 
 #[derive(Clone)]
 #[allow(unused_tuple_struct_fields)]
@@ -238,69 +240,6 @@ impl JavaTables {
         Ok(s)
     }
 
-    pub fn is_sys_type(&self, ty: &ir::Type) -> bool {
-        match ty {
-            ir::Type::Any => true,
-            ir::Type::Unit => true,
-            ir::Type::String => true,
-            ir::Type::Usize => true,
-            ir::Type::Int => true,
-            ir::Type::Char => true,
-            ir::Type::Bool => true,
-            ir::Type::Float => true,
-            ir::Type::Double => true,
-            /*
-            ir::Type::Int8 => true,
-            ir::Type::Int16 => true,
-            ir::Type::Int32 => true,
-            ir::Type::Int64 => true,
-            ir::Type::Int128 => true, */
-            ir::Type::Array(_num, _inner) => true,
-            ir::Type::List(_inner) => true,
-            _ => false,
-        }
-    }
-
-    pub fn extract_record_type(self, name: &String, ty: &[EnumField]) -> Option<EnumField> {
-        for t in ty {
-            match t.clone() {
-                EnumField::Rec(rec) => {
-                    if rec.name == *name {
-                        return Some(t.clone());
-                    }
-                }
-
-                EnumField::Id(s) => {
-                    if *name == s {
-                        return Some(t.clone()); 
-                    }
-                }
-            }
-        }
-        None
-    }
-
-    pub fn enum_type_exists(self, ty: &String) -> Result<bool> {
-        if !self.enums.contains_key(ty) {
-            Err(CompilerError::BackendError(format!(
-                "Invalid enum type {}",
-                ty
-            )))
-        } else {
-            Ok(true)
-        }
-    }
-
-    pub fn record_type_exists(self, ty: &String) -> Result<bool> {
-        if !self.records.contains_key(ty) {
-            Err(CompilerError::BackendError(format!(
-                "Invalid struct type {}",
-                ty
-            )))
-        } else {
-            Ok(true)
-        }
-    }
 
     pub fn real_type(self, ty: &ir::Type, _ctx: &mut SemContext) -> Result<String> {
         match ty {
@@ -344,8 +283,7 @@ impl JavaTables {
                 Ok(format!("{}[]", t))
             }
             ir::Type::EnumType(name, _arg) => {
-                let jit = self.clone();
-                if jit.enum_type_exists(name).is_ok() {
+                if Utils::enum_type_exists(&self.enums, name).is_ok() {
                     let name = name.clone(); 
                     let arg = _arg.clone(); 
                     let enm = self.enums.get(&name).unwrap();
@@ -389,7 +327,7 @@ impl JavaTables {
             }
             ir::Type::YourType(t) => {
                 let jit = self.clone();
-                if self.clone().record_type_exists(t).is_ok() || self.clone().enum_type_exists(t).is_ok()  {
+                if Utils::record_type_exists(&self.records, t).is_ok() || Utils::enum_type_exists(&self.enums, t).is_ok()  {
                     Ok(t.clone())
                 } else if jit.aliases.contains_key(t) {
                     let alias = jit.aliases.get(t).unwrap(); 

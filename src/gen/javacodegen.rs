@@ -211,9 +211,9 @@ impl JavaBackend {
                         }
                     }
                     Type::EnumType(parent, child) => {
-                        jit.clone().enum_type_exists(parent).unwrap(); 
+                        Utils::enum_type_exists(&self.jit.enums, parent).unwrap(); 
                         let args = self.jit.enums.get(parent).unwrap(); 
-                        let found = self.jit.clone().extract_record_type(child, &args.fields).unwrap();
+                        let found = Utils::extract_record_type(child, &args.fields).unwrap();
                         
                         match found {
                             EnumField::Rec(r) => {
@@ -249,12 +249,12 @@ impl JavaBackend {
             }
             SemExpression::EnumLiteral(parent, expr) => {
                 let jit = self.jit.clone(); 
-                jit.enum_type_exists(parent).unwrap(); 
+                Utils::enum_type_exists(&jit.enums, parent).unwrap(); 
                 let args = self.jit.enums.get(parent).unwrap(); 
                 let e = match expr.expr() {
                     SemExpression::FunCall(name, args_) => {
                         let _n = name.clone(); 
-                        let found = self.jit.clone().extract_record_type(name, &args.fields).unwrap();
+                        let found = Utils::extract_record_type(name, &args.fields).unwrap();
                         let found = match found {
                             EnumField::Rec(r) => r, 
                             _ => unreachable!()
@@ -296,7 +296,7 @@ impl JavaBackend {
             }
             SemExpression::RecordLiteral(name, args) => {
                 let jit = self.jit.clone();
-                jit.clone().record_type_exists(name)?;
+                Utils::record_type_exists(&jit.records, name)?;
 
                 let record = jit.records.get(name).unwrap();
 
@@ -344,10 +344,10 @@ impl JavaBackend {
             SemExpression::Unit => Ok("Void.Unit".to_string()),
             SemExpression::Null(_) => Ok("null".to_string()),
             SemExpression::Cast(expr, ty) => {
-                let is_sys_type = self.jit.clone().is_sys_type(ty);
+                let is_sys_type = Utils::is_sys_type(ty);
                 let real_ty = self.jit.clone().real_type(ty, ctx)?;
                 let e = self.translate_expr(expr, scope, ctx)?;
-                let is_expr_sys_type = self.jit.clone().is_sys_type(expr.ty());
+                let is_expr_sys_type = Utils::is_sys_type(expr.ty());
 
                 let cast = if is_sys_type {
                     let ty = *ty.clone();
