@@ -1,11 +1,11 @@
 
 use crate::error::{CompilerError, Result};
+use crate::gen::jscodegen::JSBackend;
 use crate::ir::raw::{RecordType, EnumType, EnumField, Alias};
 use crate::ir::sem::*;
 use crate::ir::{self, Type};
 use std::collections::HashMap;
 
-use super::utils::Utils;
 
 #[derive(Clone)]
 #[allow(unused_tuple_struct_fields)]
@@ -23,6 +23,30 @@ impl JSTables {
             aliases: HashMap::new()
         }
     }
+
+
+    pub fn to_js_type(&self, ty: Type) -> String {
+        match ty {
+            Type::Any => "Object".to_string(), 
+            Type::String | Type::Char => "String".to_string(), 
+            Type::Int | Type::Float | Type::Double => "Number".to_string(),
+            Type::Unit => "<Unit>".to_string(), 
+            Type::EnumType(n, r) => format!("{n}.{r}"), 
+            Type::YourType(x) => format!("{x}"), 
+            Type::Lambda(x, y) => format!("{x}:-{}", y.len()), 
+            _ => unreachable!()
+         }
+    } 
+
+    pub fn classes(&self) -> String {
+        format!(
+            r#"
+class Void {{}}
+Void.Unit = 0; 
+            "#
+        )
+    }
+
 
     pub fn process_enumns(&mut self, records: Vec<EnumType>, ctx: &mut SemContext) -> Result<String> {
         let mut recs: String = String::new();
@@ -201,6 +225,36 @@ class {name} extends {superz} {{
             variables.insert(name, _ty.clone());
         }
 
-        todo!()
+
+        let mut trans = JSBackend::new(self.clone());
+
+        let root = func.root().clone();
+        let return_value = trans.translate_expr(func.root(), &mut variables, ctx)?;
+
+        let final_expr = match root.expr() {
+            SemExpression::Block(_) | SemExpression::Lets(_,_) => {
+                    let sq = return_value.clone();
+                    let sq: Vec<_> = sq.split('\n').collect();
+                    let len = sq.len();
+
+                    let mut s = String::new();
+                    let rest = sq.get(0..len - 1).unwrap();
+                    for st in rest {
+                        s.push_str(st);
+                        s.push('\n');
+                    }
+
+                    let last = sq.last().unwrap();
+                    s.push_str("return ");
+                    s.push_str(last);
+                    s.push(';');
+                    s
+            },
+
+            _ => format!("return {return_value}")
+        }; 
+
+        let fx = format!("const {name} = ({args}) => {{\n{final_expr}\n}}");
+        Ok(fx)
     }
 }
