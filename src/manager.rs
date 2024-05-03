@@ -49,7 +49,8 @@ impl <'a> Manager <'a> {
                 statics.push_str(&format!("import static {lib};\n"));
             }
 
-            fs::write("./.smll_deps/statics", statics).unwrap();
+            let contents = fs::read_to_string("./.smll_deps/statics").unwrap();
+            fs::write("./.smll_deps/statics", format!("{contents}\n{statics}")).unwrap();
         }
 
         let mut imports = String::new();
@@ -64,7 +65,8 @@ impl <'a> Manager <'a> {
                 imports.push_str(&format!("import {lib};\n"));
             }
 
-            fs::write("./.smll_deps/imports", imports).unwrap();
+            let contents = fs::read_to_string("./.smll_deps/imports").unwrap();
+            fs::write("./.smll_deps/imports", format!("{contents}\n{imports}").trim()).unwrap();
         }
 
         let mut jars = String::new();
@@ -90,8 +92,10 @@ impl <'a> Manager <'a> {
                 }
                 jars.push_str(&dest);
             }
+            let contents = fs::read_to_string("./.smll_deps/jars").unwrap();
+            let contents = if !contents.is_empty() { format!("{contents}:") } else { contents }; 
 
-            fs::write("./.smll_deps/jars", jars).unwrap();
+            fs::write("./.smll_deps/jars",format!("{contents}{jars}")).unwrap();
         }
 
         (project_name.as_str().unwrap().to_string(), deps)
