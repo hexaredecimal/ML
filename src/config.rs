@@ -44,7 +44,14 @@ pub struct Config {
     pub defs: bool,
 
     /// Selects the compilation target
-    pub target: String
+    pub target: Target
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub enum Target {
+    Java, 
+    Js,
+    Unknown(String)
 }
 
 impl Config {
@@ -59,7 +66,7 @@ impl Config {
             run: false,
             ir: false,
             defs: false,
-            target: "java".to_string()
+            target: Target::Java
         }
     }
 
@@ -252,7 +259,12 @@ fun main(): Unit => ()
                 } 
 
                 if collect_target {
-                    c.target = arg.clone(); 
+                    c.target = match arg.as_str() {
+                        "java" => Target::Java, 
+                        "js" => Target::Js, 
+                        _ => Target::Unknown(arg)
+                    }; 
+
                 }
             } else {
             }
