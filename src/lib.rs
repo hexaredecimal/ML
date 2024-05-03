@@ -6,8 +6,7 @@ use ir::raw::{EnumType, Import, Alias};
 use nom::error::convert_error;
 use std::collections::{HashMap, HashSet};
 use std::fs;
-use rust_embed::RustEmbed;
-
+use crate::config::Target;
 
 pub mod config;
 pub mod error;
@@ -239,34 +238,40 @@ pub fn compile_and_run(config: &config::Config) -> Result<String> {
         typed_functions.push(ir::sem::SemFunction::analyze(func, &mut ctx)?);
     }
 
-    if &config.target == "js" {
-        let mut js = JSTables::new();
-        js.records = ts;
-        js.enums = es;
-        js.aliases = ali; 
 
-        let enums = js.process_enumns(enums, &mut ctx)?;
-        let records = js.process_records(records, true, &mut ctx, "Object")?;
-        let js_code = js.compile(&typed_functions, &mut ctx)?;
-        let js_classes = js.classes();
-        // println!("{enums}\n{records}");
-        println!("{js_classes}\n{js_code}");
-        todo!("Finish implementing JS backend");
+    match &config.target {
+        Target::Js => {
+            let mut js = JSTables::new();
+            js.records = ts;
+            js.enums = es;
+            js.aliases = ali; 
 
-    } 
+            let enums = js.process_enumns(enums, &mut ctx)?;
+            let records = js.process_records(records, true, &mut ctx, "Object")?;
+            let js_code = js.compile(&typed_functions, &mut ctx)?;
+            let js_classes = js.classes();
+            // println!("{enums}\n{records}");
+            println!("{js_classes}\n{js_code}");
+            todo!("Finish implementing JS backend");
+        }
 
+        Target::Java => {
+            let mut java = JavaTables::new();
+            java.records = ts.clone();
+            java.enums = es.clone(); 
+            java.aliases = ali.clone(); 
 
-    // The default backend
-    let mut jit = JavaTables::new();
-    jit.records = ts.clone();
-    jit.enums = es.clone(); 
-    jit.aliases = ali.clone(); 
+            let ens = java.process_enumns(enums, &mut ctx)?; 
+            let rcs = java.process_records(records, true, &mut ctx)?;
+            let code_ptr = java.compile(&typed_functions, &mut ctx)?;
+            Ok(format!("{}\n{}\n{}", ens, rcs, code_ptr))
+        }
 
-    let ens = jit.process_enumns(enums, &mut ctx)?; 
-    let rcs = jit.process_records(records, true, &mut ctx)?;
-    let code_ptr = jit.compile(&typed_functions, &mut ctx)?;
+        Target::Unknown(user) => {
+            Err(CompilerError::BackendError(format!("target `{user}` is not supported")))
+        }
+    }
 
-    Ok(format!("{}\n{}\n{}", ens, rcs, code_ptr))
 }
 
 fn parse(text: &str) -> Result<Vec<TopLevel>> {
