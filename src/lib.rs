@@ -1,4 +1,5 @@
 use crate::error::{CompilerError, Result};
+use crate::gen::jstables::JSTables;
 use crate::ir::raw::{RawFunction, RecordType, TopLevel};
 use gen::javatables::JavaTables;
 use ir::raw::{EnumType, Import, Alias};
@@ -238,7 +239,25 @@ pub fn compile_and_run(config: &config::Config) -> Result<String> {
         typed_functions.push(ir::sem::SemFunction::analyze(func, &mut ctx)?);
     }
 
-    /*let mut jit = JavaTables::new();
+    if &config.target == "js" {
+        let mut js = JSTables::new();
+        js.records = ts;
+        js.enums = es;
+        js.aliases = ali; 
+
+        let enums = js.process_enumns(enums, &mut ctx)?;
+        let records = js.process_records(records, true, &mut ctx, "Object")?;
+        let js_code = js.compile(&typed_functions, &mut ctx)?;
+        let js_classes = js.classes();
+        // println!("{enums}\n{records}");
+        println!("{js_classes}\n{js_code}");
+        todo!("Finish implementing JS backend");
+
+    } 
+
+
+    // The default backend
+    let mut jit = JavaTables::new();
     jit.records = ts.clone();
     jit.enums = es.clone(); 
     jit.aliases = ali.clone(); 
@@ -247,9 +266,7 @@ pub fn compile_and_run(config: &config::Config) -> Result<String> {
     let rcs = jit.process_records(records, true, &mut ctx)?;
     let code_ptr = jit.compile(&typed_functions, &mut ctx)?;
 
-    Ok(format!("{}\n{}\n{}", ens, rcs, code_ptr))*/
-
-    todo!()
+    Ok(format!("{}\n{}\n{}", ens, rcs, code_ptr))
 }
 
 fn parse(text: &str) -> Result<Vec<TopLevel>> {
