@@ -42,6 +42,9 @@ pub struct Config {
     /// Print module definitions
     ///
     pub defs: bool,
+
+    /// Selects the compilation target
+    pub target: String
 }
 
 impl Config {
@@ -56,6 +59,7 @@ impl Config {
             run: false,
             ir: false,
             defs: false,
+            target: "java".to_string()
         }
     }
 
@@ -181,8 +185,13 @@ fun main(): Unit => ()
         let len = args.len();
         let mut held = false;
         let mut collect_paths = false;
+        let mut collect_target = false;
         let mut collect_file = false;
         for (index, arg) in args.clone().into_iter().enumerate() {
+            if collect_file {
+                break;
+            }
+
             if !arg.is_empty() {
                 if held {
                     held = false;
@@ -225,7 +234,11 @@ fun main(): Unit => ()
                         held = true;
                         collect_paths = true;
                     }
-                    d => {
+                    "target" => {
+                        held = true;
+                        collect_target = true;
+                    }
+                    _ => {
                         c.file = arg;
                     }
                 }
@@ -235,12 +248,11 @@ fun main(): Unit => ()
                 collect_file = true;
             } else if index < len && held {
                 if collect_paths {
-                    // WTF? What was I thinking Here???
-                    // TODO: Fix this mess as soon as possible, but for not it works so it it no
-                    // high priority
-                    c = c.clone();
-                    c.import_paths.push(arg);
-                    c = c.clone();
+                    c.import_paths.push(arg.clone());
+                } 
+
+                if collect_target {
+                    c.target = arg.clone(); 
                 }
             } else {
             }
@@ -267,15 +279,16 @@ usage: {} [options] - <file>
     |  {} <file>
     
     [options]:
-        init                  Initialize a new project
-        build                 Build the project and the dependencies
-        run                   Runs the program after compilation is complete
-        ir                    Print the ir for the program
-        paths [path+]         Paths where imports are loaded from. paths are separed by spaces
-        defs                  Prints the names and types of top level statements 
-        verbose               Enables the verbosity of the compiler
-        version               Shows the version of the program
-        help                  Prints this help file
+        init                            Initialize a new project
+        build                           Build the project and the dependencies
+        run                             Runs the program after compilation is complete
+        ir                              Print the ir for the program
+        paths [path+]                   Paths where imports are loaded from. paths are separed by spaces
+        defs                            Prints the names and types of top level statements
+        target [java,js]                Selects the target to compile to               
+        verbose                         Enables the verbosity of the compiler
+        version                         Shows the version of the program
+        help                            Prints this help file
 
                   ___           ___                                 
                  /  /\         /__/\                                
