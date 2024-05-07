@@ -503,7 +503,7 @@ impl SemNode {
                     out_args.push(Self::analyze(a, ctx)?);
                 }
                 match ctx.funs().get(&id) {
-                    Some(ty) => SemExpression::FunCall(id, out_args),
+                    Some(_ty) => SemExpression::FunCall(id, out_args),
                     None => {
                         match ctx.vars().get(&id) {
                             Some(var) => {
@@ -550,8 +550,8 @@ impl SemNode {
                                format!("{name} is not a field of type {left_ty_name}")
                             ));
                         }
-                        let ty = ty.unwrap();
-                        ty
+                        
+                        ty.unwrap()
                     }
                     SemExpression::FieldAccess(_, _) => right.ty().clone(),
                     _ => return  Err(CompilerError::InvalidExpression(
@@ -608,7 +608,7 @@ impl SemNode {
                                     } else {
                                         unreachable!()
                                     };
-                                    let (t, args) = t;
+                                    let (t, _args) = t;
                                     // Type::Lambda(t, args)
                                     *t.clone()
                                 } else {

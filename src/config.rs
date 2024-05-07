@@ -91,8 +91,8 @@ impl Config {
     }
 
     fn init(&mut self) {
-        let green = Some(Color::Green);
-        let red = Some(Color::Red);
+        let _green = Some(Color::Green);
+        let _red = Some(Color::Red);
         let yellow = Some(Color::Yellow);
         let gray = Some(Color::Rgb(150, 150, 150));
         let white = Some(Color::White);
@@ -100,7 +100,7 @@ impl Config {
         let mut stdout = StandardStream::stdout(ColorChoice::Always);
 
         let init_message = "Create new SMLL project";
-        let init_message = format!("{}", init_message);
+        let init_message = init_message.to_string();
 
         stdout.set_color(ColorSpec::new().set_fg(yellow)).unwrap();
         writeln!(&mut stdout, "{}", init_message).unwrap();
@@ -166,7 +166,7 @@ fun main(): Unit => ()
 
         let red = Some(Color::Red);
         let yellow = Some(Color::Yellow);
-        let gray = Some(Color::Rgb(150, 150, 150));
+        let _gray = Some(Color::Rgb(150, 150, 150));
         let white = Some(Color::White);
 
         let mut stdout = StandardStream::stdout(ColorChoice::Always);
@@ -266,8 +266,7 @@ fun main(): Unit => ()
                     }; 
 
                 }
-            } else {
-            }
+            } 
         }
         Box::new(c)
     }

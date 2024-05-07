@@ -2,8 +2,8 @@ use std::{collections::HashMap, fmt::Display, fs};
 use git2::Repository; 
 use std::io::Write;
 use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
-use std::fs::File;
-use std::io::copy;
+
+
 use lib_traxex::download::download;
 
 
@@ -11,6 +11,12 @@ pub struct Manager <'a> {
     depends: &'a str,
     path: &'a str,
     pub tobuild: Vec<(String, Vec<String>)>
+}
+
+impl<'a> Default for Manager <'a> {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl <'a> Manager <'a> {
@@ -45,7 +51,7 @@ impl <'a> Manager <'a> {
             let values = project_statics.as_table().unwrap(); 
 
             for (_, lib) in values {
-                let lib = lib.to_string().replace("\"", "");
+                let lib = lib.to_string().replace('\"', "");
                 statics.push_str(&format!("import static {lib};\n"));
             }
 
@@ -61,7 +67,7 @@ impl <'a> Manager <'a> {
             let values = project_imports.as_table().unwrap(); 
 
             for (_, lib) in values {
-                let lib = lib.to_string().replace("\"", "");
+                let lib = lib.to_string().replace('\"', "");
                 imports.push_str(&format!("import {lib};\n"));
             }
 
@@ -79,16 +85,16 @@ impl <'a> Manager <'a> {
             let sz = values.keys().count();
 
             for (i, (dest, lib)) in values.into_iter().enumerate() {
-                let lib = lib.to_string().replace("\"", "");
-                let mut lib = format!("{lib}"); 
-                let nm = dest.to_string().replace("\"", "");
+                let lib = lib.to_string().replace('\"', "");
+                let mut lib = lib.to_string(); 
+                let nm = dest.to_string().replace('\"', "");
                 let dest = format!("./.smll_deps/libs/{nm}.jar");
 
                 if fs::metadata(&dest).is_err() {
                     let _ = self.download_lib(&nm, &dest, &lib);
                 }
                 if i < sz - 1 {
-                    lib.push_str(":");
+                    lib.push(':');
                 }
                 jars.push_str(&dest);
             }
@@ -106,7 +112,7 @@ impl <'a> Manager <'a> {
         let red = Some(Color::Red);
         let yellow = Some(Color::Yellow);
         let gray = Some(Color::Rgb(150, 150, 150));
-        let white = Some(Color::White);
+        let _white = Some(Color::White);
 
         let mut stdout = StandardStream::stdout(ColorChoice::Always);
 
@@ -201,7 +207,7 @@ impl <'a> Manager <'a> {
                 writeln!(&mut stdout, "{key} - {val}").unwrap();
 
                 match clone {
-                    Ok(repo) => {
+                    Ok(_repo) => {
                         correct += 1;
                         stdout.set_color(ColorSpec::new().set_fg(green)).unwrap();
                         write!(&mut stdout, "Download complete ").unwrap();
@@ -215,14 +221,14 @@ impl <'a> Manager <'a> {
                             let path = element.unwrap().path();
                             if let Some(extension) = path.extension() {
                                 if extension == "smll" {
-                                    v.push(format!("{}", path.to_str().unwrap()));
+                                    v.push(path.to_str().unwrap().to_string());
                                 }
                             }
                         }
                         self.tobuild.push((key.clone(), v));
                         self.process(&inner);
                     }, 
-                    Err(e) => {
+                    Err(_e) => {
                         println!("Failed to Download {key}");
 
                         stdout.set_color(ColorSpec::new().set_fg(red)).unwrap();
@@ -251,7 +257,7 @@ impl <'a> Manager <'a> {
         }
 
         if skipped > 0 {
-            return PackageResult::Skipped(skipped);
+            PackageResult::Skipped(skipped)
         } else {
             unreachable!()
         }
@@ -270,7 +276,7 @@ impl Display for PackageResult {
         let green = Some(Color::Green);
         let red = Some(Color::Red);
         let yellow = Some(Color::Yellow);
-        let white = Some(Color::White);
+        let _white = Some(Color::White);
 
         let mut stdout = StandardStream::stdout(ColorChoice::Always);
 
@@ -278,19 +284,19 @@ impl Display for PackageResult {
             Self::Success => {
                 stdout.set_color(ColorSpec::new().set_fg(green)).unwrap();
                 write!(&mut stdout, "Downloaded all packaged successfully").unwrap(); 
-                writeln!(f, "")
+                writeln!(f)
             }
             Self::Error(correct, deps_count) => {
                 let err = format!("Failed to get dependencies: {correct} / {deps_count} found");
                 stdout.set_color(ColorSpec::new().set_fg(red)).unwrap();
                 write!(&mut stdout, "{err}").unwrap(); 
-                writeln!(f, "")
+                writeln!(f)
             }
             Self::Skipped(skipped) => {
                 let err =  format!("{skipped} dependenc{} got skipped", if *skipped == 1 { "y" } else { "ies"} );
                 stdout.set_color(ColorSpec::new().set_fg(yellow)).unwrap();
                 write!(&mut stdout, "{err}").unwrap(); 
-                writeln!(f, "")
+                writeln!(f)
             }
         }
     }

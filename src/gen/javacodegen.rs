@@ -128,7 +128,7 @@ impl JavaBackend {
                 let left = self.translate_expr(left, scope, ctx)?;
                 let right = match right.expr() {
                     SemExpression::Id(name) => {
-                        format!("{name}")
+                        name.to_string()
                     }
                     _ => {
                         self.translate_expr(right, scope, ctx)?
@@ -455,14 +455,14 @@ impl JavaBackend {
                 let bo = match bo.expr().clone() {
                     SemExpression::Block(_) => {
                         let real_ty = self.jit.clone().real_type(bo.ty(), ctx).unwrap(); 
-                        let (block, ret) = self.extract_block(&bo, &mut sc, real_ty, ctx).unwrap();
+                        let (block, ret) = self.extract_block(bo, &mut sc, real_ty, ctx).unwrap();
                         let ret = format!("yield {ret};\n"); 
                         let block = self.indent_lines(block, 3);
                         let ret = self.indent_lines(ret, 3);
                         let ret = format!("{block}\n{ret}");
                         format!("{{\n{ret}\n\t\t}}\n")
                     }
-                    _ => format!("{};", self.translate_expr(&bo, &mut sc, ctx).unwrap())
+                    _ => format!("{};", self.translate_expr(bo, &mut sc, ctx).unwrap())
                 };
 
                 rest.push(format!("\t\tdefault -> {}", bo));

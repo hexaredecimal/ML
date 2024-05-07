@@ -1,6 +1,6 @@
 use crate::ir::{self, Type};
 use crate::error::{CompilerError, Result};
-use crate::ir::raw::{RecordType, EnumType, EnumField, Alias};
+use crate::ir::raw::{RecordType, EnumType, EnumField};
 use std::collections::HashMap;
 
 pub struct Utils; 

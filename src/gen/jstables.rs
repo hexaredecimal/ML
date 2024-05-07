@@ -32,19 +32,17 @@ impl JSTables {
             Type::Int | Type::Float | Type::Double => "Number".to_string(),
             Type::Unit => "<Unit>".to_string(), 
             Type::EnumType(n, r) => format!("{n}.{r}"), 
-            Type::YourType(x) => format!("{x}"), 
+            Type::YourType(x) => x.to_string(), 
             Type::Lambda(x, y) => format!("{x}:-{}", y.len()), 
             _ => unreachable!()
          }
     } 
 
     pub fn classes(&self) -> String {
-        format!(
-            r#"
-class Void {{}}
+        r#"
+class Void {}
 Void.Unit = 0; 
-            "#
-        )
+            "#.to_string()
     }
 
 
@@ -64,7 +62,7 @@ Void.Unit = 0;
                             format!("{name}.{} = {recc}", rec.name)
                         }, 
                         EnumField::Id(_name) => {
-                            let inspect = format!("inspect(depth, ops) {{ return this.toString() }}"); 
+                            let inspect = "inspect(depth, ops) { return this.toString() }".to_string(); 
                             let to_string = format!("toString() {{ return '{name}'.concat('{_name}')) }}");
                             let methods = format!("\n{inspect}\n{to_string}\n");
                             format!("    {name}.{_name} = class {_name} extends {name} {{ {methods} }}")
@@ -85,7 +83,7 @@ class {name} {{}}
     }
 
 
-    pub fn process_records(&mut self, records: Vec<RecordType>, close: bool, ctx: &mut SemContext, superz: &str) -> Result<String> {
+    pub fn process_records(&mut self, records: Vec<RecordType>, _close: bool, _ctx: &mut SemContext, superz: &str) -> Result<String> {
         let mut recs: String = String::new();
 
         for record in records.clone() {
@@ -94,7 +92,7 @@ class {name} {{}}
             let fields: Vec<String> = args.clone()
                 .into_iter()
                 .map(|f| {
-                    let (name, ty) = f;
+                    let (name, _ty) = f;
                     // let ty = Utils::real_type(&ty, ctx).unwrap();
                     format!("    #{}",name)
                 })
@@ -125,9 +123,9 @@ class {name} {{}}
             let params: Vec<String> = args
                 .into_iter()
                 .map(|f| {
-                    let (name, ty) = f;
+                    let (name, _ty) = f;
                     // let ty = Utils::real_type(&ty, ctx).unwrap();
-                    format!("{}",name)
+                    name.to_string()
                 }).collect();
 
             let fields = fields.join("\n");
@@ -138,7 +136,7 @@ class {name} {{}}
 
 
             let raw_fields = raw_fields.trim();
-            let inspect = format!("    inspect(depth, ops) {{ return this.toString() }}"); 
+            let inspect = "    inspect(depth, ops) { return this.toString() }".to_string(); 
             let to_string = format!("    toString() {{ return '{name}('.concat({raw_fields}).concat(')') }}");
             let methods = format!("{inspect}\n{to_string}\n");
             let class = format!(
@@ -155,7 +153,7 @@ class {name} extends {superz} {{
             "#
             );
 
-            recs.push_str(&format!("{class}"));
+            recs.push_str(&class.to_string());
         }
 
         Ok(recs)
@@ -183,7 +181,7 @@ class {name} extends {superz} {{
             .map(|(i, f)| {
                 let (name, ty) = f;
                 match ty {
-                    ir::Type::VarArgs(inner) => {
+                    ir::Type::VarArgs(_inner) => {
                         if i < len - 1 {
                             let e: Result<CompilerError> =
                                 Result::Err(CompilerError::BackendError(
@@ -193,10 +191,10 @@ class {name} extends {superz} {{
                             println!("{:?}", e);
                             std::process::exit(1);
                         }
-                        Ok(format!("...var_args"))
+                        Ok("...var_args".to_string())
                     }
                     _ => {
-                        Ok(format!("{name}"))
+                        Ok(name.to_string())
                     }
                 }
             })
@@ -205,7 +203,7 @@ class {name} extends {superz} {{
         let args: Vec<String> = args.into_iter().map(|f| f.unwrap()).collect();
         let args = args.join(", ");
 
-        let ret_type = if let ir::Type::Function(ret, _args) = func.ty() {
+        if let ir::Type::Function(_ret, _args) = func.ty() {
             // self.clone().real_type(ret, ctx)?
         } else {
             return Err(CompilerError::BackendError(format!(

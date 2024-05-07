@@ -88,17 +88,17 @@ impl JSBackend {
                     cond.push_str(&format!("{lhs} ? {rhs} :"));
                 }
 
-                let fx = format!("case_else_");
+                let fx = "case_else_".to_string();
                 let call = format!("{fx}()");
 
                 cond.push_str(&call);
                 let (_, body) = last;
                 let bd = match body.expr() {
                     SemExpression::Block(_) | SemExpression::Lets(_,_) => {
-                        let (block, ret) = self.extract_block(&body, scope, ctx)?;
+                        let (block, ret) = self.extract_block(body, scope, ctx)?;
                         format!("{block}\nretrun {ret}")
                     }
-                    _ => format!("return {}", self.translate_expr(&body, scope, ctx)?)
+                    _ => format!("return {}", self.translate_expr(body, scope, ctx)?)
                 }; 
 
                 let fx = format!("const {fx} = () {{\n{bd}\n}}");
@@ -151,8 +151,8 @@ impl JSBackend {
                     match &val.expr() {
                         SemExpression::Embed(_) => block.push('\n'),
                         SemExpression::Val(_, _) => (),
-                        SemExpression::Lets(_, _) => block.push_str("\n"),
-                        _ => block.push_str("\n"),
+                        SemExpression::Lets(_, _) => block.push('\n'),
+                        _ => block.push('\n'),
                     };
                 }
 
@@ -212,7 +212,7 @@ impl JSBackend {
                 let left = self.translate_expr(left, scope, ctx)?;
                 let right = match right.expr() {
                     SemExpression::Id(name) => {
-                        format!("{name}")
+                        name.to_string()
                     }
                     _ => {
                         self.translate_expr(right, scope, ctx)?
@@ -239,7 +239,7 @@ impl JSBackend {
                 let mut args_list: Vec<String> = vec![]; 
                 for arg in args.iter() {
                     let (name, _) = arg.clone(); 
-                    args_list.push(format!("{name}")); 
+                    args_list.push(name.to_string()); 
                 }; 
 
                 let args_list = args_list.join(", ");
@@ -533,17 +533,17 @@ impl JSBackend {
                     cond.push_str(&format!("{lhs} ? {rhs} :"));
                 }
 
-                let fx = format!("case_else_");
+                let fx = "case_else_".to_string();
                 let call = format!("{fx}()");
 
                 cond.push_str(&call);
                 let (_, body) = last;
                 let bd = match body.expr() {
                     SemExpression::Block(_) | SemExpression::Lets(_,_) => {
-                        let (block, ret) = self.extract_block(&body, scope, ctx)?;
+                        let (block, ret) = self.extract_block(body, scope, ctx)?;
                         format!("{block}\nretrun {ret}")
                     }
-                    _ => format!("return {}", self.translate_expr(&body, scope, ctx)?)
+                    _ => format!("return {}", self.translate_expr(body, scope, ctx)?)
                 }; 
 
                 let fx = format!("const {fx} = () {{\n{bd}\n}}");
@@ -881,7 +881,7 @@ impl JSBackend {
                 }
             }
             SemExpression::Array(elems) => {
-                let (_elem_count, elem_ty) = match node.ty() {
+                let (_elem_count, _elem_ty) = match node.ty() {
                     ir::Type::Array(elem_count, elem_ty) => (elem_count, elem_ty),
                     _ => {
                         return Err(CompilerError::BackendError(format!(
@@ -961,7 +961,7 @@ impl JSBackend {
             }
             SemExpression::Char(val) => Ok(format!("'{}'", *val as char)),
             SemExpression::Bool(val) => Ok(format!("{}", *val)),
-            SemExpression::Integer(val, t) => {
+            SemExpression::Integer(val, _t) => {
                 Ok(format!("{val}"))
             }
 
@@ -984,11 +984,11 @@ impl JSBackend {
         ctx: &mut SemContext
     ) -> Result<String, CompilerError> {
 
-        let cond_ty = "Boolean"; 
-        let then_ty = then.ty(); 
-        let alt_ty = alt.ty(); 
+        let _cond_ty = "Boolean"; 
+        let _then_ty = then.ty(); 
+        let _alt_ty = alt.ty(); 
 
-        let jit = self.jit.clone(); 
+        let _jit = self.jit.clone(); 
 
 
         let mut ret_str = String::new(); 

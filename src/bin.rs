@@ -65,7 +65,7 @@ fn try_main() -> Result<()> {
     } else if conf.build {
         package_manager.resolve_dependencies();
 
-        if package_manager.tobuild.len() > 0 {
+        if !package_manager.tobuild.is_empty() {
             for (package, files) in &package_manager.tobuild {
                 stdout.set_color(ColorSpec::new().set_fg(green)).unwrap();
                 write!(&mut stdout,"Compiling ").unwrap();
@@ -74,7 +74,7 @@ fn try_main() -> Result<()> {
                 writeln!(&mut stdout, "[{package}] ").unwrap();
                 let mut done = 0;
                 for file in files {
-                    conf.file = format!("{file}");
+                    conf.file = file.to_string();
                     let res = smll_lang::compile_and_run(&conf);
                     if res.is_err() {
                         done += 1;
@@ -134,7 +134,7 @@ fn try_main() -> Result<()> {
         let cmd = cmd
             .arg("--enable-preview")
             .arg("--class-path")
-            .arg(format!("{jars}"))
+            .arg(&jars)
             .arg(out_name);
 
         let output = cmd
@@ -156,7 +156,7 @@ fn compile_to_java(out_name: &str, program: &str, class_path: &str) {
     let mut cmd = Command::new("javac"); 
     let cmd = cmd
         .arg("--class-path")
-        .arg(format!("{class_path}"))
+        .arg(class_path)
         .arg("--enable-preview")
         .arg("--source")
         .arg("21")

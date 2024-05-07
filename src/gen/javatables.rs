@@ -113,7 +113,7 @@ impl JavaTables {
                         let ty_list = match *inner.clone() {
                             Type::YourType(x) => {
                                 if x.is_empty() {
-                                    format!("Object... ")
+                                    "Object... ".to_string()
                                 } else {
                                     format!("{x}... ")
                                 }

@@ -60,7 +60,7 @@ pub fn compile_file(config: &config::Config, input: String, cache: &mut Vec<Stri
 
             for dir_path in &config.import_paths  {
                 let _path = format!("{dir_path}{path}");
-                if !fs::metadata(&_path).is_ok() {
+                if fs::metadata(&_path).is_err() {
                     continue;
                 } else {
                     path = _path;
@@ -126,7 +126,7 @@ pub fn compile_and_run(config: &config::Config) -> Result<String> {
 
         'inner: for dir_path in &config.import_paths  {
             let _path = format!("{dir_path}{path}");
-            if !fs::metadata(&_path).is_ok() {
+            if fs::metadata(&_path).is_err() {
                 continue 'inner;
             } else {
                 path = _path;
@@ -246,8 +246,8 @@ pub fn compile_and_run(config: &config::Config) -> Result<String> {
             js.enums = es;
             js.aliases = ali; 
 
-            let enums = js.process_enumns(enums, &mut ctx)?;
-            let records = js.process_records(records, true, &mut ctx, "Object")?;
+            let _enums = js.process_enumns(enums, &mut ctx)?;
+            let _records = js.process_records(records, true, &mut ctx, "Object")?;
             let js_code = js.compile(&typed_functions, &mut ctx)?;
             let js_classes = js.classes();
             // println!("{enums}\n{records}");
@@ -257,9 +257,9 @@ pub fn compile_and_run(config: &config::Config) -> Result<String> {
 
         Target::Java => {
             let mut java = JavaTables::new();
-            java.records = ts.clone();
-            java.enums = es.clone(); 
-            java.aliases = ali.clone(); 
+            java.records = ts;
+            java.enums = es;
+            java.aliases = ali;
 
             let ens = java.process_enumns(enums, &mut ctx)?; 
             let rcs = java.process_records(records, true, &mut ctx)?;
