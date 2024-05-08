@@ -68,3 +68,16 @@ $ ./target/debug/smll run   # Run the main program file
 # Inspiration:
 >>> SMLL is a ml derived language for the JVM which borrows a lot of concepts from languages such as 
 Standard ML, Rust and Kotlin. 
+
+# Stargazers
+
+<a href="https://star-history.com/#hexaredecimal/ML&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=hexaredecimal/ML&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=hexaredecimal/ML&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=hexaredecimal/ML&type=Date" />
+ </picture>
+</a>
+
+
+
