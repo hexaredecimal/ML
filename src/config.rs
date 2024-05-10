@@ -1,7 +1,7 @@
 use std::{fs, io};
 use std::io::Write;
 use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
-
+use pkg_compile_time::*; 
 
 /// Configuration struct for command line arguments
 #[derive(Debug, Clone)]
@@ -111,7 +111,6 @@ impl Config {
         stdout.set_color(ColorSpec::new().set_fg(gray)).unwrap();
         writeln!(&mut stdout, "[Default: Project]: ").unwrap();
 
-        // println!("Enter project name: [Default: Project]");
         let mut entry = String::new();
         io::stdin().read_line(&mut entry).unwrap();
         let entry = if &entry == "\n" { "Project".to_owned() } else { entry.trim().to_owned() };
@@ -200,12 +199,6 @@ fun main(): Unit => ()
             }
 
             if !arg.is_empty() {
-                if held {
-                    held = false;
-                    if collect_paths {
-                        collect_paths = false;
-                    }
-                }
                 match arg.as_str() {
                     "defs" => {
                         c = c.clone();
@@ -246,26 +239,34 @@ fun main(): Unit => ()
                         collect_target = true;
                     }
                     _ => {
-                        c.file = arg;
+                        if held {
+                            if collect_paths {
+                                for path in arg.split(':') {
+                                    c.import_paths.push(path.to_string())
+                                }
+                                held = false;
+                                collect_paths = false;
+                            } 
+
+                            if collect_target {
+                                c.target = match arg.as_str() {
+                                    "java" => Target::Java, 
+                                    "js" => Target::Js, 
+                                    _ => Target::Unknown(arg)
+                                }; 
+                                held = false;
+                                collect_target = false;
+                            }
+                        } else {
+                            println!("Not held: {arg}");
+                            c.file = arg;
+                        }
                     }
                 }
             } else if arg.as_str() == "-" {
                 held = false;
                 collect_paths = false;
                 collect_file = true;
-            } else if index < len && held {
-                if collect_paths {
-                    c.import_paths.push(arg.clone());
-                } 
-
-                if collect_target {
-                    c.target = match arg.as_str() {
-                        "java" => Target::Java, 
-                        "js" => Target::Js, 
-                        _ => Target::Unknown(arg)
-                    }; 
-
-                }
             } 
         }
         Box::new(c)
@@ -284,6 +285,9 @@ fun main(): Unit => ()
 
     fn help(self) -> String {
         let name = self.parse_name();
+        let date = pkg_compile_date!(); 
+        let time = pkg_compile_time!(); 
+
         format!(
             r#"
 usage: {} [options] - <file>
@@ -319,8 +323,10 @@ usage: {} [options] - <file>
     |  _|_| |___|_  |_| |__,|_|_|_|_|_|_|_|_|_|_  |  |_|__,|_|_|_  |___|__,|_  |___|
     |_|         |___|                         |___|            |___|       |___|
 
-                    v1.0 - Made with <3 and rust - Gama Sibusiso
-
+                        v1.0 - Made with <3 and rust - Gama Sibusiso 
+                      (mfanakagama@gmail.com) - (hexarevision.co.za)
+                                       Compiled on 
+                                    [{date}  {time}]
 "#,
             name.clone(),
             name
