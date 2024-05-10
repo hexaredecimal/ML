@@ -88,7 +88,13 @@ pub fn compile_file(config: &config::Config, input: String, cache: &mut Vec<Stri
 
 
 pub fn compile_and_run(config: &config::Config) -> Result<String> {
-    let program = std::fs::read_to_string(&config.file).unwrap();
+    let file = std::fs::read_to_string(&config.file);
+
+    let program = match file {
+        Ok(x) => x,
+        Err(e) => return Err(CompilerError::BackendError(format!("Error reading file {}, {e}", config.file)))
+    };
+
     let toplevels = parse(program.as_str())?;
 
     let mut functions: Vec<RawFunction> = vec![];
