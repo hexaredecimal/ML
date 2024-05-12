@@ -14,17 +14,6 @@ enum Void {
 }
 "#;
 
-/*static IMPORTS: &str = 
-r#"
-import java.io.*;
-import java.util.*;
-import java.awt.event.*;
-import java.awt.*;
-import javax.swing.*;
-import java.time.*;
-import java.time.format.DateTimeFormatter;
-"#;*/
-
 fn main() {
     if let Err(err) = try_main() {
         eprintln!("{}", err);
@@ -61,7 +50,7 @@ fn try_main() -> Result<()> {
     let mut package_manager = Manager::new();
     if conf.ir {
         let res = smll_lang::compile_and_run(&conf)?;
-        println!("{}", res);
+        println!("{imports}\n{}", res);
     } else if conf.build {
         package_manager.resolve_dependencies();
 
@@ -109,20 +98,20 @@ fn try_main() -> Result<()> {
         let res = smll_lang::compile_and_run(&conf)?;
         let program = format!("{head2}\n{}", res);
         let out_name = make_output_file_name(&conf.file);
-        compile_to_java(&out_name, &program, &jars);
+        compile_to_java(&out_name, &program, jars.trim());
         
     } else if !conf.file.is_empty() {
         let res = smll_lang::compile_and_run(&conf)?;
         let program = format!("{head2}\n{}", res);
         let out_name = make_output_file_name(&conf.file);
-        compile_to_java(&out_name, &program, &jars);
+        compile_to_java(&out_name, &program, jars.trim());
     } else if !conf.ir && conf.run {
         conf.file = "./code/main.smll".to_string();
 
         let res = smll_lang::compile_and_run(&conf)?;
         let program = format!("{head2}\n{}", res);
         let out_name = make_output_file_name(&conf.file);
-        compile_to_java(&out_name, &program, &jars);
+        compile_to_java(&out_name, &program, jars.trim());
 
         let mut cmd = Command::new("java");
         let mut classes = vec!["./build"];
@@ -156,13 +145,15 @@ fn compile_to_java(out_name: &str, program: &str, class_path: &str) {
     let mut cmd = Command::new("javac"); 
     let cmd = cmd
         .arg("--class-path")
-        .arg(class_path)
+        .arg(class_path.trim())
         .arg("--enable-preview")
         .arg("--source")
         .arg("21")
         .arg("-d")
         .arg("./build")
         .arg(format!("./{}.java", out_name));
+
+    println!("{cmd:?}");
 
     let output = cmd
         .output()
