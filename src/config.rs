@@ -188,12 +188,11 @@ fun main(): Unit => ()
         let mut c = conf.clone();
         let args = conf.args.get(1..len).unwrap();
         let args = args.to_vec();
-        let len = args.len();
         let mut held = false;
         let mut collect_paths = false;
         let mut collect_target = false;
         let mut collect_file = false;
-        for (index, arg) in args.clone().into_iter().enumerate() {
+        for arg in args.clone().iter() {
             if collect_file {
                 break;
             }
@@ -201,34 +200,28 @@ fun main(): Unit => ()
             if !arg.is_empty() {
                 match arg.as_str() {
                     "defs" => {
-                        c = c.clone();
                         c.set_defs(true);
                     }
                     "build" => {
-                        c = c.clone();
                         c.set_build(true);
                     }
                     "run" => {
-                        c = c.clone();
                         c.set_run(true);
                     }
                     "ir" => {
-                        c = c.clone();
                         c.set_ir(true);
                     }
                     "verbose" => {
-                        c = c.clone();
                         c.set_verbose(true);
                     }
                     "version" => {
-                        c.clone()
-                            .report(&format!("{} version 1.0", c.program_name.clone()));
+                        c.report(&format!("{} version 1.0", c.program_name.clone()));
                     }
                     "help" => {
-                        c.clone().report(&c.clone().help());
+                        c.report(&c.clone().help());
                     }
                     "init" => {
-                        c.clone().init();
+                        c.init();
                     }
                     "paths" => {
                         held = true;
@@ -252,14 +245,13 @@ fun main(): Unit => ()
                                 c.target = match arg.as_str() {
                                     "java" => Target::Java, 
                                     "js" => Target::Js, 
-                                    _ => Target::Unknown(arg)
+                                    _ => Target::Unknown(arg.clone())
                                 }; 
                                 held = false;
                                 collect_target = false;
                             }
                         } else {
-                            println!("Not held: {arg}");
-                            c.file = arg;
+                            c.file = arg.clone();
                         }
                     }
                 }
