@@ -2,11 +2,10 @@ use std::{collections::HashMap, fmt::Display, fs};
 use git2::Repository; 
 use std::io::Write;
 use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
-
-
 use lib_traxex::download::download;
 
 
+#[allow(unused)]
 pub struct Manager <'a> {
     depends: &'a str,
     path: &'a str,
@@ -101,7 +100,7 @@ impl <'a> Manager <'a> {
             let contents = fs::read_to_string("./.smll_deps/jars").unwrap();
             let contents = if !contents.is_empty() { format!("{contents}:") } else { contents }; 
 
-            fs::write("./.smll_deps/jars",format!("{contents}{jars}")).unwrap();
+            fs::write("./.smll_deps/jars",format!(".:{contents}{jars}")).unwrap();
         }
 
         (project_name.as_str().unwrap().to_string(), deps)
