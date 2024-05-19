@@ -4,15 +4,10 @@ use rust_embed::RustEmbed;
 use smll_lang::{config::Config, error::Result, manager::Manager};
 use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 
-static HEAD: &str = r#"
-interface Block<T> {
-    T run(); 
-}
+#[derive(RustEmbed)]
+#[folder = "sys/"]
+struct Asset;
 
-enum Void {
-    Unit
-}
-"#;
 
 fn main() {
     if let Err(err) = try_main() {
@@ -20,9 +15,18 @@ fn main() {
         std::process::exit(1);
     }
 }
-#[derive(RustEmbed)]
-#[folder = "sys/"]
-struct Asset;
+
+fn create_internal_structures() -> &'static str {
+    r#"
+    interface Block<T> {
+        T run(); 
+    }
+
+    enum Void {
+        Unit
+    }
+    "#
+} 
 
 fn try_main() -> Result<()> {
     let mut conf = Config::parse();
@@ -46,7 +50,8 @@ fn try_main() -> Result<()> {
     let imports = format!("{statics}\n\n{imports}\n\n");
 
     let lambdas = generate_lambdas(20); 
-    let head2 = format!("{}\n{}\n\n{}{}\n", imports, lambdas, convs, HEAD);
+    let structures = create_internal_structures();
+    let head2 = format!("{imports}\n{lambdas}\n{convs}\n{structures}\n");
     let mut package_manager = Manager::new();
     if conf.ir {
         let res = smll_lang::compile_and_run(&conf)?;
@@ -214,7 +219,6 @@ fn make_output_file_name(file_name: &String) -> String {
     let out_file = splits.first().unwrap();
     let out_file = out_file.to_string();
     let out_file = out_file.to_lowercase();
-
 
     let splits: Vec<_> = out_file.split('/').collect();
 
