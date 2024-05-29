@@ -93,6 +93,9 @@ impl BinaryOp {
                 | BinaryOp::GreaterThanOrEqual => {
                     let mut ts = vec![
                         Type::Float,
+                        Type::Long,
+                        Type::Short, 
+                        Type::Byte,
                         Type::Int,
                         Type::Double,
                         Type::Char,
@@ -118,6 +121,9 @@ impl BinaryOp {
                 BinaryOp::Equal | BinaryOp::NotEqual => {
                     vec![
                         Type::Float,
+                        Type::Long,
+                        Type::Short, 
+                        Type::Byte,
                         Type::Int,
                         Type::Bool,
                         Type::Double,
@@ -189,6 +195,9 @@ pub enum Type {
     Float,
     Double,
     Char,
+    Long,
+    Short,
+    Byte,
     Array(u64, Box<Type>),
     List(Box<Type>),
     Lambda(Box<Type>, Vec<Type>),
@@ -235,6 +244,9 @@ impl Type {
                     Type::Float
                     | Type::Int
                     | Type::Double
+                    | Type::Long
+                    | Type::Short 
+                    | Type::Byte
                     | Type::Char
                     | Type::Int8
                     | Type::Int16
@@ -294,6 +306,9 @@ impl Type {
                 (
                     Type::Float
                     | Type::Int
+                    | Type::Long
+                    | Type::Short 
+                    | Type::Byte
                     | Type::Double
                     | Type::Char
                     | Type::Int8
@@ -331,6 +346,9 @@ impl Type {
                 _ => match other {
                     Type::Float
                     | Type::Int
+                    | Type::Long
+                    | Type::Short 
+                    | Type::Byte
                     | Type::Double
                     | Type::Char
                     | Type::Int8
@@ -390,6 +408,9 @@ impl std::fmt::Display for Type {
                 Type::Int32 => "Int32".to_string(),
                 Type::Int64 => "Int64".to_string(),
                 Type::Int128 => "Int128".to_string(),
+                Type::Long => "Long".to_string(),
+                Type::Short => "Short".to_string(),
+                Type::Byte => "Byte".to_string(),
                 Type::Bool => "Bool".to_string(),
                 Type::Float => "Float".to_string(),
                 Type::Array(len, ty) => format!("[{};{}]", ty, len),
