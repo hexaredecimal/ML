@@ -961,8 +961,11 @@ impl JavaBackend {
                     Type::Float => Ok(format!("({}){}", real_ty, *val)),
                     Type::Double => Ok(format!("({}){}", real_ty, *val)),
                     Type::Int => Ok(format!("{}", *val)), // 64 bit is the default integer
-                    Type::Bool => Ok(format!("({}){}", real_ty, *val)),
-                    Type::Char => Ok(format!("({}){}", real_ty, *val)),
+                    Type::Bool => Ok(format!("({})((boolean){})", real_ty, *val)),
+                    Type::Long => Ok(format!("({})((long){})", real_ty, *val)),
+                    Type::Short => Ok(format!("({})((short){})", real_ty, *val)),
+                    Type::Byte => Ok(format!("({})((byte){})", real_ty, *val)),
+                    Type::Char => Ok(format!("({})(char){}", real_ty, *val)),
                     Type::Int8 => Ok(format!("({}){}", real_ty, *val)),
                     Type::Int16 => Ok(format!("({}){}", real_ty, *val)),
                     Type::Int32 => Ok(format!("({}){}", real_ty, *val)),
