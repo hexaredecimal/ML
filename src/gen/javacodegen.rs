@@ -496,6 +496,9 @@ impl JavaBackend {
                         ir::BinaryOp::Equal,
                         ir::Type::Int
                         | ir::Type::Char
+                        | ir::Type::Long
+                        | ir::Type::Short
+                        | ir::Type::Byte
                         | ir::Type::Int8
                         | ir::Type::Int16
                         | ir::Type::Int32
@@ -503,6 +506,9 @@ impl JavaBackend {
                         | ir::Type::Int128,
                         ir::Type::Int
                         | ir::Type::Char
+                        | ir::Type::Long
+                        | ir::Type::Short
+                        | ir::Type::Byte
                         | ir::Type::Int8
                         | ir::Type::Int16
                         | ir::Type::Int32
@@ -523,6 +529,9 @@ impl JavaBackend {
                         ir::BinaryOp::NotEqual,
                         ir::Type::Int
                         | ir::Type::Char
+                        | ir::Type::Long
+                        | ir::Type::Short
+                        | ir::Type::Byte
                         | ir::Type::Int8
                         | ir::Type::Int16
                         | ir::Type::Int32
@@ -530,6 +539,9 @@ impl JavaBackend {
                         | ir::Type::Int128,
                         ir::Type::Int
                         | ir::Type::Char
+                        | ir::Type::Long
+                        | ir::Type::Short
+                        | ir::Type::Byte
                         | ir::Type::Int8
                         | ir::Type::Int16
                         | ir::Type::Int32
@@ -554,6 +566,9 @@ impl JavaBackend {
                     (
                         ir::BinaryOp::Mod,
                         ir::Type::Int
+                        | ir::Type::Long
+                        | ir::Type::Short
+                        | ir::Type::Byte
                         | ir::Type::Char
                         | ir::Type::Int8
                         | ir::Type::Int16
@@ -561,6 +576,9 @@ impl JavaBackend {
                         | ir::Type::Int64
                         | ir::Type::Int128,
                         ir::Type::Int
+                        | ir::Type::Long
+                        | ir::Type::Short
+                        | ir::Type::Byte
                         | ir::Type::Char
                         | ir::Type::Int8
                         | ir::Type::Int16
@@ -578,6 +596,9 @@ impl JavaBackend {
                         ir::BinaryOp::Multiply,
                         ir::Type::Int
                         | ir::Type::Char
+                        | ir::Type::Long
+                        | ir::Type::Short
+                        | ir::Type::Byte
                         | ir::Type::Int8
                         | ir::Type::Int16
                         | ir::Type::Int32
@@ -585,6 +606,9 @@ impl JavaBackend {
                         | ir::Type::Int128,
                         ir::Type::Int
                         | ir::Type::Char
+                        | ir::Type::Long
+                        | ir::Type::Short
+                        | ir::Type::Byte
                         | ir::Type::Int8
                         | ir::Type::Int16
                         | ir::Type::Int32
@@ -599,6 +623,9 @@ impl JavaBackend {
                     (
                         ir::BinaryOp::Divide,
                         ir::Type::Int
+                        | ir::Type::Long
+                        | ir::Type::Short
+                        | ir::Type::Byte
                         | ir::Type::Char
                         | ir::Type::Int8
                         | ir::Type::Int16
@@ -606,6 +633,9 @@ impl JavaBackend {
                         | ir::Type::Int64
                         | ir::Type::Int128,
                         ir::Type::Int
+                        | ir::Type::Long
+                        | ir::Type::Short
+                        | ir::Type::Byte
                         | ir::Type::Char
                         | ir::Type::Int8
                         | ir::Type::Int16
@@ -622,6 +652,9 @@ impl JavaBackend {
                         ir::BinaryOp::Add,
                         ir::Type::Int
                         | ir::Type::Char
+                        | ir::Type::Long
+                        | ir::Type::Short
+                        | ir::Type::Byte
                         | ir::Type::Int8
                         | ir::Type::Int16
                         | ir::Type::Int32
@@ -631,6 +664,9 @@ impl JavaBackend {
                         | ir::Type::Any,
                         ir::Type::Int
                         | ir::Type::Char
+                        | ir::Type::Long
+                        | ir::Type::Short
+                        | ir::Type::Byte
                         | ir::Type::Int8
                         | ir::Type::Int16
                         | ir::Type::Int32
@@ -653,6 +689,9 @@ impl JavaBackend {
                         ir::BinaryOp::Sub,
                         ir::Type::Int
                         | ir::Type::Char
+                        | ir::Type::Long
+                        | ir::Type::Short
+                        | ir::Type::Byte
                         | ir::Type::Int8
                         | ir::Type::Int16
                         | ir::Type::Int32
@@ -660,6 +699,9 @@ impl JavaBackend {
                         | ir::Type::Int128,
                         ir::Type::Int
                         | ir::Type::Char
+                        | ir::Type::Long
+                        | ir::Type::Short
+                        | ir::Type::Byte
                         | ir::Type::Int8
                         | ir::Type::Int16
                         | ir::Type::Int32
@@ -674,6 +716,9 @@ impl JavaBackend {
                     (
                         ir::BinaryOp::LessThan,
                         ir::Type::Int
+                        | ir::Type::Long
+                        | ir::Type::Short
+                        | ir::Type::Byte
                         | ir::Type::Char
                         | ir::Type::Int8
                         | ir::Type::Int16
@@ -682,6 +727,9 @@ impl JavaBackend {
                         | ir::Type::Int128,
                         ir::Type::Int
                         | ir::Type::Char
+                        | ir::Type::Long
+                        | ir::Type::Short
+                        | ir::Type::Byte
                         | ir::Type::Int8
                         | ir::Type::Int16
                         | ir::Type::Int32
@@ -697,6 +745,9 @@ impl JavaBackend {
                         ir::BinaryOp::LessThanOrEqual,
                         ir::Type::Int
                         | ir::Type::Char
+                        | ir::Type::Long
+                        | ir::Type::Short
+                        | ir::Type::Byte
                         | ir::Type::Int8
                         | ir::Type::Int16
                         | ir::Type::Int32
@@ -704,6 +755,9 @@ impl JavaBackend {
                         | ir::Type::Int128,
                         ir::Type::Int
                         | ir::Type::Char
+                        | ir::Type::Long
+                        | ir::Type::Short
+                        | ir::Type::Byte
                         | ir::Type::Int8
                         | ir::Type::Int16
                         | ir::Type::Int32
@@ -719,6 +773,9 @@ impl JavaBackend {
                         ir::BinaryOp::GreaterThan,
                         ir::Type::Int
                         | ir::Type::Char
+                        | ir::Type::Long
+                        | ir::Type::Short
+                        | ir::Type::Byte
                         | ir::Type::Int8
                         | ir::Type::Int16
                         | ir::Type::Int32
@@ -726,6 +783,9 @@ impl JavaBackend {
                         | ir::Type::Int128,
                         ir::Type::Int
                         | ir::Type::Char
+                        | ir::Type::Long
+                        | ir::Type::Short
+                        | ir::Type::Byte
                         | ir::Type::Int8
                         | ir::Type::Int16
                         | ir::Type::Int32
@@ -741,6 +801,9 @@ impl JavaBackend {
                         ir::BinaryOp::GreaterThanOrEqual,
                         ir::Type::Int
                         | ir::Type::Char
+                        | ir::Type::Long
+                        | ir::Type::Short
+                        | ir::Type::Byte
                         | ir::Type::Int8
                         | ir::Type::Int16
                         | ir::Type::Int32
@@ -748,6 +811,9 @@ impl JavaBackend {
                         | ir::Type::Int128,
                         ir::Type::Int
                         | ir::Type::Char
+                        | ir::Type::Long
+                        | ir::Type::Short
+                        | ir::Type::Byte
                         | ir::Type::Int8
                         | ir::Type::Int16
                         | ir::Type::Int32
