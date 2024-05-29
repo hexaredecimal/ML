@@ -172,13 +172,13 @@ pub fn type_literal(i: &str) -> IResult<&str, Type, VerboseError<&str>> {
         double_type,
         list_type,
         char_type,
+        long_type, 
+        short_type, 
+        byte_type,
         float_type,
         int_types,
         bool_type,
         array_type,
         user_type,
-        long_type, 
-        short_type, 
-        byte_type
     ))(i)
 }
