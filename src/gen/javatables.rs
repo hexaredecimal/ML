@@ -265,6 +265,9 @@ impl JavaTables {
             ir::Type::Float => Ok("Float".to_string()),
             ir::Type::Double => Ok("Double".to_string()),
             ir::Type::Lifter(inner) => Ok(inner.clone()),
+            ir::Type::Long => Ok("Long".to_string()),
+            ir::Type::Short => Ok("Short".to_string()),
+            ir::Type::Byte => Ok("Byte".to_string()),
             /*
             ir::Type::Int8 => Ok("i8".to_string()),
             ir::Type::Int16 => Ok("i16".to_string()),
