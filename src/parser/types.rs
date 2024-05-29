@@ -110,6 +110,22 @@ fn any_type(i: &str) -> IResult<&str, Type, VerboseError<&str>> {
     Ok((i, Type::Any))
 }
 
+fn long_type(i: &str) -> IResult<&str, Type, VerboseError<&str>> {
+    let (i, _) = tag("Long")(i)?;
+    Ok((i, Type::Long))
+}
+
+fn short_type(i: &str) -> IResult<&str, Type, VerboseError<&str>> {
+    let (i, _) = tag("Short")(i)?;
+    Ok((i, Type::Short))
+}
+
+fn byte_type(i: &str) -> IResult<&str, Type, VerboseError<&str>> {
+    let (i, _) = tag("Byte")(i)?;
+    Ok((i, Type::Byte))
+}
+
+
 fn user_type(i: &str) -> IResult<&str, Type, VerboseError<&str>> {
     let (i, t) = tuple((identifier,))(i)?;
     let (t,) = t;
@@ -161,5 +177,8 @@ pub fn type_literal(i: &str) -> IResult<&str, Type, VerboseError<&str>> {
         bool_type,
         array_type,
         user_type,
+        long_type, 
+        short_type, 
+        byte_type
     ))(i)
 }
