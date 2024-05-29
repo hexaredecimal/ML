@@ -340,6 +340,22 @@ impl Type {
                     return Err(CompilerError::TypeConflict(self.clone(), other.clone())); 
                 }
                 (Type::String, Type::Any) => return Ok(()), 
+                (Type::String, 
+                    Type::Float
+                    | Type::Int
+                    | Type::Long
+                    | Type::Short 
+                    | Type::Byte
+                    | Type::Double
+                    | Type::Char
+                    | Type::Int8
+                    | Type::Int16
+                    | Type::Int32
+                    | Type::Int64
+                    | Type::Int128
+                    | Type::String
+                    | Type::Bool
+                ) => return Ok(()),
                 (Type::String, _) => {
                     return Err(CompilerError::TypeConflict(self.clone(), other.clone())); 
                 }
