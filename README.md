@@ -21,7 +21,7 @@
 > A rust compiler
 
 ```ml
-using System::Io
+using MLIo::Io
 
 fun main(): Unit => println("Hello, world")
 ```
@@ -60,10 +60,10 @@ $ ./target/debug/smll run   # Run the main program file
 - [X] Package registry [here](https://smllregistry.github.io) 
 
 # Features:
-- Type inference for variables
-- Variant enums
-- structs
-- Expressions not Statements
+- [X] Type inference for variables
+- [X] Variant enums
+- [X] structs
+- [X] Expressions not Statements
 
 # Inspiration:
 >>> SMLL is a ml derived language for the JVM which borrows a lot of concepts from languages such as 
