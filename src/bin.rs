@@ -55,7 +55,7 @@ fn try_main() -> Result<()> {
     let mut package_manager = Manager::new();
     if conf.ir {
         let res = smll_lang::compile_and_run(&conf)?;
-        println!("{imports}\n{}", res);
+        println!("{imports}\n{res}");
     } else if conf.build {
         package_manager.resolve_dependencies();
 
