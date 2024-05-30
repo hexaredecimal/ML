@@ -1,7 +1,0 @@
-using MLIo::Io
-
-fun add(x: Long, y: Long): Long => x + y
-
-(* main.smll - Happy coding *)
-fun main(): Unit => println(add(1 of Long, 2 of Long))
-
