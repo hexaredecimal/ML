@@ -1,7 +1,7 @@
 [package]
 name = "small_ml"
-version = "0.1.0"
-authors = ["Mfanakagama mfanakagama@gmail.com github.com/hexaredecimal"]
+version = "0.5.1"
+authors = ["Gama Sibusiso Vincent"]
 edition = "2021"
 
 [lib]
