@@ -3,6 +3,9 @@ use std::io::Write;
 use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 use pkg_compile_time::*; 
 
+static VERSION : &str = env!("CARGO_PKG_VERSION");
+static AUTHOR : &str = env!("CARGO_PKG_AUTHORS");
+
 /// Configuration struct for command line arguments
 #[derive(Debug, Clone)]
 pub struct Config {
@@ -215,7 +218,7 @@ fun main(): Unit => ()
                         c.set_verbose(true);
                     }
                     "version" => {
-                        c.report(&format!("{} version 1.0", c.program_name.clone()));
+                        c.report(&format!("{} version {VERSION}", c.program_name.clone()));
                     }
                     "help" => {
                         c.report(&c.clone().help());
@@ -315,7 +318,7 @@ usage: {} [options] - <file>
     |  _|_| |___|_  |_| |__,|_|_|_|_|_|_|_|_|_|_  |  |_|__,|_|_|_  |___|__,|_  |___|
     |_|         |___|                         |___|            |___|       |___|
 
-                        v1.0 - Made with <3 and rust - Gama Sibusiso 
+                        v{VERSION} - Made with <3 and rust - {AUTHOR} 
                       (mfanakagama@gmail.com) - (hexarevision.co.za)
                                        Compiled on 
                                     [{date}  {time}]
