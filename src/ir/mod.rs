@@ -239,6 +239,18 @@ impl Type {
                     }
                 }
 
+                (Type::YourType(tname), Type::Unit) => {
+                    if ctx.aliases.contains_key(tname) {
+                        let alias = ctx.aliases.get(tname).unwrap();
+                        let ty = alias.value.clone(); 
+                        // println!("{tname} -> {ty}"); 
+                        if ty == Type::Unit {
+                            return Ok(()); 
+                        }
+                    } 
+                    return Err(CompilerError::TypeConflict(self.clone(), other.clone())); 
+                }
+
                 (
                     Type::YourType(_),
                     Type::Float
@@ -253,7 +265,6 @@ impl Type {
                     | Type::Int32
                     | Type::Int64
                     | Type::Int128
-                    | Type::Unit
                     | Type::Bool
                     | Type::String
                 ) => {
@@ -302,7 +313,6 @@ impl Type {
                 }
                 (Type::String, Type::EnumType(_, _)) => return Ok(()), 
                 (Type::String, Type::YourType(_)) => return Ok(()),
-
                 (
                     Type::Float
                     | Type::Int
@@ -325,17 +335,6 @@ impl Type {
                         let ty = alias.value.clone(); 
                         // println!("{tname} -> {ty}"); 
                         return self.assert_eq(&ty, ctx);
-                    } 
-                    return Err(CompilerError::TypeConflict(self.clone(), other.clone())); 
-                }
-                (Type::YourType(tname), Type::Unit) => {
-                    if ctx.aliases.contains_key(tname) {
-                        let alias = ctx.aliases.get(tname).unwrap();
-                        let ty = alias.value.clone(); 
-                        // println!("{tname} -> {ty}"); 
-                        if ty == Type::Unit {
-                            return Ok(()); 
-                        }
                     } 
                     return Err(CompilerError::TypeConflict(self.clone(), other.clone())); 
                 }
