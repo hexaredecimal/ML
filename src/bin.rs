@@ -25,7 +25,7 @@ fn try_main() -> Result<()> {
     let red = Some(Color::Red);
     let _yellow = Some(Color::Yellow);
     let gray = Some(Color::Rgb(150, 150, 150));
-    let _white = Some(Color::White);
+    let white = Some(Color::White);
 
     let mut stdout = StandardStream::stdout(ColorChoice::Always);
 
@@ -100,6 +100,7 @@ fn try_main() -> Result<()> {
         let out_name = make_output_file_name(&conf.file);
         compile_to_java(&out_name, &program, jars.trim(), conf.emit);
 
+        stdout.set_color(ColorSpec::new().set_fg(white)).unwrap();
         let mut cmd = Command::new("java");
         let mut classes = vec!["./build"];
         if !jars.is_empty() {
@@ -113,7 +114,7 @@ fn try_main() -> Result<()> {
             .arg(&jars)
             .arg(out_name);
 
-        println!("Running: {cmd:?}");
+        writeln!(&mut stdout,"Running: {cmd:?}").unwrap();
         let output = cmd
             .output()
             .unwrap_or_else(|_| panic!("failed to execute command {:?}", cmd));
@@ -129,6 +130,13 @@ fn try_main() -> Result<()> {
 }
 
 fn compile_to_java(out_name: &str, program: &str, class_path: &str, save: bool) {
+    let mut stdout = StandardStream::stdout(ColorChoice::Always);
+    let white = Some(Color::White);
+    let red = Some(Color::Red);
+    let green = Some(Color::Green);
+
+    stdout.set_color(ColorSpec::new().set_fg(white)).unwrap();
+    
     fs::write(format!("./{}.java", out_name), program.as_bytes()).unwrap();
     let mut cmd = Command::new("javac"); 
     let cmd = cmd
@@ -141,23 +149,28 @@ fn compile_to_java(out_name: &str, program: &str, class_path: &str, save: bool) 
         .arg("./build")
         .arg(format!("./{}.java", out_name));
 
-    println!("Compiling: {cmd:?}");
-
+    writeln!(&mut stdout,"Compiling: {cmd:?}").unwrap();
     let output = cmd
         .output()
         .unwrap_or_else(|_| panic!("failed to execute command {:?}", cmd));
+
+    if !save {
+        fs::remove_file(format!("{out_name}.java")).unwrap();
+    }
 
     let status = output.status.code().unwrap(); 
 
     if status != 0 {
         io::stdout().write_all(&output.stdout).unwrap();
         io::stderr().write_all(&output.stderr).unwrap();
-        println!("process exited with status: {}", output.status);
+
+        stdout.set_color(ColorSpec::new().set_fg(red)).unwrap();
+        writeln!(&mut stdout,"Compiling failed").unwrap();
+        std::process::exit(1);
     } else {
-        println!("process exited with status: {}", output.status);
-    }
-    if !save {
-        fs::remove_file(format!("{out_name}.java")).unwrap();
+        stdout.set_color(ColorSpec::new().set_fg(green)).unwrap();
+        writeln!(&mut stdout,"Compiling successfully").unwrap();
+        std::process::exit(0);
     }
 }
 
