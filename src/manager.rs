@@ -141,7 +141,7 @@ impl <'a> Manager <'a> {
 
     pub fn resolve_dependencies(&mut self) {
         let r = self.process("./project.toml"); 
-        println!("{r}");
+        print!("{r}");
     }
 
 
