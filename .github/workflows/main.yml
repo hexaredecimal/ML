@@ -1,0 +1,99 @@
+name: Monthly Rust Release
+
+on:
+  schedule:
+    - cron: '0 0 1 * *'  # This cron expression runs at midnight on the first day of every month
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        target: [x86_64-unknown-linux-gnu, aarch64-unknown-linux-gnu, x86_64-apple-darwin, x86_64-pc-windows-msvc]
+        exclude:
+          - os: ubuntu-latest
+            target: x86_64-apple-darwin
+          - os: ubuntu-latest
+            target: x86_64-pc-windows-msvc
+          - os: macos-latest
+            target: x86_64-unknown-linux-gnu
+          - os: macos-latest
+            target: aarch64-unknown-linux-gnu
+          - os: windows-latest
+            target: x86_64-unknown-linux-gnu
+          - os: windows-latest
+            target: aarch64-unknown-linux-gnu
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        override: true
+        target: ${{ matrix.target }}
+
+    - name: Cache Cargo registry
+      uses: actions/cache@v2
+      with:
+        path: ~/.cargo
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-
+
+    - name: Cache Cargo index
+      uses: actions/cache@v2
+      with:
+        path: ~/.cargo/registry/index
+        key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-index-
+
+    - name: Build the project
+      run: cargo build --release --target ${{ matrix.target }}
+
+    - name: Upload binary
+      uses: actions/upload-release-asset@v1
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: |
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            target/${{ matrix.target }}/release/smll.exe
+          else
+            target/${{ matrix.target }}/release/smll
+          fi
+        asset_name: |
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            smll-${{ matrix.target }}.exe
+          else
+            smll-${{ matrix.target }}
+          fi
+        asset_content_type: application/octet-stream
+
+  create_release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Extract version from Cargo.toml
+      id: extract_version
+      run: echo "::set-output name=VERSION::$(grep '^version =' Cargo.toml | sed -E 's/version = "(.*)"/\1/')"
+
+    - name: Create GitHub Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ steps.extract_version.outputs.VERSION }}
+        release_name: v${{ steps.extract_version.outputs.VERSION }}
+        body: |
+          This is an automated monthly release with builds for Linux (x86_64, ARM), macOS, and Windows.
+        draft: false
+        prerelease: false
