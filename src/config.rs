@@ -153,6 +153,7 @@ fun main(): Unit => ()
         fs::write("./.smll_deps/imports", "").unwrap();
         fs::write(project_src, code).unwrap();
         println!("Done creating smll project");
+        std::process::exit(0);
     }
 
     pub fn init_dirs() {
