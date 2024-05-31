@@ -23,7 +23,8 @@ pub fn compile_file(config: &config::Config, input: String, cache: &mut Vec<Stri
             return Err(CompilerError::BackendError(format!("failed to import file with path: {}, with reason: {e}", input)));
         }
     };
-    
+ 
+
     let toplevels = parse(&program)?;
 
     let mut functions: Vec<RawFunction> = vec![];
