@@ -3,6 +3,7 @@ name: Monthly Rust Release
 on:
   schedule:
     - cron: '0 0 1 * *'  # This cron expression runs at midnight on the first day of every month
+  workflow_dispatch:  # Add this to allow manual triggering
 
 jobs:
   build:
