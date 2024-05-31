@@ -98,7 +98,7 @@ fn try_main() -> Result<()> {
         let res = smll_lang::compile_and_run(&conf)?;
         let program = format!("{head2}\n{}", res);
         let out_name = make_output_file_name(&conf.file);
-        compile_to_java(&out_name, &program, jars.trim(), true);
+        compile_to_java(&out_name, &program, jars.trim(), conf.emit);
 
         let mut cmd = Command::new("java");
         let mut classes = vec!["./build"];
