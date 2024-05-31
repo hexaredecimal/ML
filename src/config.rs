@@ -47,7 +47,10 @@ pub struct Config {
     pub defs: bool,
 
     /// Selects the compilation target
-    pub target: Target
+    pub target: Target, 
+
+    /// Don't delete the temporary files
+    pub emit: bool
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -69,7 +72,8 @@ impl Config {
             run: false,
             ir: false,
             defs: false,
-            target: Target::Java
+            target: Target::Java,
+            emit: false
         }
     }
 
@@ -92,6 +96,11 @@ impl Config {
     fn set_defs(&mut self, v: bool) {
         self.defs = v;
     }
+
+    fn set_emit(&mut self, v: bool) {
+        self.emit = v;
+    }
+
 
     fn init(&mut self) {
         let _green = Some(Color::Green);
@@ -217,6 +226,9 @@ fun main(): Unit => ()
                     "verbose" => {
                         c.set_verbose(true);
                     }
+                    "emit" => {
+                        c.set_emit(true);
+                    }
                     "version" => {
                         c.report(&format!("{} version {VERSION}", c.program_name.clone()));
                     }
@@ -293,6 +305,7 @@ usage: {} [options] - <file>
         build                           Build the project and the dependencies
         run                             Runs the program after compilation is complete
         ir                              Print the ir for the program
+        emit                            Save the ir to a file
         paths [path+]                   Paths where imports are loaded from. paths are separed by spaces
         defs                            Prints the names and types of top level statements
         target [java,js]                Selects the target to compile to               
