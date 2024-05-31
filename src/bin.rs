@@ -16,18 +16,6 @@ fn main() {
     }
 }
 
-fn create_internal_structures() -> &'static str {
-    r#"
-    interface Block<T> {
-        T run(); 
-    }
-
-    enum Void {
-        Unit
-    }
-    "#
-} 
-
 fn try_main() -> Result<()> {
     let mut conf = Config::parse();
     let data_conv = Asset::get("SystConv.java").unwrap(); 
@@ -53,6 +41,7 @@ fn try_main() -> Result<()> {
     let structures = create_internal_structures();
     let head2 = format!("{imports}\n{lambdas}\n{convs}\n{structures}\n");
     let mut package_manager = Manager::new();
+    conf.file = "./code/main.smll".to_string();
     if conf.ir {
         let res = smll_lang::compile_and_run(&conf)?;
         println!("{imports}\n{res}");
@@ -103,20 +92,13 @@ fn try_main() -> Result<()> {
         let res = smll_lang::compile_and_run(&conf)?;
         let program = format!("{head2}\n{}", res);
         let out_name = make_output_file_name(&conf.file);
-        compile_to_java(&out_name, &program, jars.trim());
+        compile_to_java(&out_name, &program, jars.trim(), conf.emit);
         
-    } else if !conf.file.is_empty() {
+    } else if conf.run {
         let res = smll_lang::compile_and_run(&conf)?;
         let program = format!("{head2}\n{}", res);
         let out_name = make_output_file_name(&conf.file);
-        compile_to_java(&out_name, &program, jars.trim());
-    } else if !conf.ir && conf.run {
-        conf.file = "./code/main.smll".to_string();
-
-        let res = smll_lang::compile_and_run(&conf)?;
-        let program = format!("{head2}\n{}", res);
-        let out_name = make_output_file_name(&conf.file);
-        compile_to_java(&out_name, &program, jars.trim());
+        compile_to_java(&out_name, &program, jars.trim(), true);
 
         let mut cmd = Command::new("java");
         let mut classes = vec!["./build"];
@@ -131,6 +113,7 @@ fn try_main() -> Result<()> {
             .arg(&jars)
             .arg(out_name);
 
+        println!("Running: {cmd:?}");
         let output = cmd
             .output()
             .unwrap_or_else(|_| panic!("failed to execute command {:?}", cmd));
@@ -145,7 +128,7 @@ fn try_main() -> Result<()> {
     Ok(())
 }
 
-fn compile_to_java(out_name: &str, program: &str, class_path: &str) {
+fn compile_to_java(out_name: &str, program: &str, class_path: &str, save: bool) {
     fs::write(format!("./{}.java", out_name), program.as_bytes()).unwrap();
     let mut cmd = Command::new("javac"); 
     let cmd = cmd
@@ -158,7 +141,7 @@ fn compile_to_java(out_name: &str, program: &str, class_path: &str) {
         .arg("./build")
         .arg(format!("./{}.java", out_name));
 
-    println!("{cmd:?}");
+    println!("Compiling: {cmd:?}");
 
     let output = cmd
         .output()
@@ -173,7 +156,9 @@ fn compile_to_java(out_name: &str, program: &str, class_path: &str) {
     } else {
         println!("process exited with status: {}", output.status);
     }
-    fs::remove_file(format!("{out_name}.java")).unwrap();
+    if !save {
+        fs::remove_file(format!("{out_name}.java")).unwrap();
+    }
 }
 
 fn generate_lambdas(max: i32) -> String {
@@ -206,33 +191,33 @@ fn generate_lambdas(max: i32) -> String {
 }
 
 fn make_output_file_name(file_name: &String) -> String {
-    if !file_name.ends_with(".smll") {
-        println!(
-            "Invalid input file. expected a file with `.sml` extension but found `{}`",
-            file_name
-        );
-        std::process::exit(1);
+    let out_file = file_name
+        .strip_suffix(".smll")
+        .unwrap_or_else(|| {
+            println!("Invalid file name: {file_name}, expected file with extension .smll");
+            std::process::exit(1);
+        });
+
+    let name = out_file
+        .rsplit('/')
+        .next()
+        .unwrap_or(out_file)
+        .to_lowercase();
+
+    let (first, rest) = name.split_at(1);
+    let first = first.to_uppercase();
+    format!("{}{}", first, rest)
+}
+
+
+fn create_internal_structures() -> &'static str {
+    r#"
+    interface Block<T> {
+        T run(); 
     }
 
-    let splits: Vec<_> = file_name.split(".sml").collect();
-
-    let out_file = splits.first().unwrap();
-    let out_file = out_file.to_string();
-    let out_file = out_file.to_lowercase();
-
-    let splits: Vec<_> = out_file.split('/').collect();
-
-    let name = if splits.len() > 1 {
-        splits.last().unwrap().to_string()
-    } else {
-        out_file
-    };
-
-    let len = name.len();
-    let first = name.get(0..1).unwrap();
-    let mut first = first.to_uppercase();
-    let rest = name.get(1..len).unwrap();
-    first.push_str(rest);
-
-    first
-}
+    enum Void {
+        Unit
+    }
+    "#
+} 
