@@ -134,13 +134,11 @@ pub fn fun_call(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     //       What I want to parse is 
     //       <EXPR> (<ARGS>)
     //       Currenty the parser has an issue parsing this.
-    let (i, (id, _, _, _, args, _, _)) = tuple((
+    let (i, (id, _, _, args,_)) = tuple((
         identifier,
         sp,
         tag("("),
-        sp,
         separated_list0(tuple((sp, tag(","), sp)), expression),
-        sp,
         tag(")"),
     ))(i)?;
 
