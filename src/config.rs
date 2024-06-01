@@ -267,7 +267,7 @@ fun main(): Unit => ()
                                 collect_target = false;
                             }
                         } else {
-                            c.file = arg.clone();
+                            c.file = arg.to_string();
                         }
                     }
                 }
