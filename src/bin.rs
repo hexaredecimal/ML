@@ -123,6 +123,8 @@ fn try_main() -> Result<()> {
 
         io::stdout().write_all(&output.stdout).unwrap();
         io::stderr().write_all(&output.stderr).unwrap();
+        stdout.set_color(ColorSpec::new().set_fg(green)).unwrap();
+        writeln!(&mut stdout, "Done").unwrap();
     } else {
         let _ = &conf.report("no input files provided");
     }
@@ -169,8 +171,7 @@ fn compile_to_java(out_name: &str, program: &str, class_path: &str, save: bool) 
         std::process::exit(1);
     } else {
         stdout.set_color(ColorSpec::new().set_fg(green)).unwrap();
-        writeln!(&mut stdout,"Compiling successfully").unwrap();
-        std::process::exit(0);
+        writeln!(&mut stdout,"Compiled successfully").unwrap();
     }
 }
 
