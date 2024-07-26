@@ -1,10 +1,10 @@
-use std::{fs, io};
+use pkg_compile_time::*;
 use std::io::Write;
+use std::{fs, io};
 use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
-use pkg_compile_time::*; 
 
-static VERSION : &str = env!("CARGO_PKG_VERSION");
-static AUTHOR : &str = env!("CARGO_PKG_AUTHORS");
+static VERSION: &str = env!("CARGO_PKG_VERSION");
+static AUTHOR: &str = env!("CARGO_PKG_AUTHORS");
 
 /// Configuration struct for command line arguments
 #[derive(Debug, Clone)]
@@ -47,17 +47,16 @@ pub struct Config {
     pub defs: bool,
 
     /// Selects the compilation target
-    pub target: Target, 
+    pub target: Target,
 
     /// Don't delete the temporary files
-    pub emit: bool
+    pub emit: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Target {
-    Java, 
-    Js,
-    Unknown(String)
+    Java,
+    Unknown(String),
 }
 
 impl Config {
@@ -73,7 +72,7 @@ impl Config {
             ir: false,
             defs: false,
             target: Target::Java,
-            emit: false
+            emit: false,
         }
     }
 
@@ -101,7 +100,6 @@ impl Config {
         self.emit = v;
     }
 
-
     fn init(&mut self) {
         let _green = Some(Color::Green);
         let _red = Some(Color::Red);
@@ -125,9 +123,14 @@ impl Config {
 
         let mut entry = String::new();
         io::stdin().read_line(&mut entry).unwrap();
-        let entry = if &entry == "\n" { "Project".to_owned() } else { entry.trim().to_owned() };
+        let entry = if &entry == "\n" {
+            "Project".to_owned()
+        } else {
+            entry.trim().to_owned()
+        };
         let project_config_path = "./project.toml";
-        let project_text = format!(r#"
+        let project_text = format!(
+            r#"
 [project]
 name = "{entry}"
 version = "0.1.0"
@@ -136,13 +139,14 @@ edition = "2024"
 
 [depends]
 
-"#);
-        
+"#
+        );
+
         fs::write(project_config_path, project_text).unwrap();
         let project_src = "./code/main.smll";
         let code = r#"
 (* main.smll - Happy coding *)
-fun main(): Unit => ()
+fn main(): Unit => ()
 "#;
         let _ = fs::create_dir("./code");
         let _ = fs::create_dir("./.smll_deps");
@@ -161,7 +165,7 @@ fun main(): Unit => ()
         let _ = fs::create_dir("./.smll_deps");
         let _ = fs::create_dir("./.smll_deps/libs");
 
-        let deps = "./.smll_deps/depends"; 
+        let deps = "./.smll_deps/depends";
         if fs::metadata(deps).is_err() {
             fs::write(deps, "").unwrap();
             fs::write("./.smll_deps/statics", "").unwrap();
@@ -189,10 +193,10 @@ fun main(): Unit => ()
 
             stdout.set_color(ColorSpec::new().set_fg(white)).unwrap();
             write!(&mut stdout, "no command line options passed, try `").unwrap();
-            
+
             stdout.set_color(ColorSpec::new().set_fg(yellow)).unwrap();
             write!(&mut stdout, "help").unwrap();
-            
+
             stdout.set_color(ColorSpec::new().set_fg(white)).unwrap();
             writeln!(&mut stdout, "`").unwrap();
             std::process::exit(21);
@@ -255,14 +259,13 @@ fun main(): Unit => ()
                                 }
                                 held = false;
                                 collect_paths = false;
-                            } 
+                            }
 
                             if collect_target {
                                 c.target = match arg.as_str() {
-                                    "java" => Target::Java, 
-                                    "js" => Target::Js, 
-                                    _ => Target::Unknown(arg.clone())
-                                }; 
+                                    "java" => Target::Java,
+                                    _ => Target::Unknown(arg.clone()),
+                                };
                                 held = false;
                                 collect_target = false;
                             }
@@ -275,7 +278,7 @@ fun main(): Unit => ()
                 held = false;
                 collect_paths = false;
                 collect_file = true;
-            } 
+            }
         }
         Box::new(c)
     }
@@ -293,8 +296,8 @@ fun main(): Unit => ()
 
     fn help(self) -> String {
         let name = self.parse_name();
-        let date = pkg_compile_date!(); 
-        let time = pkg_compile_time!(); 
+        let date = pkg_compile_date!();
+        let time = pkg_compile_time!();
 
         format!(
             r#"
