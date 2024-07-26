@@ -210,7 +210,7 @@ pub enum Type {
 impl Type {
     pub fn as_function(&self) -> (&Type, &Vec<(String, Type)>) {
         match self {
-            Type::Function(ret, args) => (&ret, &args),
+            Type::Function(ret, args) => (ret, args),
             _ => panic!("Not a Function type"),
         }
     }
