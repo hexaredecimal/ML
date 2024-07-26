@@ -38,11 +38,10 @@ syn region   smllEncl transparent matchgroup=smlKeyword start="#\[" matchgroup=s
 syn region   smllComment start="(\*" end="\*)" contains=smlComment,smlTodo,@Spell
 syn keyword  smllTodo contained TODO FIXME XXX
 
-syn keyword  smllKeyword  fun type struct enum using java as
-syn keyword  smllKeyword  val let in if then else match fn null of 
+syn keyword  smllKeyword  type struct enum import java as
+syn keyword  smllKeyword  val let in if then else match fn null of lambda 
 
 syn keyword  smllType     Int List Any Float Double Char Unit String Bool Long Short Byte Result Option Either
-
 
 syn keyword  smllBoolean      true false
 syn match    smllConstructor  "(\s*)"
@@ -60,8 +59,6 @@ syn match    smllCharErr      +#"\\\d\d"\|#"\\\d"+
 syn region   smllString       start=+"+ skip=+\\\\\|\\"+ end=+"+ contains=@Spell
 
 syn match    smllFunDef       "=>"
-syn match    smllOperator     "\^"
-syn match    smllOperator     "\?"
 syn match    smllOperator     "::"
 syn match    smllAnyVar       "\<_\>"
 syn match    smllKeyChar      "!"
