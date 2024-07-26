@@ -10,7 +10,7 @@ use super::javacodegen::JavaBackend;
 
 
 #[derive(Clone)]
-#[allow(unused_tuple_struct_fields)]
+#[allow(dead_code)]
 pub struct JavaTables {
     pub records: HashMap<String, RecordType>,
     pub enums: HashMap<String, EnumType>,
