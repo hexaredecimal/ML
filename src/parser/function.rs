@@ -1,17 +1,16 @@
 use super::expression::*;
 use super::types::type_literal;
 use super::{identifier, sp};
-use crate::ir::raw::*; 
+use crate::ir::raw::*;
 use crate::ir::Type;
 use nom::branch::alt;
+use nom::bytes::complete::{tag, take_until};
+use nom::error::context;
 use nom::error::VerboseError;
+use nom::multi::many0;
 use nom::multi::separated_list0;
 use nom::sequence::tuple;
 use nom::IResult;
-use nom::error::context;
-use nom::bytes::complete::{tag, take_until};
-use nom::multi::many0;
-
 
 fn normargument(i: &str) -> IResult<&str, (String, Type), VerboseError<&str>> {
     let (i, (name, _, _, _, arg_type)) = tuple((identifier, sp, tag(":"), sp, type_literal))(i)?;
@@ -22,13 +21,21 @@ fn vargument(i: &str) -> IResult<&str, (String, Type), VerboseError<&str>> {
     let (i, (_, dest)) = tuple((tag("..."), many0(tuple((sp, type_literal)))))(i)?;
 
     if dest.is_empty() {
-        Ok((i, ("".to_string(), Type::VarArgs(Box::new(Type::YourType("".to_string()))))))
+        Ok((
+            i,
+            (
+                "".to_string(),
+                Type::VarArgs(Box::new(Type::YourType("".to_string()))),
+            ),
+        ))
     } else {
         let last = dest.last().unwrap();
-        let (_, ty) = last; 
+        let (_, ty) = last;
         Ok((i, ("".to_string(), Type::VarArgs(Box::new(ty.clone())))))
     }
 }
+
+// P3xZVW3P
 
 fn argument(i: &str) -> IResult<&str, (String, Type), VerboseError<&str>> {
     let (i, b) = alt((normargument, vargument))(i)?;
@@ -37,15 +44,18 @@ fn argument(i: &str) -> IResult<&str, (String, Type), VerboseError<&str>> {
 }
 
 pub fn record_type(i: &str) -> IResult<&str, TopLevel, VerboseError<&str>> {
-    let (i, (_, _, name, _, _, args, _)) = context("Struct declaration", tuple((
-        tag("struct"),
-        sp,
-        identifier,
-        sp,
-        tag("("),
-        separated_list0(tuple((sp, tag(","), sp)), normargument),
-        tag(")"),
-    )))(i)?;
+    let (i, (_, _, name, _, _, args, _)) = context(
+        "Struct declaration",
+        tuple((
+            tag("struct"),
+            sp,
+            identifier,
+            sp,
+            tag("("),
+            separated_list0(tuple((sp, tag(","), sp)), normargument),
+            tag(")"),
+        )),
+    )(i)?;
 
     Ok((
         i,
@@ -66,55 +76,46 @@ pub fn cool_enm(i: &str) -> IResult<&str, EnumField, VerboseError<&str>> {
         sp,
         tag(")"),
     ))(i)?;
-    let field = RecordType {name: id.to_string(), fields: args.clone()}; 
+    let field = RecordType {
+        name: id.to_string(),
+        fields: args.clone(),
+    };
 
-    Ok((
-        i,EnumField::Rec(field)
-    ))
+    Ok((i, EnumField::Rec(field)))
 }
 
-
 pub fn norm_enm(i: &str) -> IResult<&str, EnumField, VerboseError<&str>> {
-    let (i, (id,)) = tuple((identifier,))(i)?; 
+    let (i, (id,)) = tuple((identifier,))(i)?;
 
     Ok((i, EnumField::Id(id.to_string())))
 }
 
 pub fn enum_arg(i: &str) -> IResult<&str, EnumField, VerboseError<&str>> {
-    let (i, a) = alt((cool_enm, norm_enm))(i)?; 
+    let (i, a) = alt((cool_enm, norm_enm))(i)?;
     Ok((i, a))
 }
 
-
 pub fn enum_args(i: &str) -> IResult<&str, Vec<EnumField>, VerboseError<&str>> {
-    let (i, (_, args)) = tuple((
-        sp, 
-        separated_list0(tuple((sp, tag("|"), sp)), enum_arg),
-    ))(i)?; 
+    let (i, (_, args)) = tuple((sp, separated_list0(tuple((sp, tag("|"), sp)), enum_arg)))(i)?;
     Ok((i, args))
 }
 
 pub fn enum_type(i: &str) -> IResult<&str, TopLevel, VerboseError<&str>> {
-    let (i, (_, _, name, _, _, _, args)) = tuple((
-        tag("enum"),
-        sp,
-        identifier,
-        sp,
-        tag("="),
-        sp, 
-        enum_args,
-    ))(i)?;
+    let (i, (_, _, name, _, _, _, args)) =
+        tuple((tag("enum"), sp, identifier, sp, tag("="), sp, enum_args))(i)?;
 
-    let t = TopLevel::EnumType { name: name.to_string(), fields: args }; 
+    let t = TopLevel::EnumType {
+        name: name.to_string(),
+        fields: args,
+    };
     Ok((i, t))
 }
 
-
-
 pub fn function(i: &str) -> IResult<&str, TopLevel, VerboseError<&str>> {
-    let (i, (_, _, name, _, _, args, _, _, _, _, return_type, _, _, _, root)) = context("", 
+    let (i, (_, _, name, _, _, args, _, _, _, _, return_type, _, _, _, root)) = context(
+        "",
         tuple((
-            tag("fun"),
+            tag("fn"),
             sp,
             identifier,
             sp,
@@ -129,7 +130,8 @@ pub fn function(i: &str) -> IResult<&str, TopLevel, VerboseError<&str>> {
             tag("=>"),
             sp,
             expression,
-        )))(i)?;
+        )),
+    )(i)?;
 
     let args_types = args.to_vec();
     Ok((
@@ -144,33 +146,28 @@ pub fn function(i: &str) -> IResult<&str, TopLevel, VerboseError<&str>> {
 }
 
 pub fn import_statement(i: &str) -> IResult<&str, TopLevel, VerboseError<&str>> {
-    let (i, (_ ,_ , path)) = tuple((
-        tag("using"), 
-        sp, 
-        separated_list0(tuple((sp, tag("::"), sp)), identifier)
-    ))(i)?; 
+    let (i, (_, _, path)) = tuple((
+        tag("import"),
+        sp,
+        separated_list0(tuple((sp, tag("::"), sp)), identifier),
+    ))(i)?;
 
     let path = path.into_iter().map(|f| f.to_string()).collect();
 
-    Ok((i , 
-        TopLevel::Import { path }
-    ))
+    Ok((i, TopLevel::Import { path }))
 }
-
 
 pub fn str_literal(_i: &str) -> IResult<&str, String, VerboseError<&str>> {
     let (i, (_, c, _)) = tuple((tag("\""), take_until("\""), tag("\"")))(_i)?;
 
-    let c = c.to_string(); 
-    let c = c.replace('\n', "\\n"); 
+    let c = c.to_string();
+    let c = c.replace('\n', "\\n");
     Ok((i, c.to_string()))
 }
 
 fn lift(i: &str) -> IResult<&str, Type, VerboseError<&str>> {
     let (i, j) = str_literal(i)?;
-    Ok((i, 
-        Type::Lifter(j)
-    ))
+    Ok((i, Type::Lifter(j)))
 }
 
 fn type_or_lift(i: &str) -> IResult<&str, Type, VerboseError<&str>> {
@@ -178,18 +175,15 @@ fn type_or_lift(i: &str) -> IResult<&str, Type, VerboseError<&str>> {
 }
 
 pub fn alias_of(i: &str) -> IResult<&str, TopLevel, VerboseError<&str>> {
-    let (i, (_, _, name, _, _, _, ty)) = tuple((
-        tag("type"),
-        sp, 
-        identifier,
-        sp,
-        tag("="), 
-        sp, 
-        type_or_lift
-    ))(i)?;
+    let (i, (_, _, name, _, _, _, ty)) =
+        tuple((tag("type"), sp, identifier, sp, tag("="), sp, type_or_lift))(i)?;
 
-    Ok((i, 
-        TopLevel::Alias { name: name.to_string(), value: ty }
+    Ok((
+        i,
+        TopLevel::Alias {
+            name: name.to_string(),
+            value: ty,
+        },
     ))
 }
 
@@ -200,57 +194,90 @@ pub fn top_levels(i: &str) -> IResult<&str, TopLevel, VerboseError<&str>> {
 
 #[test]
 fn function_no_args_test() {
-    let root = RawNode::new(RawExpression::Block(vec![
-        RawNode::new(RawExpression::FunCall("println".to_string(), vec![
-            RawNode::new(RawExpression::String("Hello".to_string()))
-        ]))
-    ]));
+    let root = RawNode::new(RawExpression::Block(vec![RawNode::new(
+        RawExpression::FunCall(
+            "println".to_string(),
+            vec![RawNode::new(RawExpression::String("Hello".to_string()))],
+        ),
+    )]));
 
-    let stmt = TopLevel::RawFunction { name: "greet".to_string(), root, args: vec![], ty: Type::Function(Box::new(Type::Unit), vec![]) };
-    assert_eq!(function("fun greet(): Unit => { println(\"Hello\") }"), Ok(("", stmt))); 
+    let stmt = TopLevel::RawFunction {
+        name: "greet".to_string(),
+        root,
+        args: vec![],
+        ty: Type::Function(Box::new(Type::Unit), vec![]),
+    };
+    assert_eq!(
+        function("fun greet(): Unit => { println(\"Hello\") }"),
+        Ok(("", stmt))
+    );
 }
-
 
 #[test]
 fn inline_function_no_args_test() {
-    let root = RawNode::new(RawExpression::FunCall("println".to_string(), vec![
-        RawNode::new(RawExpression::String("Hello".to_string()))
-    ]));
-    let stmt = TopLevel::RawFunction { name: "greet".to_string(), root, args: vec![], ty: Type::Function(Box::new(Type::Unit), vec![]) };
-    assert_eq!(function("fun greet(): Unit => println(\"Hello\")"), Ok(("", stmt))); 
+    let root = RawNode::new(RawExpression::FunCall(
+        "println".to_string(),
+        vec![RawNode::new(RawExpression::String("Hello".to_string()))],
+    ));
+    let stmt = TopLevel::RawFunction {
+        name: "greet".to_string(),
+        root,
+        args: vec![],
+        ty: Type::Function(Box::new(Type::Unit), vec![]),
+    };
+    assert_eq!(
+        function("fun greet(): Unit => println(\"Hello\")"),
+        Ok(("", stmt))
+    );
 }
-
 
 #[test]
 fn alias_test() {
-    let stmt = TopLevel::Alias { name: "Id".to_string(), value: Type::Int };
-    assert_eq!(alias_of("type Id = Int"), Ok(("", stmt))); 
+    let stmt = TopLevel::Alias {
+        name: "Id".to_string(),
+        value: Type::Int,
+    };
+    assert_eq!(alias_of("type Id = Int"), Ok(("", stmt)));
 }
 
 #[test]
 fn enum_type_test() {
-    let stmt = TopLevel::EnumType { name: "Days".to_string(), fields: vec![
-        EnumField::Rec(RecordType { name: "Monday".to_string(), fields: vec![("activity".to_string(), Type::String)] }), 
-        EnumField::Id("Tuesday".to_string())
-    ]};
-    assert_eq!(enum_type("enum Days = Monday(activity: String) | Tuesday"), Ok(("", stmt))); 
+    let stmt = TopLevel::EnumType {
+        name: "Days".to_string(),
+        fields: vec![
+            EnumField::Rec(RecordType {
+                name: "Monday".to_string(),
+                fields: vec![("activity".to_string(), Type::String)],
+            }),
+            EnumField::Id("Tuesday".to_string()),
+        ],
+    };
+    assert_eq!(
+        enum_type("enum Days = Monday(activity: String) | Tuesday"),
+        Ok(("", stmt))
+    );
 }
-
 
 #[test]
 fn record_type_test() {
-    let stmt = TopLevel::RecordType { name: "Foo".to_string(), fields: vec![
-        ("bar".to_string(), Type::String),
-        ("baz".to_string(), Type::Int),
-    ]};
+    let stmt = TopLevel::RecordType {
+        name: "Foo".to_string(),
+        fields: vec![
+            ("bar".to_string(), Type::String),
+            ("baz".to_string(), Type::Int),
+        ],
+    };
 
-    assert_eq!(record_type("struct Foo (bar: String, baz: Int)"), Ok(("", stmt))); 
+    assert_eq!(
+        record_type("struct Foo (bar: String, baz: Int)"),
+        Ok(("", stmt))
+    );
 }
 
 #[test]
 fn import_test() {
-    let stmt = TopLevel::Import { path: vec!["System".to_string(), "Io".to_string()] };
-    assert_eq!(import_statement("using System::Io"), Ok(("", stmt))); 
+    let stmt = TopLevel::Import {
+        path: vec!["System".to_string(), "Io".to_string()],
+    };
+    assert_eq!(import_statement("using System::Io"), Ok(("", stmt)));
 }
-
-
