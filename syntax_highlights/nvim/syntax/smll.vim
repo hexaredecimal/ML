@@ -39,7 +39,7 @@ syn region   smllComment start="(\*" end="\*)" contains=smlComment,smlTodo,@Spel
 syn keyword  smllTodo contained TODO FIXME XXX
 
 syn keyword  smllKeyword  type struct enum import java as
-syn keyword  smllKeyword  val let in if then else match fn null of lambda 
+syn keyword  smllKeyword  val let in if then else match fn null of
 
 syn keyword  smllType     Int List Any Float Double Char Unit String Bool Long Short Byte Result Option Either
 
