@@ -1,0 +1,18 @@
+
+import System::Core
+
+enum Option =
+  Some(x: Any)
+  | None
+
+fn unwrap_option(opt: Option): Any => match opt {
+  Option.Some(x) -> x
+  _ -> panic("Attempt to unwrap a `Option.None` value")
+}
+
+fn unwrap_option_or(opt: Option, def: Any): Any => match opt {
+  Option.Some(x) -> x
+  _ -> def
+}
+
+

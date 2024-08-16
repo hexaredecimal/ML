@@ -1,0 +1,100 @@
+
+import System::Util::Collection
+
+type HashMap = "java.util.HashMap"
+
+fn new_hashmap(): HashMap => {
+  val n = null of HashMap
+  java {
+    "n = new java.util.HashMap();"
+  }
+  n
+}
+
+fn hashmap_clear(map: HashMap): Unit => {
+  java {
+    "map.clear();"
+  }
+  ()
+}
+
+fn hashmap_clone(map: HashMap): HashMap => {
+  val clone = null of Any
+  java {
+    "clone = map.clone();"
+  }
+  clone as HashMap
+}
+
+fn hashmap_containskey(map: HashMap, key: Any): Bool => {
+  val result = false
+  java {
+    "result = map.containsKey(key);"
+  }
+  result
+}
+
+fn hashmap_containsvalue(map: HashMap, value: Any): Bool => {
+  val result = false
+  java {
+    "result = map.containsValue(value);"
+  }
+  result
+}
+
+fn hashmap_isempty(map: HashMap): Bool => {
+  val result = true
+  java {
+    "result = map.isEmpty();"
+  }
+  result
+}
+
+fn hashmap_put(map: HashMap, key: Any, value: Any): Any => {
+  java {
+    "map.put(key, value);"
+  }
+  value
+}
+
+fn hashmap_get(map: HashMap, key: Any): Any => {
+  val value = null of Any
+  java {
+    "value = map.get(key);"
+  }
+  value
+}
+
+fn hashmap_remove(map: HashMap, key: Any): Any => {
+  val value = null of Any
+  java {
+    "value = map.remove(key);"
+  }
+  value
+}
+
+
+fn hashmap_putall(map: HashMap, other: HashMap): Unit => {
+  java {
+    "map.putAll(other);"
+  }
+  ()
+}
+
+
+fn hashmap_size(map: HashMap): Int => {
+  val result = 0
+  java {
+    "result = map.size();"
+  }
+  result
+}
+
+fn hashmap_tocollection(map: HashMap): Collection => {
+  val result = null of Collection
+  java {
+    "result = map.values();"
+  }
+  result
+}
+

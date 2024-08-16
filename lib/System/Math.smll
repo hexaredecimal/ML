@@ -1,0 +1,166 @@
+
+fn abs(x: Double): Double => | x |
+fn sin(x: Double): Double => {
+  val c = 0 as Double
+  java {
+    "c = Math.sin(x);"
+  }
+  c
+}
+
+fn cos(x: Double): Double => {
+  val c = 0 as Double
+  java {
+    "c = Math.cos(x);"
+  }
+  c
+}
+
+fn tan(x: Double): Double => {
+  val c = 0 as Double
+  java {
+    "c = Math.tan(x);"
+  }
+  c
+}
+
+fn pi(): Double => {
+  val c = 0 as Double
+  java {
+    "c = Math.PI;"
+  }
+  c
+}
+
+fn asin(x: Double): Double => {
+  val c = 0 as Double
+  java {
+    "c = Math.asin(x);"
+  }
+  c
+}
+
+fn acos(x: Double): Double => {
+  val c = 0 as Double
+  java {
+    "c = Math.acos(x);"
+  }
+  c
+}
+
+fn atan(x: Double): Double => {
+  val c = 0 as Double
+  java {
+    "c = Math.atan(x);"
+  }
+  c
+}
+
+fn ceil(x: Double): Double => {
+  val c = 0 as Double
+  java {
+    "c = Math.ceil(x);"
+  }
+  c
+}
+
+fn floor(x: Double): Double => {
+  val c = 0 as Double
+  java {
+    "c = Math.floor(x);"
+  }
+  c
+}
+
+fn exp(x: Double): Double => {
+  val c = 0 as Double
+  java {
+    "c = Math.exp(x);"
+  }
+  c
+}
+
+fn log(x: Double): Double => {
+  val c = 0 as Double
+  java {
+    "c = Math.log(x);"
+  }
+  c
+}
+
+fn log10(x: Double): Double => {
+  val c = 0 as Double
+  java {
+    "c = Math.log10(x);"
+  }
+  c
+}
+
+fn round(x: Double): Double => {
+  val c = 0 as Double
+  java {
+    "c = Math.round(x) * 0.0;"
+  }
+  c
+}
+
+fn random(): Double => {
+  val c = 0 as Double
+  java {
+    "c = Math.random();"
+  }
+  c
+}
+
+fn to_radians(x: Double): Double => {
+  val c = 0 as Double
+  java {
+    "c = Math.toRadians(x);"
+  }
+  c
+}
+
+fn sqrt(x: Double): Double => {
+  val c = 0 as Double
+  java {
+    "c = Math.sqrt(x);"
+  }
+  c
+}
+
+fn hypot(x: Double, y: Double): Double => {
+  val c = 0 as Double
+  java {
+    "c = Math.hypot(x, y);"
+  }
+  c
+}
+
+fn pow(x: Double, y: Double): Double => {
+  val c = 0 as Double
+  java {
+    "c = Math.pow(x, y);"
+  }
+  c
+}
+
+fn clamp(value: Double, low: Double, high: Double): Double =>
+  if value < low then
+    low 
+  else if value > high then
+    high
+  else value 
+
+
+fn max(x: Double, y: Double): Double => 
+  if x > y then 
+    x 
+  else y
+
+fn min(x: Double, y: Double): Double => 
+  if x < y then 
+    x 
+  else y
+
+fn normalize(x: Double): Double => x / 0.1
+fn scale(x: Double): Double => x * 0.1

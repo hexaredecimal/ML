@@ -1,0 +1,12 @@
+import System::Core
+import System::Io
+
+enum Result = 
+  Ok(value: Any)
+  | Err(msg: String)
+
+fn unwrap_result(result: Result): Any => match result {
+  Result.Ok(value) -> value
+  Result.Err(msg) -> panic(format("Attempt to unwrap value of Result.Err with message: %s", msg))
+  _ -> unreachable()
+}

@@ -1,0 +1,61 @@
+
+
+fn print(msg: String): Unit => _native_link_smll_print(msg)
+fn println(msg: String): Unit => print(msg + "\n")
+fn printf(fmt: String, ...): Unit => {
+  java {
+    "_native_link_smll_printf(fmt, var_args);"
+  }
+  ()
+}
+
+fn format(fmt: String, ...): String => {
+  val result = "()"
+  java {
+    "result = _native_link_smll_string_format(fmt, var_args);"
+  }
+  result
+}
+
+fn printerr(msg: String): Unit => _native_link_smll_err_print(msg)
+fn printerrln(msg: String): Unit => printerr(msg + "\n")
+
+
+
+
+
+(* ===================== stdout printers ============= *)
+fn _native_link_smll_print(x: String): Unit => {
+  java {
+    "System.out.print(x);"
+  }
+  ()
+}
+
+fn _native_link_smll_printf(x: String, ...): Unit => {
+  java {
+    "System.out.printf(x, var_args);"
+  }
+  ()
+}
+
+fn _native_link_smll_err_print(x: String): Unit => {
+  java {
+    "System.err.print(x);"
+  }
+  ()
+}
+
+
+
+(* =============== Text formatting ============= *)
+
+fn _native_link_smll_string_format(x: String, ...): String => {
+  val str = "()"
+  java {
+    "str = String.format(x, var_args);"
+  }
+  str
+}
+
+

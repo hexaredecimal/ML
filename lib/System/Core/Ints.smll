@@ -1,0 +1,26 @@
+
+fn max_int(): Unit => {
+  val value = 0; 
+  java {
+    "value = Integer.MAX_VALUE;"
+  }
+  value
+}
+
+fn min_int(): Unit => {
+  val value = 0; 
+  java {
+    "value = Integer.MIN_VALUE;"
+  }
+  value
+}
+
+fn sizeof_int(): Unit => {
+  val value = 0; 
+  java {
+    "value = Integer.SIZE;"
+  }
+  value
+}
+
+

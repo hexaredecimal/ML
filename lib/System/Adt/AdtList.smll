@@ -1,0 +1,7 @@
+
+enum AdtList = 
+  Cons(value: Any, next: AdtList)
+  | Empty
+
+
+

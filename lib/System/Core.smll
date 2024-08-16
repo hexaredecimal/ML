@@ -1,0 +1,38 @@
+import System::Io
+import System::Unix::Ansi
+
+fn panic(msg: String): Unit => {
+  val prefix = fg_red("Panic: ")
+  val _msg = underline(msg) 
+  java {
+    "Intrinsic.panic(prefix + _msg);"
+  }
+  ()
+}
+
+fn todo(msg: String): Unit => {
+  val prefix = bg_yellow(fg_black("Todo:")) + " "
+  val _msg = underline(msg) 
+  java {
+    "Intrinsic.panic(prefix + _msg);"
+  }
+  ()
+}
+
+fn unreachable(): Unit => {
+  val prefix = bg_red(fg_white("Unreachable"))
+  java {
+    "Intrinsic.panic(prefix);"
+  }
+  ()
+}
+
+fn unreachablestr(msg: String): Unit => {
+  val prefix = bg_red(fg_white("Unreachable"))
+  java {
+    "Intrinsic.panic(prefix + ' ' + msg);"
+  }
+  ()
+}
+
+

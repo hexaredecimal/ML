@@ -1,0 +1,87 @@
+
+
+fn sizeof_char(): Int => {
+  val size = 0
+  java {
+    "size = Character.BYTES;"
+  }
+  size
+}
+
+fn is_alphabetic(c: Char): Bool=> {
+  val result = false
+  java {
+    "result = Character.isAlphabetic(c);"
+  }
+  result
+}
+
+fn is_digit(c: Char): Bool => {
+  val result = false
+  java {
+    "result = Character.isDigit(c);"
+  }
+  result
+}
+
+fn is_bmp(c: Char): Bool => {
+  val result = false
+  java {
+    "result = Character.isBmpCodePoint(c);"
+  }
+  result
+}
+
+fn is_defined(c: Char): Bool => {
+  val result = false
+  java {
+    "result = Character.isDefined(c);"
+  }
+  result
+}
+
+fn is_emoji(c: Char): Bool => {
+  val result = false
+  java {
+    "result = Character.isEmoji(c);"
+  }
+  result
+}
+
+fn is_titlecase(c: Char): Bool => {
+  val result = false
+  java {
+    "result = Character.isTitleCase(c);"
+  }
+  result
+}
+
+fn is_whitespace(c: Char): Bool => {
+  val result = false
+  java {
+    "result = Character.isWhitespace(c);"
+  }
+  result
+}
+
+fn reverse_bytes(c: Char): Char => {
+  java {
+    "c = Character.reverseBytes(x);"
+  }
+  c
+} 
+
+fn char_touppercase(c: Char): Char => {
+  java {
+    "c = Character.isUpperCase(a);"
+  }
+  c
+}
+
+fn char_tolowercase(c: Char): Char => {
+  java {
+    "c = Character.isLowerCase(a);"
+  }
+  c
+}  
+

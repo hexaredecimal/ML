@@ -1,0 +1,116 @@
+
+type LinkedList = "java.util.LinkedList"
+
+fn new_linkedlist(): LinkedList => {
+  val list = null of LinkedList
+  java {
+    "list = new java.util.LinkedList();"
+  }
+  list
+}
+
+fn linkedlist_add(list: LinkedList, value: Any): Unit => {
+  java {
+    "list.add(value);"
+  }
+  ()
+}
+
+fn linkedlist_add_at(list: LinkedList, index: Int, value: Any): Unit => {
+  java {
+    "list.add(index, value);"
+  }
+  ()
+}
+
+fn linkedlist_set(list: LinkedList, index: Int, value: Any): Any => {
+  java {
+    "list.set(index, value);"
+  }
+  value
+}
+
+
+fn linkedlist_remove(list: LinkedList): Any => {
+  val value = null of Any
+  java {
+    "value = list.remove();"
+  }
+  value
+}
+
+fn linkedlist_remove_at(list: LinkedList, index: Int): Any => {
+  val value = null of Any
+  java {
+    "value = list.remove(index);"
+  }
+  value
+}
+
+
+fn linkedlist_element(list: LinkedList): Any => {
+  val value = null of Any
+  java {
+    "value = list.element();"
+  }
+  value
+}
+
+
+fn linkedlist_first(list: LinkedList): Any => {
+  val value = null of Any
+  java {
+    "value = list.getFirst();"
+  }
+  value
+}
+
+fn linkedlist_last(list: LinkedList): Any => {
+  val value = null of Any
+  java {
+    "value = list.getLast();"
+  }
+  value
+}
+
+fn linkedlist_indexof(list: LinkedList, needle: Any): Int => {
+  val value = null of Int
+  java {
+    "value = list.indexOf(needle);"
+  }
+  value
+}
+
+fn linkedlist_appendfirst(list: LinkedList, needle: Any): Bool => {
+  val result = null of Bool
+  java {
+    "result = list.offerFirst(needle);"
+  }
+  result
+}
+
+
+fn linkedlist_appendlast(list: LinkedList, needle: Any): Bool => {
+  val result = null of Bool
+  java {
+    "result = list.offerLast(needle);"
+  }
+  result
+}
+
+fn linkedlist_toarray(list: LinkedList): List[Any] => {
+  val value = null of List[Any]
+  java {
+    "value = list.toArray();"
+  }
+  value
+}
+
+fn linkedlist_size(list: LinkedList): Int => {
+  val value = null of Int
+  java {
+    "value = list.size();"
+  }
+  value
+}
+

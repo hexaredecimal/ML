@@ -1,0 +1,9 @@
+
+import System::Core
+
+fn sizeof_any(object: Any): Int => {
+  todo("Implement sizeof for type `Any`")
+  0
+}
+
+

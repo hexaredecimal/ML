@@ -1,0 +1,34 @@
+
+
+fn string_char_at(str: String, idx: Int): Char => {
+  val c = 0 of Char
+  java {
+    "c = str.charAt(idx);"
+  }
+  c
+}
+
+fn string_indent(str: String, count: Int): String => {
+  val c = null of String
+  java {
+    "c = str.indent(count);"
+  }
+  c
+}
+
+
+fn string_trim(str: String): String => {
+  val c = null of String
+  java {
+    "c = str.trim();"
+  }
+  c
+}
+
+fn string_equals(str: String, other: String): Bool => {
+  val c = false
+  java {
+    "c = str.equals(other);"
+  }
+  c
+}

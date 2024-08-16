@@ -1,0 +1,49 @@
+
+fn list_from_pair(x: Any, y: Any): List[Any] => [x,y]
+
+fn list_length(array: List[Any]): Int => {
+  val n = 0
+  java {
+    "n = array.length;"
+  }
+  n
+}
+
+fn list_tostring(array: List[Any]): String => {
+  val s = ""
+  java {
+    "String arr = new String();"
+    "arr += '[';"
+    "for (int i = 0; i < array.length; i++) {"
+    " arr += array[i];"
+    " if (i < array.length - 1)"
+    "    arr += ',';"
+    "}"
+    "arr += ']';"
+    "s = arr;"
+  }
+  s
+}
+
+fn list_tail(arr: List[Any]): Any => arr.[list_length(arr) - 1]
+fn list_head(arr: List[Any]): Any => arr.[0]
+fn list_rest(arr: List[Any]): List[Any] => {
+  val ret = []
+  val len = list_length(arr)
+  java {
+    "Object[] aa = new Object[len-1];"
+    "for (int i = 0; i < len-1; i++) {"
+    " aa[i] = arr[i + 1];"
+    "}"
+    "ret = aa;"
+  }
+  ret
+}
+
+fn list_put_at(list: List[Any], index: Int, value: Any): Unit => {
+  java {
+    "list[index] = value;"
+  }
+  ()
+}
+
