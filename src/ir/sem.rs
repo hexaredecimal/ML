@@ -262,15 +262,36 @@ impl SemNode {
 
                 SemExpression::RecordLiteral(parent.clone(), args)
             }
-            RawExpression::EnumLiteral(parent, child) => {
-                let enums = ctx.enums.clone(); 
+            RawExpression::DotExpression(left, right) => {
+                match (left.expr(), right.expr()) {
+                    (RawExpression::Id(name), RawExpression::Id(_)) |
+                    (RawExpression::Id(name), RawExpression::FunCall(_, _)) => {
+                        let node 
+                            = RawNode::new(RawExpression::EnumLiteral(name.clone(), right));
+                    
+                        let enums = ctx.enums.clone(); 
 
-                let enum_name = parent.clone(); 
-                if !enums.contains_key(&enum_name) {
-                    return Err(CompilerError::BackendError(
-                        format!("Invalid enum expression, `{}` is not an enum type", parent)
-                    ));
+                        if !enums.contains_key(name) {
+                            return Err(CompilerError::BackendError(
+                                format!("Invalid enum expression, `{}` is not an enum type", name)
+                            ));
+                        }
+
+                        SemNode::analyze(node, ctx)?.expr
+                    }
+
+                    (_, RawExpression::FunCall(name,args)) => {
+                        let mut new_args: Vec<RawNode> = vec![*left];
+                        new_args.extend(args.clone());
+
+                        let node = RawNode::new(RawExpression::FunCall(name.to_string(), new_args));
+                        SemNode::analyze(node, ctx)?.expr
+                    }
+
+                    _ => todo!()
                 }
+            }
+            RawExpression::EnumLiteral(parent, child) => {
 
                 match child.expr() {
                     RawExpression::FunCall(name, args) => {
