@@ -2,7 +2,7 @@ use crate::error::{CompilerError, Result};
 pub mod raw;
 pub mod sem;
 
-use sem::SemContext; 
+use sem::SemContext;
 #[derive(Debug, PartialEq, Clone)]
 pub enum UnaryOp {
     Minus,
@@ -58,7 +58,12 @@ impl UnaryOp {
 }
 
 impl BinaryOp {
-    pub fn check_ty(&self, left_operand: &Type, right_operand: &Type, ctx: &mut SemContext) -> Result<()> {
+    pub fn check_ty(
+        &self,
+        left_operand: &Type,
+        right_operand: &Type,
+        ctx: &mut SemContext,
+    ) -> Result<()> {
         if let BinaryOp::ArrayDeref = self {
             if let Type::Array(_, _) = left_operand {
                 if right_operand != &Type::Int {
@@ -94,7 +99,7 @@ impl BinaryOp {
                     let mut ts = vec![
                         Type::Float,
                         Type::Long,
-                        Type::Short, 
+                        Type::Short,
                         Type::Byte,
                         Type::Int,
                         Type::Double,
@@ -108,21 +113,22 @@ impl BinaryOp {
                         Type::Any,
                     ];
 
-
-                    if self == &BinaryOp::Add { match (left_operand, right_operand) {
-                        (Type::String, Type::YourType(_)) => ts.push(right_operand.clone()),
-                        (Type::String, Type::EnumType(_, _)) => ts.push(right_operand.clone()), 
-                        (Type::YourType(_), Type::String) => ts.push(left_operand.clone()),
-                        (Type::EnumType(_, _), Type::String) => ts.push(left_operand.clone()),
-                        _ => (),
-                    } };
+                    if self == &BinaryOp::Add {
+                        match (left_operand, right_operand) {
+                            (Type::String, Type::YourType(_)) => ts.push(right_operand.clone()),
+                            (Type::String, Type::EnumType(_, _)) => ts.push(right_operand.clone()),
+                            (Type::YourType(_), Type::String) => ts.push(left_operand.clone()),
+                            (Type::EnumType(_, _), Type::String) => ts.push(left_operand.clone()),
+                            _ => (),
+                        }
+                    };
                     ts
                 }
                 BinaryOp::Equal | BinaryOp::NotEqual => {
                     vec![
                         Type::Float,
                         Type::Long,
-                        Type::Short, 
+                        Type::Short,
                         Type::Byte,
                         Type::Int,
                         Type::Bool,
@@ -159,7 +165,7 @@ impl std::fmt::Display for BinaryOp {
             f,
             "{}",
             match self {
-                BinaryOp::Mod => "%", 
+                BinaryOp::Mod => "%",
                 BinaryOp::Multiply => "*",
                 BinaryOp::Divide => "/",
                 BinaryOp::Add => "+",
@@ -225,30 +231,28 @@ impl Type {
             match (self, other) {
                 (Type::Lambda(ret, _), other) => return ret.assert_eq(other, ctx),
                 (other, Type::Lambda(ret, _)) => return ret.assert_eq(other, ctx),
-                (Type::VarArgs(bx), t) => {
-                    match *bx.clone() {
-                        Type::YourType(x) => {
-                            if x.is_empty() {
-                                return Ok(());
-                            } 
-                            return bx.assert_eq(t, ctx);
+                (Type::VarArgs(bx), t) => match *bx.clone() {
+                    Type::YourType(x) => {
+                        if x.is_empty() {
+                            return Ok(());
                         }
-                        ty => {
-                            return ty.assert_eq(t, ctx);
-                        }
+                        return bx.assert_eq(t, ctx);
                     }
-                }
+                    ty => {
+                        return ty.assert_eq(t, ctx);
+                    }
+                },
 
                 (Type::YourType(tname), Type::Unit) => {
                     if ctx.aliases.contains_key(tname) {
                         let alias = ctx.aliases.get(tname).unwrap();
-                        let ty = alias.value.clone(); 
-                        // println!("{tname} -> {ty}"); 
+                        let ty = alias.value.clone();
+                        // println!("{tname} -> {ty}");
                         if ty == Type::Unit {
-                            return Ok(()); 
+                            return Ok(());
                         }
-                    } 
-                    return Err(CompilerError::TypeConflict(self.clone(), other.clone())); 
+                    }
+                    return Err(CompilerError::TypeConflict(self.clone(), other.clone()));
                 }
 
                 (
@@ -257,7 +261,7 @@ impl Type {
                     | Type::Int
                     | Type::Double
                     | Type::Long
-                    | Type::Short 
+                    | Type::Short
                     | Type::Byte
                     | Type::Char
                     | Type::Int8
@@ -266,13 +270,13 @@ impl Type {
                     | Type::Int64
                     | Type::Int128
                     | Type::Bool
-                    | Type::String
+                    | Type::String,
                 ) => {
                     return Err(CompilerError::TypeConflict(self.clone(), other.clone()));
                 }
 
                 (Type::List(list_ty), Type::Array(_, ty)) => {
-                    list_ty.assert_eq(ty, ctx).unwrap(); 
+                    list_ty.assert_eq(ty, ctx).unwrap();
                     return Ok(());
                 }
                 (Type::Any, _) => return Ok(()),
@@ -282,7 +286,6 @@ impl Type {
                         return Err(CompilerError::TypeConflict(self.clone(), other.clone()));
                     }
                     return Ok(());
-
                 }
                 (Type::YourType(t1), Type::YourType(t2)) => {
                     let (t1, t2) = (t1.clone(), t2.clone());
@@ -311,13 +314,13 @@ impl Type {
                         return Err(CompilerError::TypeConflict(self.clone(), other.clone()));
                     }
                 }
-                (Type::String, Type::EnumType(_, _)) => return Ok(()), 
+                (Type::String, Type::EnumType(_, _)) => return Ok(()),
                 (Type::String, Type::YourType(_)) => return Ok(()),
                 (
                     Type::Float
                     | Type::Int
                     | Type::Long
-                    | Type::Short 
+                    | Type::Short
                     | Type::Byte
                     | Type::Double
                     | Type::Char
@@ -328,22 +331,23 @@ impl Type {
                     | Type::Int128
                     | Type::Unit
                     | Type::Bool,
-                    Type::YourType(tname)
+                    Type::YourType(tname),
                 ) => {
                     if ctx.aliases.contains_key(tname) {
                         let alias = ctx.aliases.get(tname).unwrap();
-                        let ty = alias.value.clone(); 
-                        // println!("{tname} -> {ty}"); 
+                        let ty = alias.value.clone();
+                        // println!("{tname} -> {ty}");
                         return self.assert_eq(&ty, ctx);
-                    } 
-                    return Err(CompilerError::TypeConflict(self.clone(), other.clone())); 
+                    }
+                    return Err(CompilerError::TypeConflict(self.clone(), other.clone()));
                 }
-                (Type::String, Type::Any) => return Ok(()), 
-                (Type::String, 
+                (Type::String, Type::Any) => return Ok(()),
+                (
+                    Type::String,
                     Type::Float
                     | Type::Int
                     | Type::Long
-                    | Type::Short 
+                    | Type::Short
                     | Type::Byte
                     | Type::Double
                     | Type::Char
@@ -353,16 +357,16 @@ impl Type {
                     | Type::Int64
                     | Type::Int128
                     | Type::String
-                    | Type::Bool
+                    | Type::Bool,
                 ) => return Ok(()),
                 (Type::String, _) => {
-                    return Err(CompilerError::TypeConflict(self.clone(), other.clone())); 
+                    return Err(CompilerError::TypeConflict(self.clone(), other.clone()));
                 }
                 _ => match other {
                     Type::Float
                     | Type::Int
                     | Type::Long
-                    | Type::Short 
+                    | Type::Short
                     | Type::Byte
                     | Type::Double
                     | Type::Char
@@ -373,9 +377,7 @@ impl Type {
                     | Type::Int128
                     | Type::Any
                     | Type::String
-                    | Type::Bool => {
-                        return Ok(())
-                    },
+                    | Type::Bool => return Ok(()),
                     _ => {
                         return Err(CompilerError::TypeConflict(self.clone(), other.clone()));
                     }
@@ -393,10 +395,10 @@ impl std::fmt::Display for Type {
             "{}",
             match self {
                 Type::Lambda(_ret, args) => {
-                    let args: Vec<_> = args.iter().map(|f| format!("{f}")).collect(); 
+                    let args: Vec<_> = args.iter().map(|f| format!("{f}")).collect();
                     args.join(",")
                 }
-                Type::EnumType(name, p) => format!("{}.{}", name, p), 
+                Type::EnumType(name, p) => format!("{}.{}", name, p),
                 Type::YourType(s) => s.clone(),
                 Type::VarArgs(ty) => {
                     match *ty.clone() {
@@ -407,7 +409,7 @@ impl std::fmt::Display for Type {
                                 format!("{x}... ")
                             }
                         }
-                        other => format!("{other}... ")
+                        other => format!("{other}... "),
                     }
                 }
                 Type::Unit => "()".to_string(),
