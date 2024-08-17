@@ -1,13 +1,11 @@
-
 use crate::error::{CompilerError, Result};
-use crate::ir::raw::{RecordType, EnumType, EnumField, Alias};
+use crate::ir::raw::{Alias, EnumField, EnumType, RecordType};
 use crate::ir::sem::*;
 use crate::ir::{self, Type};
 use std::collections::HashMap;
 
-use super::utils::Utils;
 use super::javacodegen::JavaBackend;
-
+use super::utils::Utils;
 
 #[derive(Clone)]
 #[allow(dead_code)]
@@ -22,11 +20,15 @@ impl JavaTables {
         Self {
             records: HashMap::new(),
             enums: HashMap::new(),
-            aliases: HashMap::new()
+            aliases: HashMap::new(),
         }
     }
 
-    pub fn process_enumns(&mut self, records: Vec<EnumType>, ctx: &mut SemContext) -> Result<String> {
+    pub fn process_enumns(
+        &mut self,
+        records: Vec<EnumType>,
+        ctx: &mut SemContext,
+    ) -> Result<String> {
         let mut recs: String = String::new();
 
         for record in records.clone() {
@@ -34,15 +36,15 @@ impl JavaTables {
             let args = record.fields.clone();
             let args: Vec<String> = args
                 .into_iter()
-                .map(|f| {
-                    match f {
-                        EnumField::Rec(rec) => {
-                            let recc = self.process_records(vec![rec], false, ctx).unwrap();
-                            let recc = recc.trim_end(); 
-                            let recc = format!("\t{recc} implements {name} {}", "{}");
-                            recc
-                        }, 
-                        EnumField::Id(_name) => format!("\trecord {} () implements {} {}", _name, name, "{}"), 
+                .map(|f| match f {
+                    EnumField::Rec(rec) => {
+                        let recc = self.process_records(vec![rec], false, ctx).unwrap();
+                        let recc = recc.trim_end();
+                        let recc = format!("\t{recc} implements {name} {}", "{}");
+                        recc
+                    }
+                    EnumField::Id(_name) => {
+                        format!("\trecord {} () implements {} {}", _name, name, "{}")
                     }
                 })
                 .collect();
@@ -54,8 +56,12 @@ impl JavaTables {
         Ok(recs)
     }
 
-
-    pub fn process_records(&mut self, records: Vec<RecordType>, close: bool, ctx: &mut SemContext) -> Result<String> {
+    pub fn process_records(
+        &mut self,
+        records: Vec<RecordType>,
+        close: bool,
+        ctx: &mut SemContext,
+    ) -> Result<String> {
         let mut recs: String = String::new();
 
         for record in records.clone() {
@@ -71,7 +77,15 @@ impl JavaTables {
                 .collect();
 
             let args = args.join(", ");
-            recs.push_str(format!("record {} ({}) {}", name, args, if close {"{}\n"} else {" "}).as_str())
+            recs.push_str(
+                format!(
+                    "record {} ({}) {}",
+                    name,
+                    args,
+                    if close { "{}\n" } else { " " }
+                )
+                .as_str(),
+            )
         }
 
         Ok(recs)
@@ -181,39 +195,39 @@ impl JavaTables {
 
         if name == "main" {
             let return_value = match ret_type.as_str() {
-                "Integer" => {
-                    match root.expr() {
-                        SemExpression::Block(_) => {
-                            let sq = return_value.clone();
-                            let sq: Vec<_> = sq.split('\n').collect();
-                            let len = sq.len();
+                "Integer" => match root.expr() {
+                    SemExpression::Block(_) => {
+                        let sq = return_value.clone();
+                        let sq: Vec<_> = sq.split('\n').collect();
+                        let len = sq.len();
 
-                            let mut p = String::new(); 
-                            let rest = sq.get(0..len - 1).unwrap();
-                            for st in rest {
-                                p.push_str(st);
-                                p.push('\n');
-                            }
-
-                            let last = sq.last().unwrap();
-                            format!("{p}System.exit({last})") 
+                        let mut p = String::new();
+                        let rest = sq.get(0..len - 1).unwrap();
+                        for st in rest {
+                            p.push_str(st);
+                            p.push('\n');
                         }
-                        _ => format!("System.exit({})", return_value)
-                    }
-                }
-                _ => return_value
-            }; 
 
-            let last_expr = format!("try {}\n\t{};\n{}\tcatch(Exception e) {}", "{", return_value, "}", "{ Intrinsic.panic(e.getMessage()); }"); 
+                        let last = sq.last().unwrap();
+                        format!("{p}System.exit({last})")
+                    }
+                    _ => format!("System.exit({})", return_value),
+                },
+                _ => return_value,
+            };
+
+            let last_expr = format!(
+                "try {}\n\t{};\n{}\tcatch(Exception e) {}",
+                "{", return_value, "}", "{ Intrinsic.panic(e.getMessage()); }"
+            );
             match func.root().expr() {
-                SemExpression::Unit => (), 
-                _ => s.push_str(format!("{};\n", last_expr).as_str()), 
+                SemExpression::Unit => (),
+                _ => s.push_str(format!("{};\n", last_expr).as_str()),
             }
             s.push_str("\nreturn;\n");
         } else {
             match root.expr() {
                 SemExpression::Block(_) => {
-
                     let sq = return_value.clone();
                     let sq: Vec<_> = sq.split('\n').collect();
                     let len = sq.len();
@@ -240,13 +254,15 @@ impl JavaTables {
         Ok(s)
     }
 
-
     pub fn real_type(self, ty: &ir::Type, _ctx: &mut SemContext) -> Result<String> {
         match ty {
             ir::Type::Lambda(_ret, args) => {
-                let len = args.len(); 
-                let ret = self.clone().real_type(_ret, _ctx)?; 
-                let args: Vec<_> = args.iter().map(|f| self.clone().real_type(f, _ctx).unwrap()).collect();
+                let len = args.len();
+                let ret = self.clone().real_type(_ret, _ctx)?;
+                let args: Vec<_> = args
+                    .iter()
+                    .map(|f| self.clone().real_type(f, _ctx).unwrap())
+                    .collect();
                 let args = if len == 0 {
                     "".to_string()
                 } else {
@@ -277,8 +293,12 @@ impl JavaTables {
             ir::Type::Array(_num, _inner) => {
                 let inner = *_inner.clone();
                 let t = self.real_type(&inner, _ctx)?;
-                let e:String = _num.to_string();
-                Ok(format!("{}[{}]", t, if *_num == 0 { "".to_string() } else { e }))
+                let e: String = _num.to_string();
+                Ok(format!(
+                    "{}[{}]",
+                    t,
+                    if *_num == 0 { "".to_string() } else { e }
+                ))
             }
             ir::Type::List(_inner) => {
                 let inner = *_inner.clone();
@@ -287,8 +307,8 @@ impl JavaTables {
             }
             ir::Type::EnumType(name, _arg) => {
                 if Utils::enum_type_exists(&self.enums, name).is_ok() {
-                    let name = name.clone(); 
-                    let arg = _arg.clone(); 
+                    let name = name.clone();
+                    let arg = _arg.clone();
                     let enm = self.enums.get(&name).unwrap();
 
                     if name != enm.name {
@@ -298,45 +318,52 @@ impl JavaTables {
                         )));
                     };
 
-                    let mut found = false; 
+                    let mut found = false;
                     for _arg in enm.fields.clone() {
                         match _arg {
                             EnumField::Rec(rc) => {
                                 let nm = rc.name.clone();
                                 if nm == arg {
-                                    found = true; 
+                                    found = true;
                                 }
-                           }, 
+                            }
                             EnumField::Id(s) => {
                                 if s == arg {
-                                    found = true; 
+                                    found = true;
                                 }
-                            },
+                            }
                         }
                     }
 
                     if !found {
                         return Err(CompilerError::BackendError(format!(
                             "Invalid enum field lookup for field `{}`, in enum type {}",
-                            _arg, 
+                            _arg,
                             name.clone()
                         )));
                     }
-                    
+
                     Ok(format!("{}.{}", name, _arg))
                 } else {
-                    Err(CompilerError::BackendError(format!("{} is not an enum", name))) 
+                    Err(CompilerError::BackendError(format!(
+                        "{} is not an enum",
+                        name
+                    )))
                 }
             }
             ir::Type::YourType(t) => {
                 let jit = self.clone();
-                if Utils::record_type_exists(&self.records, t).is_ok() || Utils::enum_type_exists(&self.enums, t).is_ok()  {
+                if Utils::record_type_exists(&self.records, t).is_ok()
+                    || Utils::enum_type_exists(&self.enums, t).is_ok()
+                {
                     Ok(t.clone())
                 } else if jit.aliases.contains_key(t) {
-                    let alias = jit.aliases.get(t).unwrap(); 
+                    let alias = jit.aliases.get(t).unwrap();
                     self.real_type(&alias.value, _ctx)
                 } else {
-                    Err(CompilerError::BackendError(format!("Invalid struct/enum/alias type {t}")))
+                    Err(CompilerError::BackendError(format!(
+                        "Invalid struct/enum/alias type {t}"
+                    )))
                 }
             }
             _ => Err(CompilerError::BackendError(format!(
