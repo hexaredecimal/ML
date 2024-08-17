@@ -2,7 +2,7 @@ use std::fmt::Debug;
 
 use super::*;
 
-#[derive(Debug, Clone,PartialEq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum TopLevel {
     RawFunction {
         name: String,
@@ -17,43 +17,42 @@ pub enum TopLevel {
     },
 
     EnumType {
-        name: String, 
-        fields: Vec<EnumField>
+        name: String,
+        fields: Vec<EnumField>,
     },
 
     Import {
-        path: Vec<String>
+        path: Vec<String>,
     },
 
     Alias {
-        name: String, 
-        value: Type
-    }
+        name: String,
+        value: Type,
+    },
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Alias {
     pub name: String,
-    pub value: Type
+    pub value: Type,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Import {
-    pub path: Vec<String>
+    pub path: Vec<String>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum EnumField {
     Rec(RecordType),
-    Id(String)
+    Id(String),
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct EnumType {
-    pub name: String, 
-    pub fields: Vec<EnumField>
+    pub name: String,
+    pub fields: Vec<EnumField>,
 }
-
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct RecordType {
@@ -96,15 +95,16 @@ pub enum RawExpression {
     Embed(Box<RawNode>),
     RecordLiteral(String, Vec<(String, RawNode)>),
     EnumLiteral(String, Box<RawNode>),
+    DotExpression(Box<RawNode>, Box<RawNode>),
     Cast(Box<RawNode>, Box<Type>),
     Lambda(Vec<(String, Type)>, Box<Type>, Box<RawNode>),
     Destructure(Vec<String>, Box<RawNode>),
-    FieldAccess(Box<RawNode>, Box<RawNode>)
+    FieldAccess(Box<RawNode>, Box<RawNode>),
 }
 
 pub enum TempExpr {
-    Id(String), 
-    Ids(Vec<String>)
+    Id(String),
+    Ids(Vec<String>),
 }
 
 pub trait Node: PartialEq + Sized {
