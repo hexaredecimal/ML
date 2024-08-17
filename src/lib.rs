@@ -4,6 +4,7 @@ use crate::ir::raw::{RawFunction, RecordType, TopLevel};
 use gen::javatables::JavaTables;
 use ir::raw::{Alias, EnumType, Import};
 use nom::error::convert_error;
+use rust_embed::RustEmbed;
 use std::collections::{HashMap, HashSet};
 use std::fs;
 
@@ -14,20 +15,31 @@ mod ir;
 pub mod manager;
 mod parser;
 
+#[derive(RustEmbed)]
+#[folder = "lib/"]
+struct StdLib;
+
 type CompilationUnit = (Vec<RawFunction>, Vec<RecordType>, Vec<EnumType>, Vec<Alias>);
 pub fn compile_file(
     config: &config::Config,
     input: String,
     cache: &mut Vec<String>,
 ) -> Result<CompilationUnit> {
-    let program = match std::fs::read_to_string(&input) {
-        Ok(x) => x,
-        Err(e) => {
-            return Err(CompilerError::BackendError(format!(
-                "failed to import file with path: {}, with reason: {e}",
-                input
-            )));
+    let from_stdlib = StdLib::get(&input);
+    let program = if from_stdlib.is_none() {
+        match std::fs::read_to_string(&input) {
+            Ok(x) => x,
+            Err(e) => {
+                return Err(CompilerError::BackendError(format!(
+                    "failed to import file with path: {}, with reason: {e}",
+                    input
+                )));
+            }
         }
+    } else {
+        let file = from_stdlib.unwrap();
+        let data = file.data.as_ref();
+        String::from_utf8(data.to_vec()).unwrap()
     };
 
     let toplevels = parse(&program)?;
@@ -259,6 +271,13 @@ pub fn compile_and_run(config: &config::Config) -> Result<String> {
 
             let ens = java.process_enumns(enums, &mut ctx)?;
             let rcs = java.process_records(records, true, &mut ctx)?;
+
+            if config.defs {
+                for func in &typed_functions {
+                    println!("{}: {}", func.name(), func.ty());
+                }
+            }
+
             let code_ptr = java.compile(&typed_functions, &mut ctx)?;
             Ok(format!("{}\n{}\n{}", ens, rcs, code_ptr))
         }
