@@ -681,15 +681,28 @@ pub fn expression(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
         return Ok((i, e));
     }
 
-    let (_, _, _, t_) = a.last().unwrap();
+    //let (_, _, _, t_) = a.last().unwrap();
 
-    Ok((
-        i,
-        RawNode::new(RawExpression::DotExpression(
-            Box::new(e),
-            Box::new(t_.clone()),
-        )),
-    ))
+    let mut result: Option<RawNode> = None;
+    for (i, (_, _, _, expr)) in a.into_iter().enumerate() {
+        if result.is_none() {
+            // The first one
+            result = Some(RawNode::new(RawExpression::DotExpression(
+                Box::new(e.clone()),
+                Box::new(expr.clone()),
+            )));
+        } else {
+            let last = result.unwrap();
+            result = Some(RawNode::new(RawExpression::DotExpression(
+                Box::new(last.clone()),
+                Box::new(expr.clone()),
+            )));
+        }
+    }
+
+    let result = result.unwrap();
+
+    Ok((i, result))
 }
 
 #[test]
