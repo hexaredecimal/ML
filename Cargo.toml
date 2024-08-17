@@ -1,6 +1,6 @@
 [package]
 name = "small_ml"
-version = "0.5.9"
+version = "0.6.9"
 authors = ["Gama Sibusiso Vincent"]
 edition = "2021"
 
