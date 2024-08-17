@@ -3,7 +3,7 @@ use crate::ir::raw::*;
 use crate::ir::*;
 use crate::parser::types::type_literal;
 use nom::branch::alt;
-use nom::bytes::complete::{tag, take_while1, take_until};
+use nom::bytes::complete::{tag, take_until, take_while1};
 use nom::combinator::opt;
 use nom::error::{context, VerboseError};
 use nom::multi::{many0, many1, separated_list0};
@@ -71,23 +71,26 @@ fn bool_literal(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
 }
 
 fn array_literal(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
-    let (i, (_, _, exprs, _, _)) = context("Array literal", tuple((
-        tag("["),
-        sp,
-        separated_list0(tuple((sp, tag(","), sp)), expression),
-        sp,
-        tag("]"),
-    )))(i)?;
+    let (i, (_, _, exprs, _, _)) = context(
+        "Array literal",
+        tuple((
+            tag("["),
+            sp,
+            separated_list0(tuple((sp, tag(","), sp)), expression),
+            sp,
+            tag("]"),
+        )),
+    )(i)?;
     Ok((i, RawNode::new(RawExpression::Array(exprs.to_vec()))))
 }
 
 fn null_of(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     let (i, (_, t)) = tuple((tag("null"), many0(tuple((sp, tag("of"), sp, type_literal)))))(i)?;
-    
+
     let ty = if t.is_empty() {
         Box::new(Type::Any)
     } else {
-        let (_, _, _, last) = t.first().unwrap(); 
+        let (_, _, _, last) = t.first().unwrap();
         Box::new(last.clone())
     };
 
@@ -104,8 +107,8 @@ fn unit_literal(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
 fn str_literal(_i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     let (i, (_, c, _)) = tuple((tag("\""), take_until("\""), tag("\"")))(_i)?;
 
-    let c = c.to_string(); 
-    let c = c.replace('\n', "\\n"); 
+    let c = c.to_string();
+    let c = c.replace('\n', "\\n");
     Ok((i, RawNode::new(RawExpression::String(c.to_string()))))
 }
 
@@ -128,17 +131,19 @@ fn parens(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
 }
 
 pub fn fun_call(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
-    // TODO: Fix the parser for function call such that it is generic for all 
+    // TODO: Fix the parser for function call such that it is generic for all
     //       kinds of functions. For now function calls are parsed as
-    //       <ID> (<ARGS>) 
-    //       What I want to parse is 
+    //       <ID> (<ARGS>)
+    //       What I want to parse is
     //       <EXPR> (<ARGS>)
     //       Currenty the parser has an issue parsing this.
-    let (i, (id, _, _, args,_)) = tuple((
+    let (i, (id, _, _, _, args, _, _)) = tuple((
         identifier,
         sp,
         tag("("),
+        sp,
         separated_list0(tuple((sp, tag(","), sp)), expression),
+        sp,
         tag(")"),
     ))(i)?;
 
@@ -149,16 +154,16 @@ pub fn fun_call(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
 }
 
 pub fn lambda_call(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
-    // TODO: Fix the parser for function call such that it is generic for all 
+    // TODO: Fix the parser for function call such that it is generic for all
     //       kinds of functions. For now function calls are parsed as
-    //       <ID> (<ARGS>) 
-    //       What I want to parse is 
+    //       <ID> (<ARGS>)
+    //       What I want to parse is
     //       <EXPR> (<ARGS>)
     //       Currenty the parser has an issue parsing this.
     let (i, (_, _, id, _, _, args, _, _)) = tuple((
         tag("["),
-        sp, 
-        expression, 
+        sp,
+        expression,
         sp,
         tag(":"),
         separated_list0(tuple((sp, tag(","), sp)), expression),
@@ -170,8 +175,6 @@ pub fn lambda_call(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     println!("expr: {:?} -> args: {:?}", id, args);
     todo!()
 }
-
-
 
 pub fn identifier_expr(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     let (i, id) = identifier(i)?;
@@ -451,7 +454,6 @@ fn let_expr(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     ))
 }
 
-
 fn val_destruct(i: &str) -> IResult<&str, TempExpr, VerboseError<&str>> {
     let (i, (_, identifiers, _)) = tuple((
         tag("("),
@@ -459,41 +461,35 @@ fn val_destruct(i: &str) -> IResult<&str, TempExpr, VerboseError<&str>> {
         tag(")"),
     ))(i)?;
 
-    let identifiers: Vec<_> = identifiers.into_iter().map(|f| f.to_string()).collect(); 
+    let identifiers: Vec<_> = identifiers.into_iter().map(|f| f.to_string()).collect();
 
     Ok((i, TempExpr::Ids(identifiers)))
 }
 
-
 fn val_id(i: &str) -> IResult<&str, TempExpr, VerboseError<&str>> {
-    let (i, e) = tuple((identifier,))(i)?; 
-    let (e,) =e;
+    let (i, e) = tuple((identifier,))(i)?;
+    let (e,) = e;
     Ok((i, TempExpr::Id(e.to_string())))
 }
 
 fn val_alt(i: &str) -> IResult<&str, TempExpr, VerboseError<&str>> {
-    let (i, e) = alt((val_id, val_destruct))(i)?; 
+    let (i, e) = alt((val_id, val_destruct))(i)?;
     Ok((i, e))
 }
-
 
 fn val_expr(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     let (i, (_, _, ids, _, _, _, val)) =
         tuple((tag("val"), sp, val_alt, sp, tag("="), sp, expression))(i)?;
 
     match ids {
-        TempExpr::Id(id) => {
-            Ok((
-                i,
-                RawNode::new(RawExpression::Val(id.to_string(), Box::new(val))),
-            )) 
-        }
-        TempExpr::Ids(v) => {
-            Ok((
-                i, 
-                RawNode::new(RawExpression::Destructure(v.clone(), Box::new(val))),
-            )) 
-        }
+        TempExpr::Id(id) => Ok((
+            i,
+            RawNode::new(RawExpression::Val(id.to_string(), Box::new(val))),
+        )),
+        TempExpr::Ids(v) => Ok((
+            i,
+            RawNode::new(RawExpression::Destructure(v.clone(), Box::new(val))),
+        )),
     }
 }
 
@@ -564,14 +560,14 @@ fn normargument(i: &str) -> IResult<&str, (String, RawNode), VerboseError<&str>>
     Ok((i, (name.to_string(), arg_type)))
 }
 
-
-
 pub fn record_expression(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
-    let (i, (name, _, _, decls, _)) = tuple((
+    let (i, (name, _, _, _, decls, _, _)) = tuple((
         identifier,
         sp,
         tag("{"),
+        sp,
         separated_list0(tuple((sp, tag(","), sp)), normargument),
+        sp,
         tag("}"),
     ))(i)?;
 
@@ -585,56 +581,45 @@ pub fn record_expression(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> 
 }
 
 pub fn enum_node(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
-    let (i, a) = alt((fun_call, identifier_expr))(i)?; 
+    let (i, a) = alt((fun_call, identifier_expr))(i)?;
     Ok((i, a))
 }
-
-pub fn enum_expression(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
-    let (i, (parent, _, _, _, e)) = tuple((
-        identifier, 
-        sp, 
-        tag("."), 
-        sp, 
-        enum_node
-    ))(i)?;
-
-    Ok((
-        i,
-        RawNode::new(RawExpression::EnumLiteral(parent.to_string(), Box::new(e)))
-    ))
-}
-
 
 fn normargument_typed(i: &str) -> IResult<&str, (String, Type), VerboseError<&str>> {
     let (i, (name, _, _, _, arg_type)) = tuple((identifier, sp, tag(":"), sp, type_literal))(i)?;
     Ok((i, (name.to_string(), arg_type)))
 }
 
-
 pub fn lambda_expression(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
-    let (i, (_, _, _, args, _, _, _,_, ret, _,_,_, body)) = tuple((
-        tag("fn"), 
-        sp, 
-        tag("("), 
+    let (i, (_, _, _, args, _, _, _, _, ret, _, _, _, body)) = tuple((
+        tag("fn"),
+        sp,
+        tag("("),
         separated_list0(tuple((sp, tag(","), sp)), normargument_typed),
         tag(")"),
-        sp, 
-        tag(":"), 
-        sp, 
-        type_literal, 
-        sp, 
+        sp,
+        tag(":"),
+        sp,
+        type_literal,
+        sp,
         tag("=>"),
-        sp, 
-        expression
-    ))(i)?; 
+        sp,
+        expression,
+    ))(i)?;
 
-    Ok((i, RawNode::new(RawExpression::Lambda(args.clone(), Box::new(ret), Box::new(body)))))
+    Ok((
+        i,
+        RawNode::new(RawExpression::Lambda(
+            args.clone(),
+            Box::new(ret),
+            Box::new(body),
+        )),
+    ))
 }
 
 pub fn expression_(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     alt((
         lambda_expression,
-        enum_expression,
         record_expression,
         embed_expr,
         abs_expr,
@@ -653,7 +638,6 @@ pub fn expression_null_check(i: &str) -> IResult<&str, RawNode, VerboseError<&st
         many0(tuple((sp, tag("?"), many0(type_literal)))),
     ))(i)?;
 
-
     if a.is_empty() {
         return Ok((i, e));
     }
@@ -667,12 +651,10 @@ pub fn expression_null_check(i: &str) -> IResult<&str, RawNode, VerboseError<&st
         RawExpression::NullCheck(Box::new(e), Box::new(ty))
     };
 
-
     Ok((i, RawNode::new(e)))
 }
 
-
-pub fn expression(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
+pub fn cast_expression(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     let (i, (e, a)) = tuple((
         expression_null_check,
         many0(tuple((sp, tag("as"), sp, type_literal))),
@@ -689,35 +671,57 @@ pub fn expression(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     ))
 }
 
+pub fn expression(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
+    let (i, (e, a)) = tuple((
+        cast_expression,
+        many0(tuple((sp, tag("."), sp, cast_expression))),
+    ))(i)?;
+
+    if a.is_empty() {
+        return Ok((i, e));
+    }
+
+    let (_, _, _, t_) = a.last().unwrap();
+
+    Ok((
+        i,
+        RawNode::new(RawExpression::DotExpression(
+            Box::new(e),
+            Box::new(t_.clone()),
+        )),
+    ))
+}
+
 #[test]
 fn let_test() {
-
     let left = RawNode::new(RawExpression::Lets(
         vec![
-            RawExpression::Let("num".to_string(), Box::new(RawNode::new(RawExpression::Integer(10, Box::new(Type::Int))))),
-            RawExpression::Let("age".to_string(), Box::new(RawNode::new(RawExpression::Id("num".to_string()))))
+            RawExpression::Let(
+                "num".to_string(),
+                Box::new(RawNode::new(RawExpression::Integer(
+                    10,
+                    Box::new(Type::Int),
+                ))),
+            ),
+            RawExpression::Let(
+                "age".to_string(),
+                Box::new(RawNode::new(RawExpression::Id("num".to_string()))),
+            ),
         ],
         Box::new(RawNode::new(RawExpression::Id("num".to_string()))),
-    )); 
+    ));
 
-    assert_eq!(
-        let_expr("let num = 10 age = num in num"), 
-        Ok(("", left))
-    );
+    assert_eq!(let_expr("let num = 10 age = num in num"), Ok(("", left)));
 }
 
 #[test]
 fn val_test() {
-
     let left = RawNode::new(RawExpression::Val(
         "foo".to_string(),
-        Box::new(RawNode::new(RawExpression::Bool(false)))
-    )); 
+        Box::new(RawNode::new(RawExpression::Bool(false))),
+    ));
 
-    assert_eq!(
-        val_expr("val foo = false"), 
-        Ok(("", left))
-    );
+    assert_eq!(val_expr("val foo = false"), Ok(("", left)));
 }
 
 #[test]
@@ -725,13 +729,10 @@ fn logical_and_test() {
     let left = RawNode::new(RawExpression::BinaryOp(
         BinaryOp::And,
         Box::new(RawNode::new(RawExpression::Bool(true))),
-        Box::new(RawNode::new(RawExpression::Bool(false)))
-    )); 
+        Box::new(RawNode::new(RawExpression::Bool(false))),
+    ));
 
-    assert_eq!(
-        logical_or_expr("true && false"), 
-        Ok(("", left))
-    );
+    assert_eq!(logical_or_expr("true && false"), Ok(("", left)));
 }
 
 #[test]
@@ -739,67 +740,53 @@ fn logical_or_test() {
     let left = RawNode::new(RawExpression::BinaryOp(
         BinaryOp::Or,
         Box::new(RawNode::new(RawExpression::Bool(true))),
-        Box::new(RawNode::new(RawExpression::Bool(false)))
-    )); 
+        Box::new(RawNode::new(RawExpression::Bool(false))),
+    ));
 
-    assert_eq!(
-        logical_or_expr("true || false"), 
-        Ok(("", left))
-    );
+    assert_eq!(logical_or_expr("true || false"), Ok(("", left)));
 }
 
 #[test]
 fn abs_test() {
-    let left = RawNode::new(RawExpression::Abs(
-        Box::new(RawNode::new(RawExpression::Integer(100, Box::new(Type::Int))))
-    )); 
+    let left = RawNode::new(RawExpression::Abs(Box::new(RawNode::new(
+        RawExpression::Integer(100, Box::new(Type::Int)),
+    ))));
 
-    assert_eq!(
-        abs_expr("| 100 |"), 
-        Ok(("", left))
-    );
+    assert_eq!(abs_expr("| 100 |"), Ok(("", left)));
 }
-
 
 #[test]
 fn embed_test() {
-    let left = RawNode::new(RawExpression::Embed(
-        Box::new(
-            RawNode::new(RawExpression::String("System.out.println()".to_string()))
-        )
-    ));
+    let left = RawNode::new(RawExpression::Embed(Box::new(RawNode::new(
+        RawExpression::String("System.out.println()".to_string()),
+    ))));
     assert_eq!(
-        embed_expr("java { \"System.out.println()\" }"), 
+        embed_expr("java { \"System.out.println()\" }"),
         Ok(("", left))
     );
 }
 
-
 #[test]
 fn block_test() {
-    let left = RawNode::new(RawExpression::Block(vec![RawNode::new(RawExpression::Id("bar".to_string()))]));
-    assert_eq!(
-        block_expr("{ bar }"), 
-        Ok(("", left))
-    );
+    let left = RawNode::new(RawExpression::Block(vec![RawNode::new(RawExpression::Id(
+        "bar".to_string(),
+    ))]));
+    assert_eq!(block_expr("{ bar }"), Ok(("", left)));
 }
 
 #[test]
 fn empty_block_test() {
     let left = RawNode::new(RawExpression::Block(vec![]));
-    assert_eq!(
-        block_expr("{}"), 
-        Ok(("", left))
-    );
+    assert_eq!(block_expr("{}"), Ok(("", left)));
 }
 
 #[test]
 fn simple_null_check_test() {
     let left = RawNode::new(RawExpression::Id("Foo".to_string()));
     assert_eq!(
-        expression_null_check("Foo?"), 
+        expression_null_check("Foo?"),
         Ok((
-            "", 
+            "",
             RawNode::new(RawExpression::SimpleNullCheck(Box::new(left)))
         ))
     );
@@ -809,22 +796,28 @@ fn simple_null_check_test() {
 fn null_check_test() {
     let left = RawNode::new(RawExpression::Id("Foo".to_string()));
     assert_eq!(
-        expression_null_check("Foo?String"), 
+        expression_null_check("Foo?String"),
         Ok((
-            "", 
-            RawNode::new(RawExpression::NullCheck(Box::new(left), Box::new(Type::String)))
+            "",
+            RawNode::new(RawExpression::NullCheck(
+                Box::new(left),
+                Box::new(Type::String)
+            ))
         ))
     );
 }
 
 #[test]
 fn record_literal_test() {
-    let mut args: Vec<(String, RawNode)> = vec![]; 
-    args.push(("bar".to_string(), RawNode::new(RawExpression::Integer(10, Box::new(Type::Int)))));
+    let mut args: Vec<(String, RawNode)> = vec![];
+    args.push((
+        "bar".to_string(),
+        RawNode::new(RawExpression::Integer(10, Box::new(Type::Int))),
+    ));
     assert_eq!(
-        record_expression("Foo {bar: 10}"), 
+        record_expression("Foo {bar: 10}"),
         Ok((
-            "", 
+            "",
             RawNode::new(RawExpression::RecordLiteral("Foo".to_string(), args))
         ))
     );
@@ -832,24 +825,33 @@ fn record_literal_test() {
 
 #[test]
 fn enum_literal_test() {
-    let args = RawNode::new(RawExpression::Id("Bar".to_string())); 
+    let args = RawNode::new(RawExpression::Id("Bar".to_string()));
     assert_eq!(
-        enum_expression("Foo.Bar"), 
+        enum_expression("Foo.Bar"),
         Ok((
-            "", 
-            RawNode::new(RawExpression::EnumLiteral("Foo".to_string(), Box::new(args)))
+            "",
+            RawNode::new(RawExpression::EnumLiteral(
+                "Foo".to_string(),
+                Box::new(args)
+            ))
         ))
     );
 }
 
 #[test]
 fn variant_enum_literal_test() {
-    let args = RawNode::new(RawExpression::FunCall("Bar".to_string(), vec![RawNode::new(RawExpression::Integer(0, Box::new(Type::Int)))])); 
+    let args = RawNode::new(RawExpression::FunCall(
+        "Bar".to_string(),
+        vec![RawNode::new(RawExpression::Integer(0, Box::new(Type::Int)))],
+    ));
     assert_eq!(
-        enum_expression("Foo.Bar(0)"), 
+        enum_expression("Foo.Bar(0)"),
         Ok((
-            "", 
-            RawNode::new(RawExpression::EnumLiteral("Foo".to_string(), Box::new(args)))
+            "",
+            RawNode::new(RawExpression::EnumLiteral(
+                "Foo".to_string(),
+                Box::new(args)
+            ))
         ))
     );
 }
@@ -912,4 +914,3 @@ fn expression_test() {
         ))
     );
 }
-
