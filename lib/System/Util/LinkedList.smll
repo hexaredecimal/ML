@@ -9,18 +9,19 @@ fn new_linkedlist(): LinkedList => {
   list
 }
 
-fn linkedlist_add(list: LinkedList, value: Any): Unit => {
+fn linkedlist_add(list: LinkedList, value: Any): LinkedList => {
   java {
     "list.add(value);"
   }
-  ()
+  list
 }
 
-fn linkedlist_add_at(list: LinkedList, index: Int, value: Any): Unit => {
+
+fn linkedlist_add_at(list: LinkedList, index: Int, value: Any): LinkedList => {
   java {
     "list.add(index, value);"
   }
-  ()
+  list
 }
 
 fn linkedlist_set(list: LinkedList, index: Int, value: Any): Any => {
@@ -73,6 +74,21 @@ fn linkedlist_last(list: LinkedList): Any => {
   value
 }
 
+fn linkedlist_add_first(list: LinkedList, value: Any): LinkedList => {
+  java {
+    "list.addFirst(value);"
+  }
+  list
+}
+
+fn linkedlist_add_last(list: LinkedList, value: Any): LinkedList => {
+  java {
+    "list.addLast(value);"
+  }
+  list
+}
+
+
 fn linkedlist_indexof(list: LinkedList, needle: Any): Int => {
   val value = null of Int
   java {
@@ -82,7 +98,7 @@ fn linkedlist_indexof(list: LinkedList, needle: Any): Int => {
 }
 
 fn linkedlist_appendfirst(list: LinkedList, needle: Any): Bool => {
-  val result = null of Bool
+  val result = false
   java {
     "result = list.offerFirst(needle);"
   }
@@ -91,7 +107,7 @@ fn linkedlist_appendfirst(list: LinkedList, needle: Any): Bool => {
 
 
 fn linkedlist_appendlast(list: LinkedList, needle: Any): Bool => {
-  val result = null of Bool
+  val result = false
   java {
     "result = list.offerLast(needle);"
   }
@@ -107,9 +123,24 @@ fn linkedlist_toarray(list: LinkedList): List[Any] => {
 }
 
 fn linkedlist_size(list: LinkedList): Int => {
-  val value = null of Int
+  val value = 0
   java {
     "value = list.size();"
+  }
+  value
+}
+
+fn linkedlist_clear(list: LinkedList): Unit => {
+  java {
+    "list.clear();"
+  }
+  ()
+}
+
+fn linkedlist_contains(list: LinkedList): Bool => {
+  val value = false
+  java {
+    "value = list.contains();"
   }
   value
 }
