@@ -361,7 +361,13 @@ impl SemNode {
                         let cast = RawNode::new(RawExpression::Cast(Box::new(dot_node), ty.clone()));
                         SemNode::analyze(cast, ctx)?.expr
                     }
+                    (_, RawExpression::BinaryOp(op, lhs, rhs)) => {
+                        let dot_node = RawNode::new(RawExpression::DotExpression(left, lhs.clone())); 
+                        let bin_op = RawNode::new(RawExpression::BinaryOp(op.clone(), Box::new(dot_node), rhs.clone()));
+                        SemNode::analyze(bin_op, ctx)?.expr
+                    }
                     _ => {
+                        println!("{:?} {:?}", left, right);
                         return Err(CompilerError::BackendError(
                             format!("Unsupported `.` operation on: {:?} . ", left)
                         ));
