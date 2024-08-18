@@ -331,7 +331,7 @@ impl SemNode {
                                 for arg in args.into_iter() {
                                     let processed_arg = match arg.expr() {
                                         RawExpression::Id(id) => {
-                                            let ty = Type::EnumType(name.to_string(), id.to_string());
+                                            let ty = SemNode::analyze(arg.clone(), ctx)?.ty;
                                             SemNode { expr: SemExpression::Id(id.clone()), ty }
                                         } 
                                         _ => {
