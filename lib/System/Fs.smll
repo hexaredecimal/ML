@@ -1,0 +1,21 @@
+import System::Fs::File
+import System::Adt::Result
+
+fn fs_read_to_string(path: String): Result => {
+  val file = new_file(path).unwrap_result() as File
+  val str = null of String
+  java {
+    "var sb = new java.lang.StringBuilder();"
+    "try {"
+    " var sc = new java.util.Scanner(file);"
+    " while (sc.hasNextLine()) sb.append(sc.nextLine()).append((char) 10);"
+    " str = sb.toString(); sc.close();"
+    "} catch (Exception e) {"
+    "  return new Result.Err(e.getMessage());"
+    "}"
+  }
+  Result.Ok(str) as Result
+}
+
+
+
