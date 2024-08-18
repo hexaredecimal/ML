@@ -11,11 +11,11 @@ fn new_hashmap(): HashMap => {
   n
 }
 
-fn hashmap_clear(map: HashMap): Unit => {
+fn hashmap_clear(map: HashMap): HashMap => {
   java {
     "map.clear();"
   }
-  ()
+  map
 }
 
 fn hashmap_clone(map: HashMap): HashMap => {
@@ -74,11 +74,11 @@ fn hashmap_remove(map: HashMap, key: Any): Any => {
 }
 
 
-fn hashmap_putall(map: HashMap, other: HashMap): Unit => {
+fn hashmap_putall(map: HashMap, other: HashMap): HashMap => {
   java {
     "map.putAll(other);"
   }
-  ()
+  map
 }
 
 
