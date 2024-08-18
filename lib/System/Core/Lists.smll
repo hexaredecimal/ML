@@ -9,7 +9,7 @@ fn list_length(array: List[Any]): Int => {
   n
 }
 
-fn list_tostring(array: List[Any]): String => {
+fn list_to_string(array: List[Any]): String => {
   val s = ""
   java {
     "String arr = new String();"
@@ -40,25 +40,33 @@ fn list_rest(arr: List[Any]): List[Any] => {
   ret
 }
 
-fn list_put_at(list: List[Any], index: Int, value: Any): Unit => {
+fn list_put_at(list: List[Any], index: Int, value: Any): List[Any] => {
   java {
     "list[index] = value;"
   }
-  ()
+  list
 }
 
-fn list_fill(list: List[Any], value: Any): Unit => {
+fn list_fill(list: List[Any], value: Any): List[Any] => {
   java {
-    "java.util.Arrays.fill(list, value)"
+    "java.util.Arrays.fill(list, value);"
   }
-  ()
+  list
 }
 
 fn list_slice(list: List[Any], start: Int, end: Int): List[Any] => {
   val slice = null of List[Any]
   java {
-    "slice = java.util.Arrays.copyOfRange(list, start, end)"
+    "slice = java.util.Arrays.copyOfRange(list, start, end);"
   }
   slice
+}
+
+fn list_equals(left: List[Any], right: List[Any]): Any => {
+  val result = false
+  java {
+    "result = java.util.Arrays.equals(left, right);"
+  }
+  result
 }
 
