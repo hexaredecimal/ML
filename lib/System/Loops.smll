@@ -1,0 +1,38 @@
+
+fn for_loop(start: Int, end: Int, stride: Int, call: fn(Int): Unit): Unit => {
+  java {
+    "for (int li = start; li < end; li += stride) {"
+    " call.apply(li);"
+    "}"
+  }
+  ()  
+}
+
+
+fn while_loop(cond: Bool, call: fn(): Unit): Unit => {
+  java {
+    "while (cond) {"
+    " call.apply();"
+    "}"
+  }
+  ()  
+}
+
+fn do_while_loop(cond: Bool, call: fn(): Unit): Unit => {
+  java {
+    "do {"
+    " call.apply();"
+    "} while (cond);"
+  }
+  ()  
+}
+
+fn for_each_loop(list: List[Any], call: fn(Any): Unit): Unit => {
+  java {
+    "for (Object x: list){"
+    " call.apply(x);"
+    "}"
+  }
+  ()  
+}
+
