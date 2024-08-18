@@ -47,6 +47,7 @@ pub struct SemFunction {
 }
 
 impl SemFunction {
+
     pub fn analyze(fun: RawFunction, ctx: &mut SemContext) -> Result<Self> {
         let name = fun.name.to_string();
         let (ret, arg_types) = fun.ty.into_function();
@@ -175,6 +176,43 @@ impl SemNode {
         Err(CompilerError::BackendError(format!("Invalid enum field lookup for field `{}`", name)))
     }
 
+    fn dot_expression_to_raw(
+        dot: &RawExpression, 
+        ctx: &mut SemContext, 
+    ) -> Result<RawNode> {
+        let value = match dot {
+            RawExpression::DotExpression(left, right) => {
+                let value = match (left.expr(), right.expr()) {
+                    (RawExpression::Id(name), RawExpression::Id(_))  => {
+                        let node 
+                            = RawNode::new(RawExpression::EnumLiteral(name.clone(), right.clone()));
+                        node
+                    }
+                    (RawExpression::Id(name), RawExpression::FunCall(fxname, args)) => {
+                        let node 
+                            = RawNode::new(RawExpression::EnumLiteral(name.clone(), right.clone()));
+                        node
+                    }
+
+                    (_, RawExpression::FunCall(name,args)) => {
+                        let mut new_args: Vec<RawNode> = vec![*left.clone()];
+                        new_args.extend(args.clone());
+
+                        let node = RawNode::new(RawExpression::FunCall(name.to_string(), new_args));
+                        node
+                    }
+
+                    _ => todo!()
+                };
+                value
+            }
+            t =>  RawNode::new(t.clone())
+        };
+
+        Ok(value)
+    }
+
+
     pub fn analyze(node: RawNode, ctx: &mut SemContext) -> Result<Self> {
         let expr = match node.into_expr() {
             RawExpression::FieldAccess(e1, e2) => {
@@ -263,14 +301,12 @@ impl SemNode {
                 SemExpression::RecordLiteral(parent.clone(), args)
             }
             RawExpression::DotExpression(left, right) => {
-                match (left.expr(), right.expr()) {
-                    (RawExpression::Id(name), RawExpression::Id(_)) |
-                    (RawExpression::Id(name), RawExpression::FunCall(_, _)) => {
+                let expr = match (left.expr(), right.expr()) {
+                    (RawExpression::Id(name), RawExpression::Id(_))  => {
                         let node 
-                            = RawNode::new(RawExpression::EnumLiteral(name.clone(), right));
+                            = RawNode::new(RawExpression::EnumLiteral(name.clone(), right.clone()));
                     
                         let enums = ctx.enums.clone(); 
-
                         if !enums.contains_key(name) {
                             return Err(CompilerError::BackendError(
                                 format!("Invalid enum expression, `{}` is not an enum type", name)
@@ -279,17 +315,59 @@ impl SemNode {
 
                         SemNode::analyze(node, ctx)?.expr
                     }
+                    (RawExpression::Id(name), RawExpression::FunCall(fxname, args)) => {
+                        let node 
+                            = RawNode::new(RawExpression::EnumLiteral(name.clone(), right.clone()));
+                    
+                        let enums = ctx.enums.clone(); 
+                        let node = if !enums.contains_key(name) {
+                            let mut new_args: Vec<RawNode> = vec![*left.clone()];
+                            new_args.extend(args.clone());
+
+                            let node = RawNode::new(RawExpression::FunCall(fxname.to_string(), new_args));
+                            SemNode::analyze(node, ctx)?.expr
+                            } else { // We know that we have a Enum value :)
+                                let mut id_args = vec![];
+                                for arg in args.into_iter() {
+                                    let processed_arg = match arg.expr() {
+                                        RawExpression::Id(id) => {
+                                            let ty = Type::EnumType(name.to_string(), id.to_string());
+                                            SemNode { expr: SemExpression::Id(id.clone()), ty }
+                                        } 
+                                        _ => {
+                                            SemNode::analyze(arg.clone(), ctx)?
+                                        }
+                                    };
+                                    id_args.push(processed_arg);
+                                }
+                                let ty = Type::YourType(name.to_string());
+                                let rhs = SemNode { expr: SemExpression::FunCall(fxname.to_string(), id_args), ty }; 
+                                let node = SemExpression::EnumLiteral(name.clone(), Box::new(rhs));
+                                node
+                            };
+                        node
+                    }
 
                     (_, RawExpression::FunCall(name,args)) => {
-                        let mut new_args: Vec<RawNode> = vec![*left];
+                        let mut new_args: Vec<RawNode> = vec![*left.clone()];
                         new_args.extend(args.clone());
 
                         let node = RawNode::new(RawExpression::FunCall(name.to_string(), new_args));
                         SemNode::analyze(node, ctx)?.expr
                     }
 
-                    _ => todo!()
-                }
+                    (_, RawExpression::Cast(expr,ty )) => {
+                        let dot_node = RawNode::new(RawExpression::DotExpression(left, expr.clone())); 
+                        let cast = RawNode::new(RawExpression::Cast(Box::new(dot_node), ty.clone()));
+                        SemNode::analyze(cast, ctx)?.expr
+                    }
+                    _ => {
+                        return Err(CompilerError::BackendError(
+                            format!("Unsupported `.` operation on: {:?} . ", left)
+                        ));
+                    }
+                };
+                expr
             }
             RawExpression::EnumLiteral(parent, child) => {
 
@@ -357,6 +435,8 @@ impl SemNode {
                     } else {
 
                         let mut ct = ctx.clone(); 
+                        let possible_dot = c.expr();
+                        let c = SemNode::dot_expression_to_raw(possible_dot, ctx)?;
                         let c = match c.expr() {
                             RawExpression::EnumLiteral(parent, child) => {
                                 let enums = ctx.enums.clone(); 
@@ -423,7 +503,9 @@ impl SemNode {
                                     _ => unreachable!()
                                 }
                             }
-                            _ => SemNode::analyze(c, ctx).unwrap()
+                            _ => {
+                                SemNode::analyze(c, ctx).unwrap()
+                            }
                         }; 
 
                         let d = SemNode::analyze(b, &mut ct).unwrap();
