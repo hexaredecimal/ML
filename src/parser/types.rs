@@ -2,8 +2,8 @@ use super::{identifier, sp};
 use crate::ir::Type;
 use nom::branch::alt;
 use nom::bytes::complete::{tag, take_while1};
-use nom::multi::separated_list0;
 use nom::error::VerboseError;
+use nom::multi::separated_list0;
 use nom::sequence::tuple;
 use nom::IResult;
 
@@ -125,7 +125,6 @@ fn byte_type(i: &str) -> IResult<&str, Type, VerboseError<&str>> {
     Ok((i, Type::Byte))
 }
 
-
 fn user_type(i: &str) -> IResult<&str, Type, VerboseError<&str>> {
     let (i, t) = tuple((identifier,))(i)?;
     let (t,) = t;
@@ -134,12 +133,7 @@ fn user_type(i: &str) -> IResult<&str, Type, VerboseError<&str>> {
 }
 
 fn enum_type(i: &str) -> IResult<&str, Type, VerboseError<&str>> {
-    let (i, (parent, _, _, _, child)) = tuple((
-        identifier,
-        sp, 
-        tag("."), 
-        sp, 
-        identifier))(i)?;
+    let (i, (parent, _, _, _, child)) = tuple((identifier, sp, tag("."), sp, identifier))(i)?;
 
     Ok((i, Type::EnumType(parent.to_string(), child.to_string())))
 }
@@ -154,12 +148,11 @@ pub fn lambda(i: &str) -> IResult<&str, Type, VerboseError<&str>> {
         sp,
         tag(":"),
         sp,
-        type_literal
+        type_literal,
     ))(i)?;
 
     Ok((i, Type::Lambda(Box::new(ret), args.clone())))
 }
-
 
 pub fn type_literal(i: &str) -> IResult<&str, Type, VerboseError<&str>> {
     alt((
@@ -172,8 +165,8 @@ pub fn type_literal(i: &str) -> IResult<&str, Type, VerboseError<&str>> {
         double_type,
         list_type,
         char_type,
-        long_type, 
-        short_type, 
+        long_type,
+        short_type,
         byte_type,
         float_type,
         int_types,
