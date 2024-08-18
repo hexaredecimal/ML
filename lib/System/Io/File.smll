@@ -1,0 +1,118 @@
+
+import System::Adt::Result
+import System::Core
+
+type File = "java.io.File"
+
+fn new_file(path: String): Result => {
+  val file = null of File
+  java {
+    "try {"
+    " file = new java.io.File(path);"
+    "} catch (Exception e) {"
+    " return new Result.Err(e.getMessage());"
+    "}"
+  }
+  Result.Ok(file) as Result
+}
+
+
+fn new_file_with_parent(parent: String, path: String): Result => {
+  val file = null of File
+  java {
+    "try {"
+    " file = new java.io.File(parent, path);"
+    "} catch (Exception e) {"
+    " return new Result.Err(e.getMessage());"
+    "}"
+  }
+  Result.Ok(file) as Result
+}
+
+
+fn new_file_with_file_parent(parent: File, path: String): Result => {
+  val file = null of File
+  java {
+    "try {"
+    " file = new java.io.File(parent, path);"
+    "} catch (Exception e) {"
+    " return new Result.Err(e.getMessage());"
+    "}"
+  }
+  Result.Ok(file) as Result
+}
+
+
+fn file_name(file: File): String => {
+  val name = null of String
+  java {
+    "name = file.getName();"
+  }
+  name
+}
+
+fn file_parent(file: File): String => {
+  val name = null of String
+  java {
+    "name = file.getParent();"
+  }
+  name
+}
+
+fn file_parent_file(file: File): File => {
+  val parent = null of File
+  java {
+    "parent = file.getParentFile();"
+  }
+  parent
+}
+
+fn file_absolute_path(file: File): String => {
+  val path = null of String
+  java {
+    "path = file.getAbsolutePath();"
+  }
+  path
+}
+
+fn file_is_absolute(file: File): Bool => {
+  val is_abs = false
+  java {
+    "is_abs = file.isAbsolute();"
+  }
+  is_abs
+}
+
+fn file_absolute_file(file: File): File => {
+  val abs_file = null of File
+  java {
+    "abs_file = file.getAbsoluteFile();"
+  }
+  abs_file
+}
+
+fn file_cannonical_path(file: File): Result => {
+  val fp = null of String
+  java {
+    "try {"
+    " fp = file.getCanonicalPath();"
+    "} catch (Exception e) {"
+    " return new Result.Err(e.getMessage());"
+    "}"
+  }
+  Result.Ok(fp) as Result
+}
+
+fn file_cannonical_file(file: File): Result => {
+  val fp = null of File
+  java {
+    "try {"
+    " fp = file.getCanonicalFile();"
+    "} catch (Exception e) {"
+    " return new Result.Err(e.getMessage());"
+    "}"
+  }
+  Result.Ok(fp) as Result
+}
+
+
