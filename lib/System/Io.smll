@@ -1,8 +1,15 @@
 
-fn println(msg: String): Unit => print(msg + "\n")
-fn printerrln(msg: String): Unit => printerr(msg + "\n")
+fn println(msg: Any): Unit => 
+  "%s\n"
+    .format(msg)
+    .print()
 
-fn print(x: String): Unit => {
+fn printerrln(msg: Any): Unit => 
+  "%s\n"
+    .format(msg)
+    .printerr()
+
+fn print(x: Any): Unit => {
   java {
     "System.out.print(x);"
   }
@@ -16,7 +23,7 @@ fn printf(x: String, ...): Unit => {
   ()
 }
 
-fn printerr(x: String): Unit => {
+fn printerr(x: Any): Unit => {
   java {
     "System.err.print(x);"
   }
