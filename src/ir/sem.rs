@@ -177,8 +177,7 @@ impl SemNode {
     }
 
     fn dot_expression_to_raw(
-        dot: &RawExpression, 
-        ctx: &mut SemContext, 
+        dot: &RawExpression
     ) -> Result<RawNode> {
         let value = match dot {
             RawExpression::DotExpression(left, right) => {
@@ -188,7 +187,7 @@ impl SemNode {
                             = RawNode::new(RawExpression::EnumLiteral(name.clone(), right.clone()));
                         node
                     }
-                    (RawExpression::Id(name), RawExpression::FunCall(fxname, args)) => {
+                    (RawExpression::Id(name), RawExpression::FunCall(_, _)) => {
                         let node 
                             = RawNode::new(RawExpression::EnumLiteral(name.clone(), right.clone()));
                         node
@@ -316,9 +315,6 @@ impl SemNode {
                         SemNode::analyze(node, ctx)?.expr
                     }
                     (RawExpression::Id(name), RawExpression::FunCall(fxname, args)) => {
-                        let node 
-                            = RawNode::new(RawExpression::EnumLiteral(name.clone(), right.clone()));
-                    
                         let enums = ctx.enums.clone(); 
                         let node = if !enums.contains_key(name) {
                             let mut new_args: Vec<RawNode> = vec![*left.clone()];
@@ -448,7 +444,7 @@ impl SemNode {
 
                         let mut ct = ctx.clone(); 
                         let possible_dot = c.expr();
-                        let c = SemNode::dot_expression_to_raw(possible_dot, ctx)?;
+                        let c = SemNode::dot_expression_to_raw(possible_dot)?;
                         let c = match c.expr() {
                             RawExpression::EnumLiteral(parent, child) => {
                                 let enums = ctx.enums.clone(); 
@@ -639,15 +635,14 @@ impl SemNode {
         let ty = match &expr {
             SemExpression::FieldAccess(left, right) => {
                 let left_ty = left.ty();
-                let mut left_ty_name = String::new();
-                if let Type::YourType(left_ty) = left_ty {
+                let left_ty_name = if let Type::YourType(left_ty) = left_ty {
                     if !ctx.records.contains_key(left_ty) {
                         return Err(CompilerError::InvalidStruct(left_ty.clone()));
                     }
-                    left_ty_name = left_ty.clone();
+                    left_ty.clone()
                 } else {
                     return Err(CompilerError::InvalidFieldAccessType(format!("{}", left_ty)));
-                }
+                };
 
                 match right.expr() {
                     SemExpression::Id(name) => {
@@ -657,6 +652,7 @@ impl SemNode {
                         for field in &record.fields {
                            if &field.0 == name {
                                ty = Option::Some(field.1.clone());
+                               break;
                            }
                         }
 
