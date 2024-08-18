@@ -115,4 +115,71 @@ fn file_cannonical_file(file: File): Result => {
   Result.Ok(fp) as Result
 }
 
+fn file_can_read(file: File): Bool => {
+  val can_read = false
+  java {
+    "can_read = file.canRead();"
+  }
+  can_read
+}
+
+fn file_can_write(file: File): Bool => {
+  val can_write = false
+  java {
+    "can_write = file.canWrite();"
+  }
+  can_write
+}
+
+fn file_exists(file: File): Bool => {
+  val does_exists = false
+  java {
+    "does_exists = file.exists();"
+  }
+  does_exists
+}
+
+fn file_is_directory(file: File): Bool => {
+  val is_dir = false
+  java {
+    "is_dir = file.isDirectory();"
+  }
+  is_dir
+}
+
+fn file_is_file(file: File): Bool => {
+  val is_file = false
+  java {
+    "is_file = file.isFile();"
+  }
+  is_file
+}
+
+
+fn file_is_hidden(file: File): Bool => {
+  val is_dir = false
+  java {
+    "is_dir = file.isHidden();"
+  }
+  is_dir
+}
+
+fn file_length(file: File): Int => {
+  val length = 0
+  java {
+    "length = (int)file.length();"
+  }
+  length
+}
+
+fn createFile(file: File): Result => {
+  java {
+    "try {"
+    " file.createNewFile();"
+    "} catch (Exception e) {"
+    " return new Result.Err(e.getMessage());"
+    "}"
+  }
+  Result.Ok(file) as Result
+}
 
