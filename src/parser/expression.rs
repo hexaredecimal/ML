@@ -580,11 +580,6 @@ pub fn record_expression(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> 
     ))
 }
 
-pub fn enum_node(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
-    let (i, a) = alt((fun_call, identifier_expr))(i)?;
-    Ok((i, a))
-}
-
 fn normargument_typed(i: &str) -> IResult<&str, (String, Type), VerboseError<&str>> {
     let (i, (name, _, _, _, arg_type)) = tuple((identifier, sp, tag(":"), sp, type_literal))(i)?;
     Ok((i, (name.to_string(), arg_type)))
@@ -684,7 +679,7 @@ pub fn expression(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     //let (_, _, _, t_) = a.last().unwrap();
 
     let mut result: Option<RawNode> = None;
-    for (i, (_, _, _, expr)) in a.into_iter().enumerate() {
+    for (_, _, _, expr) in a.into_iter() {
         if result.is_none() {
             // The first one
             result = Some(RawNode::new(RawExpression::DotExpression(
