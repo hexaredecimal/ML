@@ -25,6 +25,16 @@ fn string_trim(str: String): String => {
   c
 }
 
+fn string_uppercase(str: String): String => {
+  val c = null of String
+  java {
+    "c = str.upperCase();"
+  }
+  c
+}
+
+
+
 fn string_equals(str: String, other: String): Bool => {
   val c = false
   java {
@@ -32,3 +42,5 @@ fn string_equals(str: String, other: String): Bool => {
   }
   c
 }
+
+
