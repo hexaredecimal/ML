@@ -10,3 +10,9 @@ fn unwrap_result(result: Result): Any => match result {
   Result.Err(msg) -> panic(format("Attempt to unwrap value of Result.Err with message: %s", msg))
   _ -> unreachable()
 }
+
+fn unwrap_result_or(result: Result, init: Any): Any => match result {
+  Result.Ok(value) -> value
+  _ -> init
+}
+
