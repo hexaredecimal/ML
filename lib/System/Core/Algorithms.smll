@@ -1,0 +1,29 @@
+
+fn binary_search(list: List[Any], key: Any): List[Any] => {
+  java {
+    "java.util.Arrays.binarySearch(list, key);"
+  }
+  list
+}
+
+
+fn binary_search_range(list: List[Any], start: Int, end: Int, key: Any): List[Any] => {
+  java {
+    "java.util.Arrays.binarySearch(list, start, end, key);"
+  }
+  list
+}
+
+fn sort(list: List[Any]): List[Any] => {
+  java {
+    "java.util.Arrays.sort(list);"
+  }
+  list
+}
+
+fn parallelSort(list: List[Any]): List[Any] => {
+  java {
+    "java.util.Arrays.parallelSort(list);"
+  }
+  list
+}
