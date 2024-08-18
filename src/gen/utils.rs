@@ -1,20 +1,19 @@
-use crate::ir::{self, Type};
 use crate::error::{CompilerError, Result};
-use crate::ir::raw::{RecordType, EnumType, EnumField};
+use crate::ir::raw::{EnumField, EnumType, RecordType};
+use crate::ir::{self, Type};
 use std::collections::HashMap;
 
-pub struct Utils; 
+pub struct Utils;
 
 impl Utils {
     pub fn record_contains_field(name: &String, rec: &[(String, Type)]) -> (bool, usize) {
         for (i, (n, _)) in rec.iter().enumerate() {
             if *n == *name {
-                return (true, i)
+                return (true, i);
             }
         }
         (false, 1_usize)
     }
-
 
     pub fn is_sys_type(ty: &ir::Type) -> bool {
         match ty {
@@ -50,7 +49,7 @@ impl Utils {
 
                 EnumField::Id(s) => {
                     if *name == s {
-                        return Some(t.clone()); 
+                        return Some(t.clone());
                     }
                 }
             }

@@ -1,33 +1,36 @@
-use std::{collections::HashMap, fmt::Display, fs};
-use git2::Repository; 
-use std::io::Write;
-use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
+use git2::Repository;
 use lib_traxex::download::download;
-
+use std::io::Write;
+use std::{collections::HashMap, fmt::Display, fs};
+use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 
 #[allow(unused)]
-pub struct Manager <'a> {
+pub struct Manager<'a> {
     depends: &'a str,
     path: &'a str,
-    pub tobuild: Vec<(String, Vec<String>)>
+    pub tobuild: Vec<(String, Vec<String>)>,
 }
 
-impl<'a> Default for Manager <'a> {
+impl<'a> Default for Manager<'a> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl <'a> Manager <'a> {
+impl<'a> Manager<'a> {
     pub fn new() -> Self {
-        Self { depends: "depends", path: "./.smll_deps", tobuild: vec![] }
+        Self {
+            depends: "depends",
+            path: "./.smll_deps",
+            tobuild: vec![],
+        }
     }
 
-    fn depends_list(&self, path: &str) -> (String, HashMap<String, String>){
-        let project_toml_text = fs::read_to_string(path).unwrap(); 
+    fn depends_list(&self, path: &str) -> (String, HashMap<String, String>) {
+        let project_toml_text = fs::read_to_string(path).unwrap();
         let project_toml = tsu::toml_from_str(project_toml_text);
 
-        let project_info = project_toml.get("project").unwrap(); 
+        let project_info = project_toml.get("project").unwrap();
         let project_name = project_info.get("name").unwrap();
 
         let mut deps: HashMap<String, String> = HashMap::new();
@@ -46,8 +49,8 @@ impl <'a> Manager <'a> {
         let project_statics = project_toml.get("statics");
 
         if project_statics.is_some() {
-            let project_statics = project_statics.unwrap(); 
-            let values = project_statics.as_table().unwrap(); 
+            let project_statics = project_statics.unwrap();
+            let values = project_statics.as_table().unwrap();
 
             for (_, lib) in values {
                 let lib = lib.to_string().replace('\"', "");
@@ -62,8 +65,8 @@ impl <'a> Manager <'a> {
         let project_imports = project_toml.get("imports");
 
         if project_imports.is_some() {
-            let project_imports = project_imports.unwrap(); 
-            let values = project_imports.as_table().unwrap(); 
+            let project_imports = project_imports.unwrap();
+            let values = project_imports.as_table().unwrap();
 
             for (_, lib) in values {
                 let lib = lib.to_string().replace('\"', "");
@@ -71,21 +74,25 @@ impl <'a> Manager <'a> {
             }
 
             let contents = fs::read_to_string("./.smll_deps/imports").unwrap();
-            fs::write("./.smll_deps/imports", format!("{contents}\n{imports}").trim()).unwrap();
+            fs::write(
+                "./.smll_deps/imports",
+                format!("{contents}\n{imports}").trim(),
+            )
+            .unwrap();
         }
 
         let mut jars = String::new();
         let project_jars = project_toml.get("libs");
 
         if project_jars.is_some() {
-            let project_jars = project_jars.unwrap(); 
-            let values = project_jars.as_table().unwrap(); 
+            let project_jars = project_jars.unwrap();
+            let values = project_jars.as_table().unwrap();
 
             let sz = values.keys().count();
 
             for (i, (dest, lib)) in values.into_iter().enumerate() {
                 let lib = lib.to_string().replace('\"', "");
-                let mut lib = lib.to_string(); 
+                let mut lib = lib.to_string();
                 let nm = dest.to_string().replace('\"', "");
                 let dest = format!("./.smll_deps/libs/{nm}.jar");
 
@@ -98,9 +105,13 @@ impl <'a> Manager <'a> {
                 jars.push_str(&dest);
             }
             let contents = fs::read_to_string("./.smll_deps/jars").unwrap();
-            let contents = if !contents.is_empty() { format!("{contents}:") } else { contents }; 
+            let contents = if !contents.is_empty() {
+                format!("{contents}:")
+            } else {
+                contents
+            };
 
-            fs::write("./.smll_deps/jars",format!(".:{contents}{jars}")).unwrap();
+            fs::write("./.smll_deps/jars", format!(".:{contents}{jars}")).unwrap();
         }
 
         (project_name.as_str().unwrap().to_string(), deps)
@@ -120,7 +131,7 @@ impl <'a> Manager <'a> {
 
         stdout.set_color(ColorSpec::new().set_fg(gray)).unwrap();
         writeln!(&mut stdout, "[{name}]").unwrap();
-        let dl = download(url, Some(dest)); 
+        let dl = download(url, Some(dest));
         match dl {
             Err(_why) => {
                 stdout.set_color(ColorSpec::new().set_fg(red)).unwrap();
@@ -140,13 +151,12 @@ impl <'a> Manager <'a> {
     }
 
     pub fn resolve_dependencies(&mut self) {
-        let r = self.process("./project.toml"); 
+        let r = self.process("./project.toml");
         print!("{r}");
     }
 
-
     fn process(&mut self, path: &str) -> PackageResult {
-        let (name, depends) = self.depends_list(path); 
+        let (name, depends) = self.depends_list(path);
         let deps_count = depends.keys().count();
         // TODO: Rewrite this and donot hard code the registry url, load it from file
         let repos = "https://github.com/smllregistry";
@@ -168,7 +178,7 @@ impl <'a> Manager <'a> {
 
         let _ = fs::create_dir("./smll_deps/src");
         let mut correct = 0;
-        let mut skipped = 0; 
+        let mut skipped = 0;
         for line in lines {
             for (key, val) in &depends {
                 let url = format!("{line}/{key}");
@@ -181,10 +191,10 @@ impl <'a> Manager <'a> {
                 }
 
                 let str = fs::read_to_string("./.smll_deps/depends").unwrap();
-                let mut lines: Vec<String> = vec![]; 
+                let mut lines: Vec<String> = vec![];
 
                 for st in str.lines() {
-                    let st = st.to_string(); 
+                    let st = st.to_string();
                     if st.is_empty() || lines.contains(&st) {
                         continue;
                     }
@@ -226,7 +236,7 @@ impl <'a> Manager <'a> {
                         }
                         self.tobuild.push((key.clone(), v));
                         self.process(&inner);
-                    }, 
+                    }
                     Err(_e) => {
                         println!("Failed to Download {key}");
 
@@ -265,9 +275,9 @@ impl <'a> Manager <'a> {
 
 #[derive(Debug)]
 pub enum PackageResult {
-    Success, 
-    Error(i32, i32), 
-    Skipped(i32)
+    Success,
+    Error(i32, i32),
+    Skipped(i32),
 }
 
 impl Display for PackageResult {
@@ -282,22 +292,24 @@ impl Display for PackageResult {
         match self {
             Self::Success => {
                 stdout.set_color(ColorSpec::new().set_fg(green)).unwrap();
-                write!(&mut stdout, "Downloaded all packaged successfully").unwrap(); 
+                write!(&mut stdout, "Downloaded all packaged successfully").unwrap();
                 writeln!(f)
             }
             Self::Error(correct, deps_count) => {
                 let err = format!("Failed to get dependencies: {correct} / {deps_count} found");
                 stdout.set_color(ColorSpec::new().set_fg(red)).unwrap();
-                write!(&mut stdout, "{err}").unwrap(); 
+                write!(&mut stdout, "{err}").unwrap();
                 writeln!(f)
             }
             Self::Skipped(skipped) => {
-                let err =  format!("{skipped} dependenc{} got skipped", if *skipped == 1 { "y" } else { "ies"} );
+                let err = format!(
+                    "{skipped} dependenc{} got skipped",
+                    if *skipped == 1 { "y" } else { "ies" }
+                );
                 stdout.set_color(ColorSpec::new().set_fg(yellow)).unwrap();
-                write!(&mut stdout, "{err}").unwrap(); 
+                write!(&mut stdout, "{err}").unwrap();
                 writeln!(f)
             }
         }
     }
-} 
-
+}

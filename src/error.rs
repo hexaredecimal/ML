@@ -38,8 +38,15 @@ pub enum CompilerError {
     UserTypeConflict(String, String),
     #[error(display = "Type Error:\n Type {} is not a struct type", 0)]
     InvalidStruct(String),
-    #[error(display = "Type Error:\n Attempted field access on type {} which is not a struct", 0)]
+    #[error(
+        display = "Type Error:\n Attempted field access on type {} which is not a struct",
+        0
+    )]
     InvalidFieldAccessType(String),
-    #[error(display = "Type Error:\n Invalid expression found, expected {} found {}", 0, 1)]
+    #[error(
+        display = "Type Error:\n Invalid expression found, expected {} found {}",
+        0,
+        1
+    )]
     InvalidExpression(String, String),
 }
