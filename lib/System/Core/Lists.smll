@@ -53,3 +53,12 @@ fn list_fill(list: List[Any], value: Any): Unit => {
   }
   ()
 }
+
+fn list_slice(list: List[Any], start: Int, end: Int): List[Any] => {
+  val slice = null of List[Any]
+  java {
+    "slice = java.util.Arrays.copyOfRange(list, start, end)"
+  }
+  slice
+}
+
