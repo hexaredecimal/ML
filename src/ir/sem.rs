@@ -348,6 +348,12 @@ impl SemNode {
                         node
                     }
 
+                    (RawExpression::UnaryOp(op, expr), _) => {
+                        let dot_node = RawNode::new(RawExpression::DotExpression(expr.clone(), right)); 
+                        let unary = RawNode::new(RawExpression::UnaryOp(op.clone(), Box::new(dot_node)));
+                        SemNode::analyze(unary, ctx)?.expr
+                    }
+
                     (_, RawExpression::FunCall(name,args)) => {
                         let mut new_args: Vec<RawNode> = vec![*left.clone()];
                         new_args.extend(args.clone());
