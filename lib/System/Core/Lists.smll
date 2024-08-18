@@ -47,3 +47,9 @@ fn list_put_at(list: List[Any], index: Int, value: Any): Unit => {
   ()
 }
 
+fn list_fill(list: List[Any], value: Any): Unit => {
+  java {
+    "java.util.Arrays.fill(list, value)"
+  }
+  ()
+}
