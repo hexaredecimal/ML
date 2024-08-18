@@ -1,0 +1,59 @@
+
+type Queue = "java.util.Queue"
+
+fn new_queue(): Queue => {
+  val queue = null of Queue
+  java {
+    "queue = new java.util.LinkedList();"
+  }
+  queue
+}
+
+fn queue_add(queue: Queue, value: Any): Queue => {
+  java {
+    "queue.add(value);"
+  }
+  queue
+}
+
+fn queue_offer(queue: Queue, value: Any): Bool => {
+  val found = false
+  java {
+    "found = queue.offer(value);"
+  }
+  found
+}
+
+fn queue_poll(queue: Queue): Any => {
+  val value = null of Any
+  java {
+    "value = queue.poll();"
+  }
+  value
+}
+
+fn queue_remove(queue: Queue): Any => {
+  val value = null of Any
+  java {
+    "value = queue.remove();"
+  }
+  value
+}
+
+
+fn queue_element(queue: Queue): Any => {
+  val value = null of Any
+  java {
+    "value = queue.element();"
+  }
+  value
+}
+
+fn queue_peek(queue: Queue): Any => {
+  val value = null of Any
+  java {
+    "value = queue.peek();"
+  }
+  value
+}
+
