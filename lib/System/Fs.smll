@@ -18,4 +18,20 @@ fn fs_read_to_string(path: String): Result => {
 }
 
 
+fn fs_write_string_to_path(path: String, txt: String): Result => {
+  val file = path
+      .new_file()
+      .unwrap_result() as File
+  
+  java {
+    "try {"
+    "  java.io.FileWriter fr = new java.io.FileWriter(file);"
+    "  fr.write(txt);"
+    "  fr.close();"
+    "} catch (Exception e) {"
+    "  return new Result.Err(e.getMessage());"
+    "}"
+  }
 
+  Result.Ok(()) as Result
+}
