@@ -1,4 +1,4 @@
 
 fn lang_name() => "smll"
-
+fn lang_author() => "Gama Sibusiso"
 
