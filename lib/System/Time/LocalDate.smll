@@ -1,0 +1,172 @@
+
+type LocalDate = "java.time.LocalDate"
+
+fn localdate_now(): LocalDate => {
+  val n = null of LocalDate
+  java {
+    "n = java.time.LocalDate.now();"
+  }
+  n
+}
+
+fn localdate_of(year: Int, month: Int, day: Int): LocalDate => {
+  val n = null of LocalDate
+  java {
+    "n = java.time.LocalDate.of(year, month, day);"
+  }
+  n
+}
+
+fn localdate_max(): LocalDate => {
+  val n = null of LocalDate
+  java {
+    "n = java.time.LocalDate.MAX;"
+  }
+  n
+}
+
+fn localdate_min(): LocalDate => {
+  val n = null of LocalDate
+  java {
+    "n = java.time.LocalDate.MIN;"
+  }
+  n
+}
+
+
+
+fn localdate_plus_days(dt: LocalDate, days: Int): LocalDate => {
+  val n = null of LocalDate
+  java {
+    "n = dt.plusDays(days);"
+  }
+  n
+}
+
+fn localdate_plus_weeks(dt: LocalDate, weeks: Int): LocalDate => {
+  val n = null of LocalDate
+  java {
+    "n = dt.plusWeeks(weeks);"
+  }
+  n
+}
+
+fn localdate_plus_months(dt: LocalDate, month: Int): LocalDate => {
+  val n = null of LocalDate
+  java {
+    "n = dt.plusMonths(month);"
+  }
+  n
+}
+
+fn localdate_plus_years(dt: LocalDate, year: Int): LocalDate => {
+  val n = null of LocalDate
+  java {
+    "n = dt.plusYears(year);"
+  }
+  n
+}
+
+fn localdate_minus_days(dt: LocalDate, days: Int): LocalDate => {
+  val n = null of LocalDate
+  java {
+    "n = dt.minusDays(days);"
+  }
+  n
+}
+
+fn localdate_minus_weeks(dt: LocalDate, weeks: Int): LocalDate => {
+  val n = null of LocalDate
+  java {
+    "n = dt.minusWeeks(weeks);"
+  }
+  n
+}
+
+fn localdate_minus_months(dt: LocalDate, month: Int): LocalDate => {
+  val n = null of LocalDate
+  java {
+    "n = dt.minusMonths(month);"
+  }
+  n
+}
+
+fn localdate_minus_years(dt: LocalDate, year: Int): LocalDate => {
+  val n = null of LocalDate
+  java {
+    "n = dt.minusYears(year);"
+  }
+  n
+}
+
+fn localdate_day_of_month(dt: LocalDate): Int => {
+  val day = 0
+  java {
+    "day = dt.getDayOfMonth();"
+  }
+  day
+}
+
+fn localdate_day_of_year(dt: LocalDate): Int => {
+  val day = 0
+  java {
+    "day = dt.getDayOfYear();"
+  }
+  day
+}
+
+fn localdate_month(dt: LocalDate): Int => {
+  val month = 0
+  java {
+    "month = dt.getMonthValue();"
+  }
+  month
+}
+
+fn localdate_year(dt: LocalDate): Int => {
+  val year = 0
+  java {
+    "year = dt.getYear();"
+  }
+  year
+}
+
+fn localdate_is_leapyear(dt: LocalDate): Bool => {
+  val is_leapyear = false
+  java {
+    "is_leapyear = dt.isLeapYear();"
+  }
+  is_leapyear
+}
+
+fn localdate_with_day(dt: LocalDate, day: Int): LocalDate => {
+  val n = null of LocalDate
+  java {
+    "n = dt.withDayOfMonth(day);"
+  }
+  n
+}
+
+fn localdate_with_day_of_year(dt: LocalDate, day: Int): LocalDate => {
+  val n = null of LocalDate
+  java {
+    "n = dt.withDayOfYear(day);"
+  }
+  n
+}
+
+fn localdate_with_month(dt: LocalDate, month: Int): LocalDate => {
+  val n = null of LocalDate
+  java {
+    "n = dt.withMonth(month);"
+  }
+  n
+}
+
+fn localdate_with_year(dt: LocalDate, year: Int): LocalDate => {
+  val n = null of LocalDate
+  java {
+    "n = dt.withYear(year);"
+  }
+  n
+}
