@@ -15,4 +15,16 @@ fn unwrap_option_or(opt: Option, def: Any): Any => match opt {
   _ -> def
 }
 
+fn unwrap_option_or_try(result: Result, fx: fn(): Any): Any => match result {
+  Result.Ok(value) -> value
+  _ -> fx()
+}
+
+fn is_none(result: Result): Bool => match result {
+  Option.None -> true
+  _ -> false
+}
+
+fn is_some(result: Result): Bool => !is_none(result)
+
 

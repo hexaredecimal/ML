@@ -11,8 +11,26 @@ fn unwrap_result(result: Result): Any => match result {
   _ -> unreachable()
 }
 
+fn unwrap_err(result: Result): String => match result {
+  Result.Err(msg) -> msg
+  Result.Ok(value) -> panic("Attempt to unwrap value of Result.Ok as error with message") as String
+  _ -> unreachable() as String
+}
+
 fn unwrap_result_or(result: Result, init: Any): Any => match result {
   Result.Ok(value) -> value
   _ -> init
 }
+
+fn unwrap_result_or_try(result: Result, fx: fn(): Any): Any => match result {
+  Result.Ok(value) -> value
+  _ -> fx()
+}
+
+fn is_err(result: Result): Bool => match result {
+  Result.Err(msg) -> true
+  _ -> false
+}
+
+fn is_ok(result: Result): Bool => !is_err(result)
 
