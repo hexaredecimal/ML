@@ -164,3 +164,11 @@ fn min(x: Double, y: Double): Double =>
 
 fn normalize(x: Double): Double => x / 0.1
 fn scale(x: Double): Double => x * 0.1
+
+fn add(x: Double, y: Double): Double => x + y
+fn sub(x: Double, y: Double): Double => x - y
+fn div(x: Double, y: Double): Double => x / y
+fn mul(x: Double, y: Double): Double => x * y
+fn mod(x: Double, y: Double): Double => x % y
+
+
