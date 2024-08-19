@@ -1,4 +1,6 @@
 
+import System::Loops
+
 fn list_from_pair(x: Any, y: Any): List[Any] => [x,y]
 
 fn list_length(array: List[Any]): Int => {
@@ -68,5 +70,27 @@ fn list_equals(left: List[Any], right: List[Any]): Any => {
     "result = java.util.Arrays.equals(left, right);"
   }
   result
+}
+
+fn list_map(list: List[Any], call: fn(Any): Any): List[Any] => {
+  val size = list.list_length()
+  val new_list = list.list_slice(0, size)
+  for_loop(0, size, 1, fn(x: Int): Unit => {
+    new_list.list_put_at(x, call(new_list.[x]))
+    ()
+  })
+  new_list
+}
+
+fn list_concat(left: List[Any], right: List[Any]): List[Any] => {
+  val lhs_size = left.list_length()
+  val rhs_size = right.list_length()
+  val n = null of List[Any]
+  java {
+    "n = new Object[lhs_size + rhs_size];"
+    "System.arraycopy(left, 0, n, 0, lhs_size);"
+    "System.arraycopy(right, 0, n, lhs_size, rhs_size);"
+  }
+  n
 }
 
