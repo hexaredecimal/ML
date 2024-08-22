@@ -21,9 +21,9 @@
 > A rust compiler
 
 ```ml
-using MLIo::Io
+import System::Io 
 
-fun main(): Unit => println("Hello, world")
+fn main(): Unit => println("Hello, world")
 ```
 # How to compile?
 > After downloading and installing the required software, execute the following commands
@@ -39,18 +39,19 @@ then execute the following
 
 ```sh
 $ ./target/debug/smll init  # Initialize a new project in the current directory and creates a `project.toml` and a directory named code
-```
-edit the newly created `project.toml`
-and add the following under `[depends]`
-```
-MlIo = "0.0.1"
-```
-save and return to your terminal.
-
-```
 $ ./target/debug/smll build # Builds the dependencies and the projects main file
 $ ./target/debug/smll run   # Run the main program file
 ```
+
+
+# Package Management
+- SMLL has a built-in package manager which handles dependencies as they are specified in the `project.toml` file 
+- To add dependencies simply edit the `project.toml` file and add the following:
+```sh
+RaySMLL = "0.0.1"
+```
+- Then run build. The compiler will download and install the dependencies in a folder in the current working directory.
+
 
 # Todo:
 - [X] Package manager
@@ -62,12 +63,13 @@ $ ./target/debug/smll run   # Run the main program file
 # Features:
 - [X] Type inference for variables
 - [X] Variant enums
-- [X] structs
+- [X] Structs
 - [X] Expressions not Statements
+
 
 # Inspiration:
 >>> SMLL is a ml derived language for the JVM which borrows a lot of concepts from languages such as 
-Standard ML, Rust and Kotlin. 
+Standard ML, Rust and ocaml. 
 
 # Stargazers
 
