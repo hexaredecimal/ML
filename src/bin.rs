@@ -40,7 +40,6 @@ fn try_main() -> Result<()> {
     let structures = create_internal_structures();
     let head2 = format!("{imports}\n{lambdas}\n{convs}\n{structures}\n");
     let mut package_manager = Manager::new();
-    conf.file = "./code/main.smll".to_string();
     if conf.ir {
         let res = smll_lang::compile_and_run(&conf)?;
         println!("{imports}\n{res}");
@@ -89,7 +88,6 @@ fn try_main() -> Result<()> {
         stdout
             .set_color(ColorSpec::new().set_fg(Some(Color::Rgb(255, 255, 255))))
             .unwrap();
-        conf.file = "./code/main.smll".to_string();
         let res = smll_lang::compile_and_run(&conf)?;
         let program = format!("{head2}\n{}", res);
         let out_name = make_output_file_name(&conf.file);
