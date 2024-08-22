@@ -1,5 +1,5 @@
 
-fun main(): Unit => { 
+fn main(): Unit => { 
   val a = let
     n = 10
     b = 20

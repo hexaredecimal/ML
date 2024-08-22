@@ -1,19 +1,17 @@
-using System::Io
-using System::Intrinsics
-using System::Result
+import System::Io
+import System::Core
+import System::Adt::Result
 
-fun red_encode(msg: String): String => "\033[31m" + msg + "\033[0m"
-fun green_encode(msg: String): String => "\033[32m" + msg + "\033[0m"
-fun succ(): String => green_encode("Success")
-fun err(): String => red_encode("Error:")
+fn succ(): String => "Success".fg_green()
+fn err(): String => "Error:".fg_red()
 
 
-fun someOther(n: Result): Any => {
+fn someOther(n: Result): Any => {
   unwrap_result(n)
 }
 
  
-fun main(): Unit => {
+fn main(): Unit => {
   val n = Result.Err("Just testing things out")
   val p = someOther(n)
   println(p)

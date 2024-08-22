@@ -1,12 +1,12 @@
 (* Comment *)(* Comment *)
 
 
-fun main(): Int (*
+fn main(): Unit (*
 Comment *)
 =>
 (* Comment
  * (*Comment *)(* Comment
  * *)(* Comment *)
-    0
+    ()
 
 (* Comment *)(* Comment *)

@@ -1,10 +1,12 @@
+import System::Io
 
-fun map(values: List[Any], func: fn(Any): Any): List[Any] => {
+fn test(): Int => {
  val fx = fn(x: Int, y: Int): Int => x+y
- [fx: 10, 20]
- []
+ fx(10, 20)
 }
 
-fun main(): Unit => {
+fn main(): Unit => {
+  val result = test()
+  result.println()
   ()
 }

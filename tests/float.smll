@@ -1,7 +1,9 @@
-fun half(a: Float): Float => a / 2.0 of Float
+fn half(a: Double): Double => a / 2.0 of Double
 
-fun main(): Int =>
-  if half(2000.0 of Float) == 1000.0 of Float then 
-    0 
-  else 1
+fn main(): Unit =>
+  let n = if half(9.5) == 4.75 then 
+      0 
+    else 1
+  in ()
+
 

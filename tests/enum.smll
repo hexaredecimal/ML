@@ -1,1 +1,24 @@
 
+import System::Io
+
+enum Days = Monday | Tuesday | Wednesday | Thursday | Friday | Saturday | Sunday 
+
+fn day_to_string(day: Days): String => match day {
+  Days.Monday -> "Monday"
+  Days.Tuesday -> "Tuesday"
+  Days.Wednesday -> "Wednesday"
+  Days.Thursday -> "Thursday"
+  Days.Friday -> "Friday"
+  Days.Saturday -> "Saturday"
+  Days.Sunday -> "Sunday"
+  _ -> "unknown"
+}
+
+fn main(): Unit => 
+  let
+    day = Days.Wednesday as Days
+  in 
+    day
+      .day_to_string()
+      .println()
+
