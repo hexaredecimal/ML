@@ -63,7 +63,7 @@ impl Config {
     fn new() -> Self {
         Self {
             program_name: String::new(),
-            file: String::new(),
+            file: "./code/main.smll".to_string(),
             verbose: false,
             import_paths: vec!["./".to_string(), "./.smll_deps/src/".to_string()],
             args: Config::args(),
@@ -145,6 +145,9 @@ edition = "2024"
         fs::write(project_config_path, project_text).unwrap();
         let project_src = "./code/main.smll";
         let code = r#"
+import System::Io 
+
+
 (* main.smll - Happy coding *)
 fn main(): Unit => ()
 "#;
@@ -210,7 +213,7 @@ fn main(): Unit => ()
         let mut collect_target = false;
         let mut collect_file = false;
         for arg in args.clone().iter() {
-            if collect_file {
+            if collect_file && held {
                 break;
             }
 
@@ -251,26 +254,29 @@ fn main(): Unit => ()
                         held = true;
                         collect_target = true;
                     }
+                    "-" => {
+                        collect_file = true;
+                        held = false;
+                    }
                     _ => {
-                        if held {
-                            if collect_paths {
-                                for path in arg.split(':') {
-                                    c.import_paths.push(path.to_string())
-                                }
-                                held = false;
-                                collect_paths = false;
+                        if held && collect_paths {
+                            for path in arg.split(':') {
+                                c.import_paths.push(path.to_string())
                             }
-
-                            if collect_target {
-                                c.target = match arg.as_str() {
-                                    "java" => Target::Java,
-                                    _ => Target::Unknown(arg.clone()),
-                                };
-                                held = false;
-                                collect_target = false;
-                            }
+                            held = false;
+                            collect_paths = false;
+                        } else if held && collect_target {
+                            c.target = match arg.as_str() {
+                                "java" => Target::Java,
+                                _ => Target::Unknown(arg.clone()),
+                            };
+                            held = false;
+                            collect_target = false;
                         } else {
                             c.file = arg.to_string();
+                            if !held {
+                                held = true;
+                            }
                         }
                     }
                 }
