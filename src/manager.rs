@@ -1,6 +1,8 @@
 use git2::Repository;
 use lib_traxex::download::download;
+use serde::Deserialize;
 use std::io::Write;
+use std::process;
 use std::{collections::HashMap, fmt::Display, fs};
 use termcolor::{Color, ColorChoice, ColorSpec, StandardStream, WriteColor};
 
@@ -9,6 +11,15 @@ pub struct Manager<'a> {
     depends: &'a str,
     path: &'a str,
     pub tobuild: Vec<(String, Vec<String>)>,
+}
+
+#[derive(Deserialize, Debug)]
+struct Package {
+    pkgname: String,
+    pkgauthor: String,
+    pkgurl: String,
+    pkgdesc: String,
+    status: String,
 }
 
 impl<'a> Default for Manager<'a> {
@@ -159,7 +170,7 @@ impl<'a> Manager<'a> {
         let (name, depends) = self.depends_list(path);
         let deps_count = depends.keys().count();
         // TODO: Rewrite this and donot hard code the registry url, load it from file
-        let repos = "https://github.com/smllvendorlibs";
+        let repos = "https://smllpkgs.onrender.com/v1/public/pkgman/pkginfo";
         let lines = repos.lines();
 
         let green = Some(Color::Green);
@@ -179,9 +190,33 @@ impl<'a> Manager<'a> {
         let _ = fs::create_dir("./smll_deps/src");
         let mut correct = 0;
         let mut skipped = 0;
-        for line in lines {
+        for server_url in lines {
             for (key, val) in &depends {
-                let url = format!("{line}/{key}");
+                let params = [("term", key.as_str())];
+                let client = reqwest::blocking::Client::new();
+                let res = client
+                    .post(server_url)
+                    .form(&params)
+                    .send()
+                    .expect(&format!("Failed to connect to server"))
+                    .json::<Package>()
+                    .expect(&format!("Failed to connect to server"));
+
+                let status = res.status.as_str();
+
+                if status != "ok" {
+                    stdout.set_color(ColorSpec::new().set_fg(red)).unwrap();
+                    write!(&mut stdout, "Error: ").unwrap();
+
+                    stdout.set_color(ColorSpec::new().set_fg(yellow)).unwrap();
+                    write!(&mut stdout, "package `{key}` does not exist").unwrap();
+
+                    stdout.set_color(ColorSpec::new().set_fg(white)).unwrap();
+                    writeln!(&mut stdout, "").unwrap();
+                    process::exit(0);
+                }
+
+                let url = res.pkgurl.clone();
                 let dest = format!("./.smll_deps/src/{key}");
                 if fs::metadata(&dest).is_ok() {
                     stdout.set_color(ColorSpec::new().set_fg(yellow)).unwrap();
