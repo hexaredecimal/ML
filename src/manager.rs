@@ -198,9 +198,9 @@ impl<'a> Manager<'a> {
                     .post(server_url)
                     .form(&params)
                     .send()
-                    .expect(&format!("Failed to connect to server"))
+                    .expect("Failed to connect to server")
                     .json::<Package>()
-                    .expect(&format!("Failed to connect to server"));
+                    .expect("Failed to connect to server");
 
                 let status = res.status.as_str();
 
