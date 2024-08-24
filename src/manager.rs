@@ -170,8 +170,7 @@ impl<'a> Manager<'a> {
         let (name, depends) = self.depends_list(path);
         let deps_count = depends.keys().count();
         // TODO: Rewrite this and donot hard code the registry url, load it from file
-        let repos = "https://smllpkgs.onrender.com/v1/public/pkgman/pkginfo";
-        let lines = repos.lines();
+        let server_url = "https://smllpkgs.onrender.com/v1/public/pkgman/pkginfo";
 
         let green = Some(Color::Green);
         let red = Some(Color::Red);
@@ -190,101 +189,100 @@ impl<'a> Manager<'a> {
         let _ = fs::create_dir("./smll_deps/src");
         let mut correct = 0;
         let mut skipped = 0;
-        for server_url in lines {
-            for (key, val) in &depends {
-                let params = [("term", key.as_str())];
-                let client = reqwest::blocking::Client::new();
-                let res = client
-                    .post(server_url)
-                    .form(&params)
-                    .send()
-                    .expect("Failed to connect to server")
-                    .json::<Package>()
-                    .expect("Failed to connect to server");
+        for (key, val) in &depends {
+            let dest = format!("./.smll_deps/src/{key}");
+            if fs::metadata(&dest).is_ok() {
+                stdout.set_color(ColorSpec::new().set_fg(yellow)).unwrap();
+                writeln!(&mut stdout, "Skipping {key}").unwrap();
+                skipped += 1;
+                continue;
+            }
 
-                let status = res.status.as_str();
+            let params = [("term", key.as_str())];
+            let client = reqwest::blocking::Client::new();
+            let res = client
+                .post(server_url)
+                .form(&params)
+                .send()
+                .expect("Failed to connect to server")
+                .json::<Package>()
+                .expect("Failed to connect to server");
 
-                if status != "ok" {
-                    stdout.set_color(ColorSpec::new().set_fg(red)).unwrap();
-                    write!(&mut stdout, "Error: ").unwrap();
+            let status = res.status.as_str();
 
-                    stdout.set_color(ColorSpec::new().set_fg(yellow)).unwrap();
-                    write!(&mut stdout, "package `{key}` does not exist").unwrap();
-
-                    stdout.set_color(ColorSpec::new().set_fg(white)).unwrap();
-                    writeln!(&mut stdout, "").unwrap();
-                    process::exit(0);
-                }
-
-                let url = res.pkgurl.clone();
-                let dest = format!("./.smll_deps/src/{key}");
-                if fs::metadata(&dest).is_ok() {
-                    stdout.set_color(ColorSpec::new().set_fg(yellow)).unwrap();
-                    writeln!(&mut stdout, "Skipping {key}").unwrap();
-                    skipped += 1;
-                    continue;
-                }
-
-                let str = fs::read_to_string("./.smll_deps/depends").unwrap();
-                let mut lines: Vec<String> = vec![];
-
-                for st in str.lines() {
-                    let st = st.to_string();
-                    if st.is_empty() || lines.contains(&st) {
-                        continue;
-                    }
-                    lines.push(st);
-                }
-
-                if !lines.contains(&url) {
-                    lines.push(url.clone());
-                }
-
-                let str = lines.join("\n");
-                fs::write("./.smll_deps/depends", str).unwrap();
-                let clone = Repository::clone(&url, &dest);
-
-                stdout.set_color(ColorSpec::new().set_fg(white)).unwrap();
-                write!(&mut stdout, "Downloading ").unwrap();
+            if status != "ok" {
+                stdout.set_color(ColorSpec::new().set_fg(red)).unwrap();
+                write!(&mut stdout, "Error: ").unwrap();
 
                 stdout.set_color(ColorSpec::new().set_fg(yellow)).unwrap();
-                writeln!(&mut stdout, "{key} - {val}").unwrap();
+                write!(
+                    &mut stdout,
+                    "package `{key}` does not exist on the remote server"
+                )
+                .unwrap();
 
-                match clone {
-                    Ok(_repo) => {
-                        correct += 1;
-                        stdout.set_color(ColorSpec::new().set_fg(green)).unwrap();
-                        write!(&mut stdout, "Download complete ").unwrap();
+                stdout.set_color(ColorSpec::new().set_fg(white)).unwrap();
+                writeln!(&mut stdout, "").unwrap();
+                process::exit(0);
+            }
 
-                        stdout.set_color(ColorSpec::new().set_fg(gray)).unwrap();
-                        writeln!(&mut stdout, "{key}").unwrap();
-                        let inner = format!("{dest}/project.toml");
+            let url = res.pkgurl.clone();
+            let str = fs::read_to_string("./.smll_deps/depends").unwrap();
+            let mut lines: Vec<String> = vec![];
 
-                        let mut v: Vec<String> = vec![];
-                        for element in std::path::Path::new(&dest).read_dir().unwrap() {
-                            let path = element.unwrap().path();
-                            if let Some(extension) = path.extension() {
-                                if extension == "smll" {
-                                    v.push(path.to_str().unwrap().to_string());
-                                }
+            for st in str.lines() {
+                let st = st.to_string();
+                if st.is_empty() || lines.contains(&st) {
+                    continue;
+                }
+                lines.push(st);
+            }
+
+            if !lines.contains(&url) {
+                lines.push(url.clone());
+            }
+
+            let str = lines.join("\n");
+            fs::write("./.smll_deps/depends", str).unwrap();
+            let clone = Repository::clone(&url, &dest);
+
+            stdout.set_color(ColorSpec::new().set_fg(white)).unwrap();
+            write!(&mut stdout, "Downloading ").unwrap();
+
+            stdout.set_color(ColorSpec::new().set_fg(yellow)).unwrap();
+            writeln!(&mut stdout, "{key} - {val}").unwrap();
+
+            match clone {
+                Ok(_repo) => {
+                    correct += 1;
+                    stdout.set_color(ColorSpec::new().set_fg(green)).unwrap();
+                    write!(&mut stdout, "Download complete ").unwrap();
+
+                    stdout.set_color(ColorSpec::new().set_fg(gray)).unwrap();
+                    writeln!(&mut stdout, "{key}").unwrap();
+                    let inner = format!("{dest}/project.toml");
+
+                    let mut v: Vec<String> = vec![];
+                    for element in std::path::Path::new(&dest).read_dir().unwrap() {
+                        let path = element.unwrap().path();
+                        if let Some(extension) = path.extension() {
+                            if extension == "smll" {
+                                v.push(path.to_str().unwrap().to_string());
                             }
                         }
-                        self.tobuild.push((key.clone(), v));
-                        self.process(&inner);
                     }
-                    Err(_e) => {
-                        println!("Failed to Download {key}");
-
-                        stdout.set_color(ColorSpec::new().set_fg(red)).unwrap();
-                        write!(&mut stdout, "Download failed for ").unwrap();
-
-                        stdout.set_color(ColorSpec::new().set_fg(gray)).unwrap();
-                        writeln!(&mut stdout, "{key}").unwrap();
-                    }
+                    self.tobuild.push((key.clone(), v));
+                    self.process(&inner);
                 }
-            }
-            if correct == deps_count {
-                break;
+                Err(_e) => {
+                    println!("Failed to Download {key}");
+
+                    stdout.set_color(ColorSpec::new().set_fg(red)).unwrap();
+                    write!(&mut stdout, "Download failed for ").unwrap();
+
+                    stdout.set_color(ColorSpec::new().set_fg(gray)).unwrap();
+                    writeln!(&mut stdout, "{key}").unwrap();
+                }
             }
         }
 
