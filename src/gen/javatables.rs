@@ -174,7 +174,16 @@ impl JavaTables {
         let mut trans = JavaBackend::new(self.clone());
 
         let root = func.root().clone();
-        let return_value = trans.translate_expr(func.root(), &mut variables, ctx)?;
+        let mut is_conditional = false;
+        let return_value = match func.root().expr() {
+            SemExpression::Conditional(cond, left, right) => {
+                let (last, blocks) =
+                    trans.translate_conditional(cond, left, right, &mut variables, ctx)?;
+                is_conditional = true;
+                format!("{blocks}\nreturn {last};")
+            }
+            _ => trans.translate_expr(func.root(), &mut variables, ctx)?,
+        };
 
         let mut s = if name == "main" {
             format!("{} {}({}) ", "void", name, args,)
@@ -239,14 +248,23 @@ impl JavaTables {
                     }
 
                     let last = sq.last().unwrap();
-                    s.push_str("return ");
+
+                    if !is_conditional {
+                        s.push_str("return ");
+                    }
                     s.push_str(last);
-                    s.push(';');
+                    if !is_conditional {
+                        s.push(';');
+                    }
                 }
                 _ => {
-                    s.push_str("return ");
+                    if !is_conditional {
+                        s.push_str("return ");
+                    }
                     s.push_str(return_value.as_str());
-                    s.push(';');
+                    if !is_conditional {
+                        s.push(';');
+                    }
                 }
             }
         }

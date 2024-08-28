@@ -45,20 +45,24 @@ impl JavaBackend {
 
                 for val in rest.iter() {
                     let v = val.clone();
-                    let e = self.translate_expr(&v, scope, ctx)?;
                     block.push('\t');
                     match &val.expr() {
-                        SemExpression::Conditional(_, _, _) => {
+                        SemExpression::Conditional(cond, then, alt) => {
+                            let (e, blocks) = self.translate_conditional(cond, then, alt, scope, ctx)?;
                             let splits: Vec<_> = e.split('\n').collect();
                             let len = splits.len();
                             let first = splits.get(0..len - 1).unwrap();
                             let first = first.join("\n");
 
                             let last = splits.last().unwrap();
+                            block.push_str(&format!("{blocks\n}"));
                             block.push_str(&format!("{}\n", first));
                             block.push_str(&format!("var tmp_{} = {};\n", self.block_count, last));
                         }
-                        _ => block.push_str(e.as_str()),
+                        _ => {
+                            let e = self.translate_expr(&v, scope, ctx)?;
+                            block.push_str(e.as_str())
+                        },
                     }
 
                     match &val.expr() {
@@ -73,6 +77,10 @@ impl JavaBackend {
                 let e = self.translate_expr(last, scope, ctx)?;
 
                 match &last.expr() {
+                    SemExpression::Conditional(cond, then, alt) => {
+                        let (e, blocks) = self.translate_conditional(cond, then, alt, scope, ctx)?;
+                        block.push_str(&format!("{blocks}\n\treturn {e};\n}}"));
+                    }
                     SemExpression::Embed(_) => {
                         block.push_str(&e);
                         block.push_str(";\n}");
@@ -473,7 +481,8 @@ impl JavaBackend {
                 self.translate_funcall(func_name, args, scope, ctx)
             }
             SemExpression::Conditional(cond, then, alt) => {
-                self.translate_conditional(cond, then, alt, scope, ctx)
+                let (ret, _) = self.translate_conditional(cond, then, alt, scope, ctx)?;
+                Ok(ret)
             }
             SemExpression::BinaryOp(op, left, right) => {
                 let left_val = self.translate_expr(left, scope, ctx)?;
@@ -918,6 +927,11 @@ impl JavaBackend {
                         s.push_str(&ret);
                         s.push_str(";\n\t}");
                     }
+
+                    SemExpression::Conditional(cond, then, alt) => {
+                        let (ret, blocks) = self.translate_conditional(cond, then, alt, scope, ctx)?;
+                        s.push_str(&format!("{blocks}\n\treturn {ret};\n\t}}"));
+                    }
                     _ => {
                         let e = self.translate_expr(expr, &mut sc, ctx)?;
                         s.push_str("\t\treturn ");
@@ -975,14 +989,14 @@ impl JavaBackend {
         }
     }
 
-    fn translate_conditional(
+    pub fn translate_conditional(
         &mut self,
         cond: &SemNode,
         then: &SemNode,
         alt: &SemNode,
         scope: &mut HashMap<String, Type>,
         ctx: &mut SemContext,
-    ) -> Result<String, CompilerError> {
+    ) -> Result<(String, String), CompilerError> {
         let cond_ty = "Boolean";
         let then_ty = then.ty();
         let alt_ty = alt.ty();
@@ -1024,8 +1038,7 @@ impl JavaBackend {
         };
 
         let st = format!("(({}) ? {} : {})", cond, then, alt);
-        let st = format!("{ret_str}\n{st}");
-        Ok(st)
+        Ok((st, ret_str))
     }
 
     fn translate_val(
@@ -1065,6 +1078,10 @@ impl JavaBackend {
                 Ok(format!("{}\t{} {} = {};\n", rest, "var", id, last))
             }
             SemExpression::Null(_) => Ok(format!("{} {} = {};\n", val_ty, id, val.clone())),
+            SemExpression::Conditional(cond, then, alt) => {
+                let (ret, blocks) = self.translate_conditional(cond, then, alt, scope, ctx)?;
+                Ok(format!("{blocks}\n\tvar {id} = {ret};"))
+            }
             _ => Ok(format!("{} {} = {};\n", "var", id, val.clone())),
         }
         //self.vars.push_str(format!("{} {};", val_ty, id.clone()).as_str());
