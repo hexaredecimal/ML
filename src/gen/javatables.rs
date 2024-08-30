@@ -242,7 +242,7 @@ impl JavaTables {
                             }
 
                             let last = sq.last().unwrap();
-                            format!("{p}\n{defers}// Last\n{last}")
+                            format!("{p}\n// Last\n{last};\n//defers\n{defers}")
                         }
 
                         _ => return_value,
