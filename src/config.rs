@@ -147,9 +147,8 @@ edition = "2024"
         let code = r#"
 import System::Io 
 
-
 (* main.smll - Happy coding *)
-fn main(): Unit => ()
+fn main(): Unit => "Hello, world".println()
 "#;
         let _ = fs::create_dir("./code");
         let _ = fs::create_dir("./.smll_deps");
