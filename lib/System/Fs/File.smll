@@ -172,7 +172,7 @@ fn file_length(file: File): Int => {
   length
 }
 
-fn createFile(file: File): Result => {
+fn file_create(file: File): Result => {
   java {
     "try {"
     " file.createNewFile();"
