@@ -1,9 +1,8 @@
-import java.lang.instrument.Instrumentation;
 
 public class ObjectSizer {
-    private static Instrumentation instrumentation;
+    private static java.lang.instrument.Instrumentation instrumentation;
 
-    public static void premain(String args, Instrumentation inst) {
+    public static void premain(String args, java.lang.instrument.Instrumentation inst) {
         instrumentation = inst;
     }
 
