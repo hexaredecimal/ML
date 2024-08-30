@@ -34,9 +34,11 @@ pub enum SemExpression {
     Cast(Box<SemNode>, Box<Type>),
     Lambda(Vec<(String, Type)>, Box<Type>, Box<SemNode>),
     Destructure(Vec<String>, Box<SemNode>),
-    FieldAccess(Box<SemNode>, Box<SemNode>)
+    FieldAccess(Box<SemNode>, Box<SemNode>),
+    Defer(Box<SemNode>)
 }
 
+static mut TMP_VAR: i32 = 0;
 
 #[derive(PartialEq, Debug)]
 pub struct SemFunction {
@@ -214,6 +216,27 @@ impl SemNode {
 
     pub fn analyze(node: RawNode, ctx: &mut SemContext) -> Result<Self> {
         let expr = match node.into_expr() {
+            RawExpression::Defer(rexpr) => {
+                let expr = SemNode::analyze(*rexpr, ctx)?;
+                let ty = expr.ty.clone();
+                let unit = SemExpression::Unit; 
+                let unit = SemNode {expr: unit, ty: Type::Unit};
+                let block_body = match expr.expr() {
+                    SemExpression::Block(_) => {
+                        vec![expr, unit]
+                    }
+                    _ => {
+                        let var_name = format!("global_tmp_{}", unsafe { TMP_VAR }); 
+                        unsafe { TMP_VAR += 1; }
+                        let lhs  = SemExpression::Val(var_name, Box::new(expr));
+                        let node = SemNode {expr: lhs, ty};
+                        vec![node, unit] // 
+                    }
+                };
+                let  block = SemExpression::Block(block_body);
+                let node = SemNode { expr: block, ty: Type::Unit};
+                SemExpression::Defer(Box::new(node))
+            }
             RawExpression::FieldAccess(e1, e2) => {
                 let mut ct = ctx.clone();
                 
@@ -633,6 +656,9 @@ impl SemNode {
         };
 
         let ty = match &expr {
+            SemExpression::Defer(expr) => {
+                Type::Unit
+            }
             SemExpression::FieldAccess(left, right) => {
                 let left_ty = left.ty();
                 let left_ty_name = if let Type::YourType(left_ty) = left_ty {

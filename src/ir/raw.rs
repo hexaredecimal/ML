@@ -100,6 +100,7 @@ pub enum RawExpression {
     Lambda(Vec<(String, Type)>, Box<Type>, Box<RawNode>),
     Destructure(Vec<String>, Box<RawNode>),
     FieldAccess(Box<RawNode>, Box<RawNode>),
+    Defer(Box<RawNode>),
 }
 
 pub enum TempExpr {
