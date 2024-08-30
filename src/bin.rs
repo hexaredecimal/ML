@@ -17,7 +17,7 @@ fn main() {
 
 fn try_main() -> Result<()> {
     let mut conf = Config::parse();
-    let data_conv = Asset::get("SystConv.java").unwrap();
+    let data_conv = Asset::get("Backend.java").unwrap();
     let convs = std::str::from_utf8(data_conv.data.as_ref()).unwrap();
 
     let green = Some(Color::Green);
