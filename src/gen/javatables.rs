@@ -23,7 +23,6 @@ impl JavaTables {
             aliases: HashMap::new(),
         }
     }
-
     pub fn process_enumns(
         &mut self,
         records: Vec<EnumType>,
@@ -171,18 +170,18 @@ impl JavaTables {
             variables.insert(name, _ty.clone());
         }
 
-        let mut trans = JavaBackend::new(self.clone());
+        let mut backend = JavaBackend::new(self);
 
         let root = func.root().clone();
         let mut is_conditional = false;
         let return_value = match func.root().expr() {
             SemExpression::Conditional(cond, left, right) => {
                 let (last, blocks) =
-                    trans.translate_conditional(cond, left, right, &mut variables, ctx)?;
+                    backend.translate_conditional(cond, left, right, &mut variables, ctx)?;
                 is_conditional = true;
                 format!("{blocks}\nreturn {last};")
             }
-            _ => trans.translate_expr(func.root(), &mut variables, ctx)?,
+            _ => backend.translate_expr(func.root(), &mut variables, ctx)?,
         };
 
         let mut s = if name == "main" {
@@ -194,13 +193,19 @@ impl JavaTables {
         s.push_str(" {\n");
 
         s.push_str("// Variables \n");
-        s.push_str(trans.vars.as_str());
+        s.push_str(backend.vars.as_str());
         s.push('\n');
         // Patch all collected lamda blocks
 
         s.push_str("// Block patching area\n");
-        s.push_str(trans.blocks.as_str());
+        s.push_str(backend.blocks.as_str());
         s.push('\n');
+
+        let defers = if backend.has_defers() {
+            format!("{}\n;", backend.construct_defers().trim_end())
+        } else {
+            format!("//Global defer space \n")
+        };
 
         if name == "main" {
             let return_value = match ret_type.as_str() {
@@ -218,11 +223,32 @@ impl JavaTables {
                         }
 
                         let last = sq.last().unwrap();
-                        format!("{p}System.exit({last})")
+                        format!("{p}{defers} System.exit({last})")
                     }
                     _ => format!("System.exit({})", return_value),
                 },
-                _ => return_value,
+                _ => {
+                    let return_value = match root.expr() {
+                        SemExpression::Block(_) => {
+                            let sq = return_value.clone();
+                            let sq: Vec<_> = sq.split('\n').collect();
+                            let len = sq.len();
+
+                            let mut p = String::new();
+                            let rest = sq.get(0..len - 1).unwrap();
+                            for st in rest {
+                                p.push_str(st);
+                                p.push('\n');
+                            }
+
+                            let last = sq.last().unwrap();
+                            format!("{p}\n{defers}// Last\n{last}")
+                        }
+
+                        _ => return_value,
+                    };
+                    return_value
+                }
             };
 
             let last_expr = format!(
@@ -249,6 +275,7 @@ impl JavaTables {
 
                     let last = sq.last().unwrap();
 
+                    s.push_str(&defers);
                     if !is_conditional {
                         s.push_str("return ");
                     }
@@ -258,6 +285,7 @@ impl JavaTables {
                     }
                 }
                 _ => {
+                    s.push_str(&defers);
                     if !is_conditional {
                         s.push_str("return ");
                     }
