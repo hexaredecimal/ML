@@ -7,22 +7,41 @@ use crate::JavaTables;
 
 use std::collections::hash_map::HashMap;
 
-pub(crate) struct JavaBackend {
-    jit: JavaTables,
+pub(crate) struct JavaBackend<'a> {
+    jit: &'a mut JavaTables,
     block_count: i32,
     pub blocks: String,
     pub vars: String,
+    pub defers: Vec<String>
 }
 
-impl JavaBackend {
-    pub fn new(jit: JavaTables) -> Self {
+impl <'a> JavaBackend <'a> {
+    pub fn new(jit: &'a mut JavaTables) -> Self {
         Self {
             jit,
             blocks: String::new(),
             vars: String::new(),
             block_count: 0,
+            defers: Vec::new()
         }
     }
+
+
+    pub fn has_defers(&self) -> bool {
+        !self.defers.is_empty()
+    }
+
+    pub fn cache_defer(&mut self, defer_expr: String) {
+        self.defers.push(defer_expr);
+    }
+
+    pub fn construct_defers(&mut self) -> String {
+        let code = self.defers.join("\n");
+        self.defers.clear();
+        code
+    }
+
+
 
     fn extract_block(
         &mut self,
@@ -43,6 +62,8 @@ impl JavaBackend {
 
                 let mut block = String::from("{\n");
 
+                let mut defer_blocks: Vec<String> = vec![];
+
                 for val in rest.iter() {
                     let v = val.clone();
                     block.push('\t');
@@ -59,9 +80,14 @@ impl JavaBackend {
                             block.push_str(&format!("{}\n", first));
                             block.push_str(&format!("var tmp_{} = {};\n", self.block_count, last));
                         }
+
+                        SemExpression::Defer(expr) => {
+                            let block = self.translate_expr(expr, scope, ctx)?;
+                            defer_blocks.push(block);
+                        }
                         _ => {
                             let e = self.translate_expr(&v, scope, ctx)?;
-                            block.push_str(e.as_str())
+                            block.push_str(e.as_str());
                         },
                     }
 
@@ -76,12 +102,21 @@ impl JavaBackend {
                 let last = values.last().unwrap();
                 let e = self.translate_expr(last, scope, ctx)?;
 
+                let defers = if !defer_blocks.is_empty() {
+                    let blocks = defer_blocks.join("\n");
+                    format!("{blocks}\n;")
+                } else {
+                    format!("//No defers found inside block\n")
+                };
+
+
                 match &last.expr() {
                     SemExpression::Conditional(cond, then, alt) => {
                         let (e, blocks) = self.translate_conditional(cond, then, alt, scope, ctx)?;
-                        block.push_str(&format!("{blocks}\n\treturn {e};\n}}"));
+                        block.push_str(&format!("{blocks}\n{defers}\n\treturn {e};\n}}"));
                     }
                     SemExpression::Embed(_) => {
+                        block.push_str(&defers);
                         block.push_str(&e);
                         block.push_str(";\n}");
                     }
@@ -95,9 +130,11 @@ impl JavaBackend {
                         block.push_str(&first);
 
                         let last = lines.last().unwrap();
+                        block.push_str(&defers);
                         block.push_str(&format!("\treturn {last};\n{}", "}"));
                     }
                     _ => {
+                        block.push_str(&defers);
                         block.push_str("\treturn ");
                         block.push_str(&e);
                         block.push_str(";\n}");
@@ -133,6 +170,11 @@ impl JavaBackend {
         let real_ty = self.jit.clone().real_type(node.ty(), ctx)?;
 
         match node.expr() {
+            SemExpression::Defer(expr) => {
+                let block = self.translate_expr(expr, scope, ctx)?;
+                self.cache_defer(format!("{block}"));
+                Ok(format!("Void.Unit")) 
+            }
             SemExpression::FieldAccess(left, right) => {
                 let left = self.translate_expr(left, scope, ctx)?;
                 let right = match right.expr() {
