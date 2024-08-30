@@ -103,8 +103,8 @@ impl <'a> JavaBackend <'a> {
                 let e = self.translate_expr(last, scope, ctx)?;
 
                 let defers = if !defer_blocks.is_empty() {
-                    let blocks = defer_blocks.join("\n");
-                    format!("{blocks}\n;")
+                    let blocks = defer_blocks.join(";\n");
+                    format!("{blocks};\n")
                 } else {
                     format!("//No defers found inside block\n")
                 };
