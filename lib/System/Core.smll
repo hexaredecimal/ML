@@ -35,4 +35,12 @@ fn unreachablestr(msg: String): Unit => {
   ()
 }
 
+fn sizeof(obj: Any): Int => {
+  val size = 0
+  java {
+    "size = (int) ObjectSizer.getObjectSize(obj);"
+  }
+  size
+}
+
 
