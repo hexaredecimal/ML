@@ -1,0 +1,17 @@
+
+import System::Io 
+(* main.smll - Happy coding *)
+
+fn main(): Unit => test()
+
+fn test(): Unit => {
+  "First statement of test()".println()
+  defer "Defered statement".println()
+  "Third statement of test()".println()
+  defer "Another Defered statement".println()
+  val result = if 5 > 1 then "Greater" else "Less"
+  defer "Last Defered statement".println()
+  "Computed: %s\n".printf(result)
+  ()
+}
+
