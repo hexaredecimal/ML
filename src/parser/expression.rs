@@ -153,36 +153,13 @@ pub fn fun_call(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     ))
 }
 
-pub fn lambda_call(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
-    // TODO: Fix the parser for function call such that it is generic for all
-    //       kinds of functions. For now function calls are parsed as
-    //       <ID> (<ARGS>)
-    //       What I want to parse is
-    //       <EXPR> (<ARGS>)
-    //       Currenty the parser has an issue parsing this.
-    let (i, (_, _, id, _, _, args, _, _)) = tuple((
-        tag("["),
-        sp,
-        expression,
-        sp,
-        tag(":"),
-        separated_list0(tuple((sp, tag(","), sp)), expression),
-        sp,
-        tag("]"),
-    ))(i)?;
-
-    let _ = i; // TODO: Remove this. This is done to suppress a warning
-    println!("expr: {:?} -> args: {:?}", id, args);
-    todo!()
-}
-
 pub fn identifier_expr(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     let (i, id) = identifier(i)?;
     Ok((i, RawNode::new(RawExpression::Id(id.to_string()))))
 }
 
 fn terminal(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
-    alt((parens, literal, fun_call, identifier_expr, lambda_call))(i)
+    alt((parens, literal, fun_call, identifier_expr))(i)
 }
 
 fn deref_expr(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
@@ -612,10 +589,16 @@ pub fn lambda_expression(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> 
     ))
 }
 
+pub fn defer_expression(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
+    let (i, (_, _, expr)) = tuple((tag("defer"), sp, expression))(i)?;
+    Ok((i, RawNode::new(RawExpression::Defer(Box::new(expr)))))
+}
+
 pub fn expression_(i: &str) -> IResult<&str, RawNode, VerboseError<&str>> {
     alt((
         lambda_expression,
         record_expression,
+        defer_expression,
         embed_expr,
         abs_expr,
         match_expr,
