@@ -1,0 +1,27 @@
+
+import System::Io 
+import System::Loops
+import System::Core::Lists
+
+fn main(): Unit => 
+  let 
+    numbers = [2, 5, 100, 21, 1, 0, -4]
+    size = numbers.list_length()
+  in {
+    "Before: %s\n".printf(numbers.list_to_string())
+    for_loop(0, size, 1,
+      fn(x: Int): Unit => for_loop(x, size, 1, 
+        fn(y: Int): Unit => {
+          val left = numbers.[x]
+          val right = numbers.[y]
+          val c = ()
+          if left > right then {
+            numbers.list_put_at(y, left)
+            numbers.list_put_at(x, right)
+            ()
+          } else ()
+        }
+      )
+    )
+    "After: %s\n".printf(numbers.list_to_string())
+  }
