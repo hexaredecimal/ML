@@ -1,6 +1,4 @@
-
 import System::Io 
-(* main.smll - Happy coding *)
 
 fn main(): Unit => test()
 
